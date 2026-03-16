@@ -247,7 +247,7 @@ def run_E2_sparsity(seed=42, output_dir=None):
         num_measured = max(2, int(meas_frac * num_nodes))
         print(f"\n  meas_frac={meas_frac} (num_measured={num_measured})")
         r = run_experiment(
-            random_seed=seed, num_repetitions=10, num_networks=50,
+            random_seed=seed, num_repetitions=30, num_networks=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_measured=num_measured, stim_gain=1.0,
             nonlinearity="tanh",
@@ -298,7 +298,7 @@ def run_E4_granger(seed=42, output_dir=None):
     num_nodes = 60
     # Single experiment, compare estimate vs optimized in the results
     r = run_experiment(
-        random_seed=seed, num_repetitions=17, num_networks=50,
+        random_seed=seed, num_repetitions=30, num_networks=50,
         max_timesteps=1000, num_nodes=num_nodes, stim_gain=1.0,
         nonlinearity="tanh", save_matrices=True,
     )
@@ -321,7 +321,7 @@ def run_E5_nonlinearity(seed=42, output_dir=None):
     for nl in ["tanh", "relu", "identity", "sigmoid"]:
         print(f"\n  nonlinearity={nl}")
         r = run_experiment(
-            random_seed=seed, num_repetitions=10, num_networks=50,
+            random_seed=seed, num_repetitions=30, num_networks=50,
             max_timesteps=1000, num_nodes=num_nodes, stim_gain=1.0,
             nonlinearity=nl,
         )

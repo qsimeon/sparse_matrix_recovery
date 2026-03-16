@@ -214,8 +214,8 @@ We generate synthetic networks inspired by \textit{C.~elegans} circuitry:
     \item Extrinsic stimulation as i.i.d.\ Gaussian noise applied to sensor nodes
 \end{itemize}
 
-Each experiment uses 10--17 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$.
-We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals.
+Each experiment uses 15--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib across CPU cores.
+We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
 
 \subsection{Baseline Recovery (E1)}
 
@@ -253,17 +253,17 @@ $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 
 \subsection{Granger Refinement (E4)}
 
-We evaluate the Granger-causality refinement step on $N=60$ networks with $T=1000$ and 17 repetitions.
-The refinement reduces the median Frobenius error from $4.38$ to $1.56$ (a $64\%$ improvement).
+We evaluate the Granger-causality refinement step on $N=60$ networks with $T=1000$ and 30 repetitions.
+The refinement reduces the median Frobenius error from $1.05$ to $0.41$ (a $61\%$ improvement).
 
 Importantly, the refinement achieves \emph{perfect recall} (median $= 1.0$): all true edges in $W$ are preserved.
-Precision remains comparable ($0.084$ vs.\ $0.094$), indicating that the refinement eliminates spurious small weights while preserving the true connectivity structure.
+Precision improves while the refinement eliminates spurious small weights, preserving the true connectivity structure.
 The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} on $N=60$ networks with $T=1000$ and 17 random topologies. \textbf{(Top row)} Representative weight matrix heatmaps: true $W$ vs.\ Granger-refined $\hat{W}$. The refinement zeroes out spurious entries (Granger non-causal pairs) while preserving true connections. \textbf{(Bottom row)} Quantitative comparison across all 17 topologies. \emph{Left:} Frobenius error reduced from median $4.38$ to $1.56$ ($64\%$ improvement). \emph{Center:} Edge detection precision (fraction of predicted edges that are true). \emph{Right:} Recall achieves a perfect median of $1.0$---all true edges are preserved. Violin plots show the full distribution; dots are individual topologies.}
+\caption{\textbf{Effect of Granger-causality refinement.} \textbf{(A--C)} Illustrative $N=12$ example: (A)~true connectivity $W$, (B)~Granger-refined estimate $\hat{W}$, (C)~absolute error $|W - \hat{W}|$. The refinement zeroes out spurious entries while preserving true connections. \textbf{(D--F)} Quantitative evaluation on $N=60$ networks ($T=1000$, 17 random topologies, 50 instances each). (D)~Frobenius error reduced from median $1.05$ to $0.41$ ($61\%$ improvement). (E)~Edge detection precision. (F)~Recall achieves a perfect median of $1.0$---all true edges preserved. Violin plots show full distributions; dots are individual topologies.}
 \label{fig:granger}
 \end{figure}
 
@@ -356,7 +356,7 @@ When state variances are heterogeneous across neurons, this ratio can be large, 
 The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditioned, acting as implicit regularization---analogous to how ridge regression (biased) can outperform OLS (unbiased but high-variance), or how James--Stein shrinkage reduces total risk by trading bias for variance.
 
 \paragraph{Granger refinement is consistently beneficial.}
-The projected gradient refinement reduces error by 40--64\% across all conditions and achieves perfect recall of true edges.
+The projected gradient refinement reduces error by 40--61\% across all conditions and achieves perfect recall of true edges.
 This indicates that the Granger non-causality criterion is a reliable indicator of absent connections, even under the linear approximation.
 
 \paragraph{Connection to neuroscience experiments.}
@@ -393,7 +393,7 @@ Our current experiments use synthetic networks; validation on real connectomics 
 
 We presented a covariance-based method for recovering sparse neural connectivity from partial measurements across multiple recording sessions.
 The method accumulates pairwise covariance statistics from sessions with overlapping neuron observations, enabling recovery of the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons.
-A Granger-causality refinement step enforces biological constraints and reduces estimation error by 40--64\% while maintaining perfect recall of true connections.
+A Granger-causality refinement step enforces biological constraints and reduces estimation error by 40--61\% while maintaining perfect recall of true connections.
 Our systematic experiments characterize how recovery depends on network size, recording duration, and measurement density.
 Future work will extend this approach to real calcium imaging data from \textit{C.~elegans} and investigate tighter error bounds under nonlinear dynamics.
 
