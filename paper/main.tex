@@ -42,10 +42,10 @@ A Covariance-Based Approach with Granger-Causality Refinement}
 \begin{abstract}
 Inferring the connectivity of neural circuits from incomplete observations is a fundamental challenge in neuroscience.
 We present a covariance-based method for estimating the weight matrix of a recurrent neural network from sparse, partial measurements across multiple recording sessions.
-Our approach leverages the statistical structure of neural dynamics: by accumulating pairwise covariance estimates across sessions where different subsets of neurons are observed, we reconstruct the full connectivity matrix without requiring simultaneous recording of all neurons.
-We introduce a Granger-causality-inspired refinement step that enforces biologically motivated constraints---sparsity, non-negativity, and absence of self-connections---via projected gradient descent.
-Through systematic experiments on synthetic networks inspired by \textit{C.~elegans}, we characterize the fundamental tradeoff between stimulation-driven identifiability and preservation of intrinsic dynamics.
-Our results show that the covariance estimator significantly outperforms chance baselines, and that the Granger refinement step improves both precision and recall of edge detection.
+By accumulating pairwise covariance estimates across sessions where different subsets of neurons are observed, we reconstruct the full connectivity matrix without requiring simultaneous recording of all neurons.
+A Granger-causality refinement step enforces biological constraints via projected gradient descent.
+Through systematic experiments on synthetic networks modeling small brain circuits, we characterize a fundamental \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
+We discover that the ``incorrect'' linear approximation acts as implicit regularization---outperforming the oracle estimator with known nonlinearity at all operating regimes---and provide an exact characterization via the Stein--Price identity.
 \end{abstract}
 
 % ============================================================================
@@ -53,11 +53,13 @@ Our results show that the covariance estimator significantly outperforms chance 
 \label{sec:intro}
 % ============================================================================
 
-A central goal in systems neuroscience is to map the connectivity of neural circuits---the \emph{connectome}---from functional measurements.
-In organisms like \textit{Caenorhabditis elegans}, whose 302 neurons and $\sim$7,000 synapses have been anatomically mapped \citep{white1986structure, cook2019whole}, the challenge shifts from anatomical tracing to inferring \emph{functional} connection strengths from neural activity recordings.
-
-Modern calcium imaging and electrophysiology experiments typically observe only a subset of neurons in any given session.
+A central goal in systems neuroscience is to map the connectivity of neural circuits from functional measurements.
+In small brain circuits---such as \textit{C.~elegans} \citep{white1986structure, cook2019whole}, larval zebrafish, and cortical organoids---the number of neurons is tractable ($10^2$--$10^4$) but simultaneous recording of the entire circuit remains difficult.
 This creates a fundamental inverse problem: given partial, noisy measurements of neural dynamics across multiple sessions, can we recover the full connectivity matrix?
+
+This problem embodies a \emph{control-estimation tradeoff}: stimulating neurons with random perturbations aids connectivity estimation by exciting network modes, but disrupts the intrinsic dynamics that make the circuit biologically relevant.
+An ideal experimental protocol must balance identifiability against preservation of natural dynamics.
+Furthermore, real circuits possess intrinsic oscillatory patterns (central pattern generators, or CPGs) whose detailed structure is unknown to the experimenter---they represent \emph{unmodeled autonomous dynamics} that influence the observed activity.
 
 We formalize this as a sparse matrix recovery problem.
 Consider a network of $N$ neurons with connectivity matrix $W \in \mathbb{R}^{N \times N}$, where $W_{ij}$ represents the synaptic weight from neuron $j$ to neuron $i$.
@@ -211,7 +213,7 @@ We generate synthetic networks inspired by \textit{C.~elegans} circuitry:
 \begin{itemize}
     \item Random directed graphs with non-negative weights and spectral radius $\rho(W) \leq 1$
     \item Intrinsic dynamics driven by central pattern generators (CPGs) modeled as chaotic reservoir networks
-    \item Extrinsic stimulation as i.i.d.\ Gaussian noise applied to sensor nodes
+    \item Extrinsic stimulation as \emph{independent} i.i.d.\ Gaussian noise applied to each sensor node at each timestep (the most favorable case for identifiability; correlated or shared stimulation would reduce the rank of the input covariance)
 \end{itemize}
 
 Each experiment uses 15--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib across CPU cores.
