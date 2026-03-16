@@ -1,0 +1,90 @@
+{
+  "title": "Recovering Sparse Neural Connectivity from Partial Measurements",
+  "authors": ["Quilee Simeon"],
+  "target_venue": "NeurIPS Workshop on Symmetry and Geometry in Neural Representations (NeurReps)",
+  "format": "workshop",
+  "page_limit": 8,
+  "core_question": "Can we recover the connectivity matrix of a neural circuit from sparse, partial measurements across multiple recording sessions?",
+  "core_claim": "Covariance-based weight estimation with Granger-causality refinement can recover sparse neural connectivity from partial measurements, but there is a fundamental tradeoff between stimulation-driven identifiability and intrinsic dynamics richness.",
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "The covariance estimator W_hat = Cov(x_{t+1}, x_t) @ pinv(Cov(x_t, x_t)) recovers W better than chance baselines",
+      "experiment": "E1",
+      "metric": "Frobenius error normalized by network size"
+    },
+    {
+      "id": "H2",
+      "statement": "Recovery accuracy improves with measurement fraction (more neurons observed simultaneously)",
+      "experiment": "E2",
+      "metric": "Recovery accuracy vs measurement fraction"
+    },
+    {
+      "id": "H3",
+      "statement": "There exists a tradeoff: higher stimulation gain improves identifiability but disrupts intrinsic dynamics",
+      "experiment": "E3",
+      "metric": "Recovery error and dynamics quality vs stimulation gain"
+    },
+    {
+      "id": "H4",
+      "statement": "Granger-causality refinement improves precision and recall of edge detection",
+      "experiment": "E4",
+      "metric": "Precision/recall of nonzero entries in W"
+    },
+    {
+      "id": "H5",
+      "statement": "The linear approximation phi(x) ≈ x degrades gracefully under model mismatch",
+      "experiment": "E5",
+      "metric": "Recovery error across different nonlinearities"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "E1",
+      "name": "Baseline recovery",
+      "variables": {"network_size": [12, 60, 150], "T": [100, 500, 1000, 2000, 5000]},
+      "fixed": {"stim_gain": 1.0, "nonlinearity": "tanh", "num_measured_frac": 0.66}
+    },
+    {
+      "id": "E2",
+      "name": "Sparsity effect",
+      "variables": {"measurement_fraction": [0.33, 0.5, 0.66, 0.8, 1.0]},
+      "fixed": {"num_nodes": 60, "T": 1000, "stim_gain": 1.0}
+    },
+    {
+      "id": "E3",
+      "name": "Stimulation tradeoff",
+      "variables": {"stim_gain": [0.0, 0.25, 0.5, 0.75, 1.0], "num_cpgs_frac": [0.1, 0.2, 0.33]},
+      "fixed": {"num_nodes": 60, "T": 1000}
+    },
+    {
+      "id": "E4",
+      "name": "Granger refinement",
+      "variables": {"with_granger": [true, false]},
+      "fixed": {"num_nodes": 60, "T": 1000, "stim_gain": 1.0}
+    },
+    {
+      "id": "E5",
+      "name": "Nonlinearity robustness",
+      "variables": {"nonlinearity": ["tanh", "relu", "identity", "sigmoid"]},
+      "fixed": {"num_nodes": 60, "T": 1000, "stim_gain": 1.0}
+    }
+  ],
+  "figures_needed": [
+    {"id": "F1", "description": "Problem setup schematic (network with measured/unmeasured/CPG nodes)", "type": "schematic"},
+    {"id": "F2", "description": "True vs estimated W heatmaps at varying measurement density", "type": "heatmap"},
+    {"id": "F3", "description": "Recovery error vs stimulation gain (the core tradeoff curve)", "type": "line_plot"},
+    {"id": "F4", "description": "Effect of Granger refinement (before/after comparison)", "type": "comparison"},
+    {"id": "F5", "description": "Scaling with network size and recording duration", "type": "line_plot"},
+    {"id": "F6", "description": "C. elegans application: recovery on biologically realistic topology", "type": "heatmap"}
+  ],
+  "acceptance_criteria": {
+    "scope": "Research question is specific, falsifiable, and novel",
+    "literature": "Key prior works cited, positioning clear, gaps identified",
+    "theory": "Derivations correct, assumptions stated, bounds provided",
+    "experiment": "Experiments test stated claims, baselines included, reproducible",
+    "analyze": "Figures clear, results support claims, failure cases discussed",
+    "write": "Writing clear and concise, paper self-contained, meets format",
+    "review": "Reviewer would accept, weaknesses addressed, rebuttal ready"
+  }
+}

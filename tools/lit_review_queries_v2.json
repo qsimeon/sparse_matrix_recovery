@@ -1,0 +1,5 @@
+[
+  "Identifiability conditions for linear dynamical systems from partial observations. What are necessary and sufficient conditions for recovering system matrices from incomplete state measurements? Cover Kalman observability, persistent excitation, and recent work on sparse observation patterns.",
+  "Comparison of covariance-based vs regression-based vs maximum likelihood methods for network inference in neuroscience. Which methods work best with partial observations and nonlinear dynamics? Include GLM approaches (Pillow et al.), transfer entropy, and compressed sensing (RESCUME).",
+  "Central pattern generators in C. elegans locomotion circuits. What is known about the CPG architecture? How do interneurons generate oscillatory patterns? Recent optogenetic and calcium imaging studies (Kato, Yemini NeuroPAL, Zimmer whole-brain imaging)."
+]

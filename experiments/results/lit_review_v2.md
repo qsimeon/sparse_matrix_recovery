@@ -1,0 +1,172 @@
+# Literature Review Synthesis
+
+### Query: Identifiability conditions for linear dynamical systems from partial observations. What are necessary and sufficient conditions for recovering system matrices from incomplete state measurements? Cover Kalman observability, persistent excitation, and recent work on sparse observation patterns.
+
+### Recovering System Dynamics: Unpacking the Conditions for Identifiability from Partial Observations
+
+The ability to accurately determine the governing equations of a linear dynamical system from incomplete measurements is a cornerstone of modern control theory and system identification. This process, known as system identification, hinges on the concept of identifiability—whether the system's inherent properties, encapsulated in its state-space matrices (A, B, C, and D), can be uniquely recovered. For linear systems observed through a limited set of sensors, several key conditions must be met, revolving around the concepts of Kalman observability, persistent excitation of inputs, and more recently, the structure of observation patterns.
+
+#### Kalman Observability: A Window into the System's Internal State
+
+At its core, observability addresses whether the internal states of a system can be inferred from its external outputs. For a linear time-invariant (LTI) system described by:
+
+ẋ = Ax + Bu
+y = Cx + Du
+
+where 'x' is the state vector, 'u' is the input vector, and 'y' is the output vector, the Kalman observability rank condition provides a fundamental test.
+
+**Necessary and Sufficient Condition:** A system is completely observable if and only if the observability matrix, **O**, has full column rank (rank n, where n is the dimension of the state vector). The observability matrix is constructed as:
+
+**O** = [C; CA; CA²; ...; CAⁿ⁻¹]
+
+If the system is observable, it means that the initial state of the system can be uniquely determined from a finite history of output measurements. This is a crucial prerequisite for identifying the system matrices, as an unobservable state or mode would have no influence on the output, making its dynamics impossible to recover. In the context of partial observations, where the 'C' matrix has fewer rows than the dimension of the state vector, this condition ensures that the available measurements, over time, contain enough information to reconstruct the entire state trajectory. A system with unobservable states will have dynamics that are hidden from the output, and consequently, the corresponding elements in the 'A' matrix cannot be uniquely identified.
+
+#### Persistent Excitation: Ensuring the System is "Sufficiently Stirred"
+
+While observability guarantees that the system's states are visible at the output, it does not, on its own, ensure that the system's dynamics can be identified. The nature of the input signal 'u(t)' plays a critical role. The concept of persistent excitation (PE) ensures that the input is rich enough to excite all the system's modes, making their dynamics visible in the output data.
+
+**Necessary and Sufficient Condition:** For the consistent estimation of the parameters in a linear system, the input signal must be persistently exciting. Mathematically, a signal u(t) is persistently exciting of order 'n' if the following matrix is positive definite for all t and some T > 0:
+
+∫[t, t+T] Φ(τ)Φ(τ)ᵀ dτ > 0
+
+where Φ(t) is a vector of 'n' linearly independent functions of the input signal. In simpler terms, the input signal must contain a sufficient number of distinct frequencies to excite all the dynamic modes of the system.
+
+If an input is not persistently exciting (e.g., a single sinusoid for a second-order system), it may not "activate" all the system's dynamics, leading to a situation where different sets of system matrices could produce the same output for that specific input. This results in non-uniqueness of the identified model. Therefore, persistent excitation is a necessary and sufficient condition to ensure that the observed input-output data is informative enough to uniquely determine the system parameters.
+
+#### The Role of Sparse Observation Patterns in Modern Systems
+
+Recent advancements have explored the identifiability of systems under sparse observation patterns, where measurements are not available from all sensors at all times. This is particularly relevant in networked systems, sensor networks, and applications where data acquisition is costly or constrained.
+
+The key question is: how sparse can the observations be while still allowing for the recovery of the system matrices? The answer is not as straightforward as a single rank condition and often depends on the interplay between the system dynamics, the input, and the statistical properties of the observation pattern.
+
+Recent work has shown that even with sparse and intermittent measurements, system identification is possible under certain conditions. While a universally accepted necessary and sufficient condition is still an active area of research, several key findings have emerged:
+
+*   **Sufficient Conditions from Low-Rank Matrix Recovery:** The problem of system identification from incomplete data can be framed as a low-rank matrix recovery problem. By stacking the observed input-output data into a larger matrix, one can exploit the inherent low-rank structure imposed by the system dynamics. Sufficient conditions for exact recovery often involve the number of measurements satisfying certain bounds related to the system's order and the sparsity of the observation pattern.
+
+*   **Impact of Sparsity on Identifiability:** Research into sparse linear ordinary differential equations has highlighted that sparsity in the system matrix 'A' can, contrary to intuition, make identifiability more challenging. This is because a sparse system may have dynamics that are localized and less coupled, making it harder to infer the entire system structure from a limited set of observations.
+
+*   **Identifiability from a Single Trajectory:** For dense systems, it is generally known that the system is "almost surely identifiable from a single trajectory." However, for sparse systems, this is not always the case, and the probability of unidentifiability can be significant.
+
+In essence, for systems with sparse observation patterns, the conditions for identifiability are more nuanced. They depend not just on the total number of observations, but also on their distribution in time and across different states. The observability and persistent excitation conditions remain foundational, but the sparsity of the 'C' matrix over time introduces additional challenges that are being addressed by leveraging tools from compressed sensing and matrix completion.
+
+In conclusion, the recovery of system matrices from partial observations is a multifaceted problem. The classical conditions of Kalman observability and persistent excitation provide the necessary and sufficient foundation, ensuring that the system's internal states are visible and its dynamics are adequately excited. As we move towards systems with increasingly sparse and intermittent data, the conditions for identifiability are evolving, with ongoing research providing new insights into the fundamental limits of what can be learned from incomplete information.
+
+---
+
+### Query: Comparison of covariance-based vs regression-based vs maximum likelihood methods for network inference in neuroscience. Which methods work best with partial observations and nonlinear dynamics? Include GLM approaches (Pillow et al.), transfer entropy, and compressed sensing (RESCUME).
+
+## Navigating the Labyrinth of the Brain: A Comparison of Network Inference Methods in Neuroscience
+
+**A deep dive into how neuroscientists infer neural networks reveals a trade-off between model assumptions, data requirements, and robustness to real-world complexities like unobserved neurons and nonlinear interactions. While no single method is a silver bullet, understanding the strengths and weaknesses of covariance-based, regression-based, and maximum likelihood approaches, alongside specialized techniques like GLMs, transfer entropy, and compressed sensing, is crucial for accurately mapping the intricate circuitry of the brain.**
+
+The quest to understand the brain's complex network of connections is a central goal in neuroscience. Researchers employ a variety of computational methods to infer these networks from neural data, such as spike trains or fMRI signals. However, the inherent challenges of incomplete data due to partial observations and the brain's nonlinear dynamics complicate this endeavor. This comparison examines the utility of several prominent network inference methods in the face of these challenges.
+
+### Broad Approaches to Network Inference
+
+At a high level, network inference methods can be categorized into three main families:
+
+*   **Covariance-based methods** are conceptually straightforward, relying on the statistical relationships between the activities of different neurons. A common approach is to calculate the covariance or correlation between pairs of neural time series. While simple to implement, these methods are susceptible to inferring indirect connections as direct ones. For instance, if neuron A influences both neuron B and neuron C, a covariance-based method might incorrectly infer a direct link between B and C.
+
+*   **Regression-based methods** aim to predict the activity of one neuron based on the activity of others. A prominent example is Granger causality, which posits that a neuron A "Granger-causes" neuron B if the past activity of A helps to predict the future activity of B better than using the past activity of B alone. These methods can provide directional information about connections.
+
+*   **Maximum likelihood methods** involve defining a probabilistic model of how the network generates the observed data and then finding the model parameters that are most likely to have produced that data. This is a powerful and flexible framework but often requires strong assumptions about the underlying data distribution and can be computationally intensive.
+
+### Specialized Methods and Their Performance
+
+Within these broad categories, several specific techniques have gained prominence in neuroscience, each with its own set of advantages and disadvantages, particularly when dealing with partial observations and nonlinear dynamics.
+
+#### Generalized Linear Models (GLMs) - Pillow et al.
+
+Generalized Linear Models, as pioneered by Pillow and colleagues, are a powerful regression-based approach for modeling the firing rate of a neuron. A key feature of the GLM framework is its ability to incorporate various factors that influence a neuron's spiking activity, including its own recent firing history (refractoriness), the influence of other observed neurons (connectivity), and external stimuli.
+
+*   **Partial Observations:** Standard GLMs assume that all relevant neurons are observed. When neurons are unobserved, their influence can be mistakenly attributed to other observed neurons, leading to spurious connections. However, the GLM framework is flexible and can be extended to account for missing data, for example, through latent variables or imputation techniques.
+
+*   **Nonlinear Dynamics:** While GLMs are "linear" in their parameters, they can capture some nonlinearities through the use of a nonlinear "link function" that transforms the linear combination of inputs into a firing rate. However, they may struggle to capture highly complex or non-additive nonlinear interactions between neurons.
+
+#### Transfer Entropy (TE)
+
+Transfer Entropy is an information-theoretic measure that quantifies the directed flow of information between two time series. It is a model-free approach, meaning it does not make strong assumptions about the underlying relationship between the variables.
+
+*   **Partial Observations:** A significant challenge for transfer entropy is its sensitivity to unobserved common inputs. If an unobserved neuron drives two observed neurons, transfer entropy can falsely detect a direct connection between the observed pair. Multivariate transfer entropy methods that consider the influence of multiple variables simultaneously can help mitigate this issue, but they require more data.
+
+*   **Nonlinear Dynamics:** This is a key strength of transfer entropy. Because it is non-parametric, it can capture arbitrary nonlinear interactions between time series, making it advantageous over linear methods like Granger causality when the underlying neural dynamics are nonlinear. For Gaussian processes, transfer entropy is equivalent to Granger causality.
+
+#### Compressed Sensing (RESCUME)
+
+Compressed sensing is a signal processing technique that allows for the reconstruction of a sparse signal from a limited number of measurements. In neuroscience, this translates to inferring a sparse network of neural connections from subsampled neural activity. The RESCUME (REgularized, Sparse, Causal, and Unmixed Estimation) algorithm is an application of these principles.
+
+*   **Partial Observations:** Compressed sensing is inherently designed to work with undersampled data, which is a form of partial observation. The fundamental assumption is that the true underlying network is sparse (i.e., each neuron is connected to a relatively small number of other neurons). If this assumption holds, compressed sensing can accurately recover the network structure even with a limited number of measurements.
+
+*   **Nonlinear Dynamics:** While the foundational theory of compressed sensing is based on linear measurements, it can be extended to nonlinear systems. The success of these methods in nonlinear regimes often depends on the specific nature of the nonlinearities and the sparsity of the network.
+
+### Which Methods Work Best? A Comparative Summary
+
+The optimal choice of network inference method depends heavily on the specific characteristics of the data and the research question at hand.
+
+| Method Category | Specific Method | Performance with Partial Observations | Performance with Nonlinear Dynamics | Key Strengths | Key Weaknesses |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Covariance-based** | Correlation/Covariance | **Poor.** Highly susceptible to inferring indirect connections as direct due to unobserved common inputs. | **Poor.** Can only capture linear relationships. | Simplicity and computational efficiency. | Prone to false positives; cannot infer directionality. |
+| **Regression-based** | **GLM (Pillow et al.)** | **Moderate.** Standard models are vulnerable to unobserved neurons, but can be extended to handle missing data. | **Moderate.** Can capture some nonlinearities via link functions, but may not be suitable for highly complex interactions. | Provides a probabilistic model of spiking; can incorporate stimulus and history effects. | Assumes a specific model structure; can be biased by unobserved neurons. |
+| **Information-Theoretic** | **Transfer Entropy** | **Moderate.** Prone to false positives from unobserved common drivers. Multivariate versions can mitigate this but require more data. | **Excellent.** Model-free nature allows it to capture arbitrary nonlinear interactions. | Non-parametric and sensitive to nonlinearities. | Data-hungry; can be computationally intensive. |
+| **Sparsity-based** | **Compressed Sensing (RESCUME)** | **Excellent.** Explicitly designed for undersampled data, assuming the network is sparse. | **Good.** Can be effective for nonlinear dynamics, particularly when the network is sparse. | Robust to subsampling; provides a principled way to handle high-dimensional data. | Relies heavily on the assumption of network sparsity. |
+| **Likelihood-based** | Maximum Likelihood Estimation | **Good.** Can explicitly model missing data, but requires correct model specification. | **Good.** Can be applied to nonlinear models, but the likelihood function may be difficult to define and optimize. | Provides a statistically rigorous framework for parameter estimation and model comparison. | Computationally expensive; performance depends on the accuracy of the assumed model. |
+
+In conclusion, for scenarios with significant **partial observations**, particularly when the underlying network is believed to be sparse, **compressed sensing methods like RESCUME** offer a robust solution. When **nonlinear dynamics** are the primary concern and sufficient data is available, **transfer entropy** is a powerful, model-free tool. **GLMs** provide a flexible and interpretable framework that can be adapted to handle both challenges to some extent, making them a versatile choice. **Covariance-based methods**, due to their simplicity, can be a useful starting point for exploratory analysis but should be interpreted with caution in the presence of partial observations and nonlinearities. Finally, **maximum likelihood methods** offer a powerful, albeit computationally demanding, approach when a good probabilistic model of the system can be formulated. The ongoing development of novel methods and the integration of different approaches will continue to refine our ability to map the brain's intricate and dynamic networks.
+
+---
+
+### Query: Central pattern generators in C. elegans locomotion circuits. What is known about the CPG architecture? How do interneurons generate oscillatory patterns? Recent optogenetic and calcium imaging studies (Kato, Yemini NeuroPAL, Zimmer whole-brain imaging).
+
+## Enigmatic Engine of Movement: Unraveling the C. elegans Locomotion Circuit
+
+**The architecture of the central pattern generator (CPG) that drives the sinusoidal movement of the nematode *C. elegans* remains a subject of intense investigation. While a classic, anatomically defined CPG has been elusive, a combination of computational modeling, optogenetics, and advanced imaging techniques is painting a complex picture of a distributed and flexible system. Recent breakthroughs, including whole-brain imaging and comprehensive neuronal identification, are providing unprecedented insights into how interneurons generate the rhythmic patterns of activity that orchestrate the worm's locomotion.**
+
+The current understanding of the *C. elegans* locomotor CPG suggests a departure from a single, centralized oscillator. Instead, evidence points towards a model of distributed rhythm generators along the ventral nerve cord (VNC), with significant contributions from both intrinsic neuronal properties and sensory feedback. Computational models have been instrumental in exploring the potential for the known neural connectome to generate rhythmic patterns. These models have demonstrated that the repeating units of motor neurons in the VNC could, in principle, produce oscillations necessary for locomotion.
+
+### Interneurons at the Helm: Orchestrating Oscillatory Patterns
+
+A key aspect of the locomotor circuit is the generation of alternating dorsal and ventral muscle contractions. This is largely controlled by the interplay between excitatory (cholinergic) and inhibitory (GABAergic) motor neurons. Interneurons play a crucial role in driving and modulating the activity of these motor neurons.
+
+For forward locomotion, the command interneurons AVB and PVC are thought to play a significant role. They provide excitatory input to the B-class motor neurons, which in turn drive forward movement. Conversely, during backward locomotion, the command interneurons AVA, AVD, and AVE become active, exciting the A-class motor neurons that orchestrate backward movement. The transition between these states is regulated by a network of interneurons, including AIB and RIM, which are involved in turning and changes in direction.
+
+The generation of oscillatory patterns is not solely dependent on a simple "on-off" switch by command interneurons. Instead, it is believed to emerge from the dynamic interactions within the network, including reciprocal inhibition between motor neurons and feedback from the muscles and the environment. Electrical synapses, or gap junctions, are also thought to be critical for synchronizing the activity of motor neurons, ensuring smooth and coordinated body bends.
+
+### Illuminating the Circuit: Insights from Modern Techniques
+
+Recent technological advancements have revolutionized the study of the *C. elegans* nervous system, providing a window into the real-time activity of the locomotion circuit.
+
+**Kato and Colleagues' Optogenetic Studies:** Groundbreaking work by Saul Kato and his collaborators utilized optogenetics and calcium imaging in immobilized worms to record the activity of a large portion of the nervous system. This research revealed that the global brain dynamics embed a low-dimensional representation of the motor command sequence. They were able to identify distinct neural ensembles whose sequential activity correlated with the commands for forward, backward, and turning movements, providing a functional map of the underlying motor program.
+
+**Yemini's NeuroPAL for Comprehensive Identification:** A significant challenge in studying the worm's brain has been the unambiguous identification of each of its 302 neurons. The development of NeuroPAL by Eviatar Yemini and his team has addressed this by creating a "multicolor atlas" of the nervous system. This tool uses a combination of fluorescent proteins to assign a unique color to each neuron, allowing for precise and repeatable identification across different animals. NeuroPAL, when combined with calcium imaging, enables researchers to link the activity of specific, identified neurons to particular behaviors, a crucial step in dissecting the locomotor circuit.
+
+**Zimmer's Whole-Brain Imaging in Freely Moving Worms:** Manuel Zimmer's lab has pioneered techniques for whole-brain calcium imaging in freely moving *C. elegans*. This has been a monumental leap, as it allows for the observation of neural activity in the context of natural behavior, capturing the influence of sensory feedback and the animal's interaction with its environment. These studies have revealed that population-level neural activity can accurately decode the animal's locomotion, including its velocity and body curvature. This work has further supported the idea of a distributed representation of motor control across the nervous system, where the collective activity of many neurons, rather than a few "command" neurons, dictates the animal's movement.
+
+In conclusion, while the precise architecture of a classical CPG in *C. elegans* remains to be fully elucidated, a more nuanced understanding is emerging. The locomotor circuit appears to be a dynamic and distributed network where interneurons, driven by both internal states and sensory inputs, generate rhythmic patterns of activity. The powerful combination of optogenetics, comprehensive neuronal identification with tools like NeuroPAL, and whole-brain imaging in behaving animals continues to unravel the intricate neural choreography that underlies the elegant and efficient movement of this model organism.
+
+---
+
+## Sources
+
+- [youtube.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGu7Pb3Y_IMMCfkQ_w4dx9WXlHqumW5www9ySZQKIHhQIyFN0ukMQtITy9ePf8n5riZwUWqThLWlx8dh9mn9X0mBflKgmlVdzpIaaXY6yb-_yWDE5KNkBVlC_M98-N2K4bzQwVQo4E=)
+- [scispace.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmdU6dbEf2CEkYLSfPxLe2FWNW9Msa7Cp_8xX-xjeWI86QIZSon3_UNx2PFnL7NDJSY88NQLJUHZym4NPXG9tiDArcBBjazRNAPcpJWFhg-ssJT9DySHGtCWXlgYlOB82foW4VitBsByS0sxPbL0nuATjN1nQM45YQgDdnVzHnZ0SPsbKnMk2rwVb8JtMC_S9IZQJOo70Cv4ndWAE=)
+- [fiveable.me](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFcfF94srUZfwGm6VAFht-7znS90zpejny73d98pN1KQTmlpaZm8r7bc-Ty0w573ORB1lgkuAMEgjij6_MpCxMvHAdNSiwfB8mrNIWaqEjvpvGfKyqXYMFM59KmfFGenCfkq8I-zd3I-6ud04pSWY1RZM8uKH81OET5uDdJe-rVK4QZcYapz5hniMVM_ML5ddS2eKgUP_p_KsWSg8HoMBxq3uolDacfuuTS4XHItkTUxc8cYhd4svB8MLSoCk-uE0YHjQ==)
+- [anu.edu.au](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFmYywrml-oVZ7cDTcfwZFTR1hL5z8ZKfKlvNxtzBbP9-bG_SXUPUgP9z59GPUqVmogQO8s9DaumIubuOkuTFmhYroRK9SWupd36ie7K6Cq0TBBwD9cLTsYjvFf0IVNIUjhCxfU8cNQrTakvEeUYkD7pf8=)
+- [ieee.org](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEond77JIGxHK3OS0ujuOVcXm1JtLMxOu3IsJ_Gpow81vEPfR6kgtSkn8ps6zCMictZquy-jVfbutq1JCey9ObH2fc0mssFKDXCQQaQPMGqwZQX9CTUs1EGrqyjI5zy9LYiwO6cUBNeLQ==)
+- [unimelb.edu.au](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHiEu0bsmcqYWTvcsLIhl7HVgb24FGOgN_7tPYIME9eT2qzyyu4Z1rNDc1wNQly8XjLsfJtQ3Wkw8x4mePwxeswtgMkqmYmWW0_hX0kTBt-CTORzEiV0ok0J1NPXrSxB1ianDF9f-YPrRGq1LU5VenTz_TdJHGKKWfYbOOqQ0A5F2IemRBgnUmNvb3ZGKfc58jemenngb81bdsb6g==)
+- [arxiv.org](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGmrgiXIoIdInx_U2YaNMBF7ranVDOnp8-JRyur1H3kksQsc2fSab1BoSeOC4HvLuY8F6OtwFFpYnWZoZAvNoJH7mkgNdcdHe66stVPfZlt6oi68tOstsfjr3-a)
+- [researchgate.net](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFtNU7DySK2m_IgUuGLHNsx49li4jv2ePfbkenS9bOmvvoH6F-nDl2Ae0kvuWx6VDBY2Z5PIW0pJPFL9diMyB88RuIu5EyveZtXphJtnmSL0sW4KjmQ6RZ9vxhzoZlcDgmi61qtcPGDTanO91GZBWwp-PamEE7qzPes3mDg5HHz0e7yALASm8ZcNkLIlApm_PErcs6YuOTSiQDitbHv7YQEDCGXU4jDiXyef8DIqhsTWDPvw3P8jPC_rQ==)
+- [arxiv.org](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZcxGP0OUcVJBeaEeB9BkSEh1NJCVagK2cnFus-OxNrEt7HepcSDMOvHikFWgfWXq_4IkCe-f2hC_hmKYjDthmuLPdr1GZK1iiVrCnmE_OOiG3DLuvT4zOjraw)
+- [nih.gov](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE1VYZDpNZGHoLBDfo51249v-kqiy-dOsawIacY817g3cAg1TVDuc6xaDsBvSjauQrRoPgQCrh7iaeWWrYnRDiG7G2mgtU9ox09Fq68_MDuk0pv2gawdkB3TVJWC7tPaq7OCxHdgDcoJ0onOrI=)
+- [nih.gov](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGPBXqYuUs-nBz1iQG8D1WF2VylwW7kSRlR91nnFuNru-mOZxZbdW1GwTmk9p6FRlRDgpHKdIl5VC6YUJMbkHKHLgCRUb_oq7a1atxwIUMFfk-Vo7oQeOu8lQNPOVRn2U3LLfM2)
+- [nih.gov](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEimmCNu_l3QfBcWNnNDpiWugaoBX2NtP6ZiPvvlI45P6Ir0GnzMBm76Vx2Zv3MA5qBnJ6CMoG8qMCMSg-3dwfDvAnXARLzFYrw4fbby1q8q5ojCM5yRDsi52ejOdm31IUA0JxNchvlY0KC9Vbf)
+- [esann.org](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbLebvQb20eO2V99id7929jPI4VMXLY4DLak6b3ky6ZibrUM9ffxvISyK5apgtmzkjyQwenKvMzG2DUhvL-v7YJPcHlDjE5QpG8uKddmUId3xYYv2_juSS9cjCfalySZCXfxZLxSzxJp1d8sbNS1Z_sK5FNjLJDidDNW3w0uigHsBg9-0J)
+- [mdpi.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEMm8vflgd8W3RsaB0y6gxfTbJ3iJOg-TAI77CrHN4pE2CjwIOhC_xREOzi2Eturi5-tdCH5CzRcwZn2E6vfOG9eOxQ4C9TL4-AoXlwiFin7oyks_DqY-ByD5byEX8Y1dHTUA==)
+- [kuleuven.be](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFTS-C_ideg1A3KxSRv1O4j_L5GxkElrnbn3zcQBk51-s-WLuNQ7i-BONMTg91dHsLdF-MyEhmHW38GMDHERYWjGQZxYykLzS4-qhLgEEuhjsVOxciY_upomP5pcSzLb5s9Zb06Q1lVJifKatma1hAe)
+- [imp.ac.at](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5eh8Js-aNmiPzzxNm8NFqEbh1Nv1nYbo08yUMMlCjEN4TgH52ahm1gTiKhSq1sbPBKm7XsC8uSuG87Hae7Wiu5aGonzLNQ83MZHBne8t9fcAX01LKfVC4ATrWQfkHjkTdOSmTQRFDo2Ar3whZGg==)
+- [nih.gov](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF1hDLrPN9N2P1mebUP4WcAc0Fp0ltEW-cnBVcsw7a9hTeV6z8XdUeFLEl6nMbKk7bNOA9OY--ExWXiTxgFk1o73L2gt2oEa26OgPDljRg4BxO-AK-i16lAEcE86NS6jH0jGr_ALniXnogrlna1)
+- [researchgate.net](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkpnb6ZGXl4uNHGQGTKFhzjOuqBNAv2dyzwYEwBfUq8yJBLjmKQS0EIlIm4ULlvm-JTWKVhw4U92dRX3gkJwwHzO8yHW-M9Ng3MWZvXpWN3weejbvEcDuBIXWu6An-Wzhze0TuXZ9RbQqlO5zx0o5ZaUJJBv4AvMQdbb0tQ6XHz22aogC-j3cmcfKih7zMM48cTImD1rX0slEM9Tq2Lcwxr6U58smP-6R4Lj9zWWuQkgi7zPhQ_yDb8jQiC6wauQ==)
+- [yeminilab.com](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE0pTUZRvn4VCREz08XRCoIhHq9qWrSeDy9b-3QRdxg109RwgDrM9eXMmy8bAjq14q6i6SgEbGLoi5a2oNon-51rAiSQfV0amQgwjJsqMESD4cpNO4aX2HvoN-2UkQ=)
+- [nih.gov](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEfOLH2mRLJ8orjaKeJ-B0FHsvh_Rv3sQB9MZpL2lAYWoy-NHFiBfSxYDUKYsHsNcWTsdFNIO6C7XzsodKadYV7beoJEKvi3VoFhSTjzkrG6Et0SZgzunh8v32_GCJrErSqA81azuvLB0ld270=)
+- [nih.gov](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGOYJyrU3UfQaAxLHHDRayyg0Z3xnQeHr0-6ueLy9Fvk8QOWmKkhtOgQwOZG19hZiDUAsX7H061-H2iw4-rq38EOYo8aRFns4lqQSQUYRPB-R5CR3o8nspvR50ymZ5eqZusvDTz)
+- [elifesciences.org](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH0d_2xefCszs_nghdj3Du7d2GUUyfiPGrL0fQcTguSxkVTfuU2oj5GNBcl7E-TSVb2zRqzKAT2l4HQVBWaHbYcJ3_zIr46vgbXYT7mKcU4ZPFTy-5ry9G5fIu0zatE2ZrtDug=)
+- [sciety.org](https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFn18061-U9y9aIxr8gCTLWlCXeOs266T1ztiZ-wO3EAFRAWUDG7WtR6edrPOh3ZYEhUpYQ_Ljv76OH66TeSg8uHaq39JHxsEEwhS-fJUT6kITw9zpQdq78h3EnmWivOtqmewclslVOzslDCftpig==)

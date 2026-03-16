@@ -1,0 +1,36 @@
+[project]
+name = "sparse-matrix-recovery"
+version = "0.1.0"
+description = "Recovering sparse neural connectivity from partial measurements"
+readme = {text = "Recovering sparse neural connectivity from partial measurements", content-type = "text/plain"}
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    {name = "Quilee Simeon", email = "qsimeon@mit.edu"},
+]
+
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "torch>=2.0",
+    "networkx>=3.0",
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+    "scikit-learn>=1.2",
+    "joblib>=1.2",
+    "wandb>=0.15",
+]
+
+[project.optional-dependencies]
+research = [
+    "google-genai>=1.0",
+    "openai>=1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["experiments", "tools"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
