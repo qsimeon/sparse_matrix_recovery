@@ -269,18 +269,21 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}
 
 \subsection{Stimulation-Dynamics Tradeoff (E3)}
 
-We vary stimulation gain $\sigma \in \{0, 0.25, 0.5, 0.75, 1.0\}$ and CPG density $\in \{10\%, 20\%, 33\%\}$ for $N=60$, $T=1000$.
-Surprisingly, \emph{zero stimulation yields the lowest recovery error} ($0.244$ at CPG$=10\%$), with error generally increasing with stimulation gain.
-At $\sigma = 1.0$ and CPG$=10\%$, the error rises to $1.11$.
+We examine the interaction between stimulation gain $\sigma$ and measurement fraction for $N=30$, $T=500$.
+The results reveal a fundamental \emph{interaction effect}: the optimal stimulation level depends critically on measurement density.
 
-This reveals a nuanced tradeoff: while stimulation perturbs the network away from equilibrium (potentially aiding identifiability by exciting more modes), excessive noise corrupts the covariance structure that the estimator relies on.
-The CPG-driven intrinsic dynamics already provide sufficient excitation for the covariance estimator to work, and additional stochastic perturbation is counterproductive.
-Higher CPG density moderates this effect, likely because richer intrinsic dynamics provide more independent observations (Figure~\ref{fig:tradeoff}).
+At low measurement ($33\%$), recovery is moderately successful regardless of stimulation because partial observation implicitly regularizes $\Sigma_{x,x}$.
+At high measurement ($66$--$100\%$), a striking pattern emerges: \emph{zero stimulation fails catastrophically} (error $>4.0$), while moderate stimulation ($\sigma \approx 0.5$) yields excellent recovery (error $\sim 0.03$).
+This occurs because CPG-driven dynamics alone do not excite all network modes---at high measurement, $\Sigma_{x,x}$ becomes rank-deficient without stimulation.
+A small amount of stochastic input breaks the CPG autocorrelation structure and ensures persistent excitation.
+However, excessive stimulation ($\sigma > 2$) begins to degrade recovery as noise dominates the signal (Figure~\ref{fig:tradeoff}).
+
+This confirms the control-estimation tradeoff: experimentalists must balance stimulation strength against signal quality, with the optimal level depending on how many neurons are simultaneously observed.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig3_stimulation_tradeoff.pdf}
-\caption{\textbf{Stimulation-dynamics tradeoff} for $N=60$, $T=1000$, with CPG densities of 10\%, 20\%, and 33\%. \textbf{(Left)} Schematic: extrinsic Gaussian stimulation of varying intensity is applied to sensor nodes alongside intrinsic CPG drive. \textbf{(Right)} Median recovery error vs.\ stimulation gain $\sigma$ with 95\% bootstrap CI (shaded). Counterintuitively, zero stimulation yields the lowest error ($0.244$ at CPG~$=10\%$). Increasing $\sigma$ corrupts the covariance structure the estimator relies on. The star marks the optimum. Higher CPG density moderates the effect by providing richer intrinsic excitation. 10 topologies $\times$ 50 instances per condition.}
+\caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=30$, $T=500$, 15 topologies $\times$ 50 instances). \textbf{(Left)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to sensor nodes. \textbf{(Right)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 66\%, 100\%). At low measurement, the effect is mild. At high measurement, zero stimulation \emph{fails} (error $>4.0$) because CPG dynamics alone leave $\Sigma_{x,x}$ rank-deficient, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery ($\sim 0.03$). This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
 \label{fig:tradeoff}
 \end{figure}
 
