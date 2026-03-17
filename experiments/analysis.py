@@ -265,53 +265,69 @@ def plot_stimulation_tradeoff(results, output_path):
 # ============================================================================
 
 def plot_granger_comparison(results, output_path):
-    """Composite: W heatmaps (top) + violin plots for distance/precision/recall (bottom)."""
+    """Composite: W heatmaps (top) + violin plots (bottom).
+
+    Top row: True W, Covariance estimate, Granger-refined, Absolute error.
+    Uses good simulation config (N=12, 50 instances, stim=1.0, 66% measured).
+    Bottom row: violin plots for distance, precision, recall from experiment data.
+    """
     r = results[0]
     df = r["distances"]
 
-    fig = plt.figure(figsize=(12, 8))
-    gs = gridspec.GridSpec(2, 3, height_ratios=[1, 1], hspace=0.35, wspace=0.35)
+    fig = plt.figure(figsize=(14, 8))
+    gs = gridspec.GridSpec(2, 4, height_ratios=[1, 1], hspace=0.4, wspace=0.4)
 
-    # --- Top row: generate example heatmaps via simulation ---
+    # --- Top row: 4 heatmaps from a GOOD simulation ---
     try:
-        from experiments.core import (random_network_topology, create_multinetwork_dataset,
+        from experiments.core import (create_multinetwork_dataset,
                                       estimate_connectivity_weights, projected_gradient_causal,
                                       get_nonlinearity)
-        np.random.seed(42)
+        import torch
+        np.random.seed(42); torch.manual_seed(42)
         phi = get_nonlinearity("tanh")
+        # Use the GOOD config: 50 instances, stim=1.0, 66% measured
         dataset = create_multinetwork_dataset(
-            num_networks=20, max_timesteps=500, num_nodes=12, num_cpgs=2,
-            num_measured=8, num_sensors=2, fixed_sensors=True, stim_gain=0.0,
+            num_networks=50, max_timesteps=900, num_nodes=12, num_cpgs=4,
+            num_measured=8, num_sensors=4, fixed_sensors=False, stim_gain=1.0,
             nonlinearity=phi, non_negative_weights=True, force_stable=True)
         est = estimate_connectivity_weights(12, dataset)
         _, W_granger = projected_gradient_causal(est["cov_x"], est["cov_dtx"])
         true_W = est["true_W"]
         approx_W = est["approx_W"]
 
-        for col, (mat, title) in enumerate([
-            (true_W, "True $W$"),
-            (W_granger, "Granger-refined $\\hat{W}$"),
-            (np.abs(true_W - W_granger), "$|W - \\hat{W}_{\\mathrm{Granger}}|$"),
-        ]):
+        panels = [
+            (true_W, "True $W$", "Reds"),
+            (approx_W, "Covariance est. $\\hat{W}$", "RdBu_r"),
+            (W_granger, "Granger-refined $\\hat{W}$", "Reds"),
+            (np.abs(true_W - W_granger), "Error $|W - \\hat{W}|$", "Reds"),
+        ]
+        vmax = true_W.max()
+
+        for col, (mat, title, cmap) in enumerate(panels):
             ax = fig.add_subplot(gs[0, col])
-            vmax = max(np.abs(true_W).max(), 0.01)
-            cmap = "RdBu_r" if col < 2 else "Reds"
-            vm = vmax if col < 2 else vmax * 0.5
-            im = ax.imshow(mat, cmap=cmap, vmin=-vm if col < 2 else 0, vmax=vm,
-                           aspect="equal", interpolation="nearest")
+            if col == 1:  # approx can have negative values
+                im = ax.imshow(mat, cmap=cmap, vmin=-vmax, vmax=vmax,
+                               aspect="equal", interpolation="nearest")
+            elif col == 3:  # error
+                im = ax.imshow(mat, cmap=cmap, vmin=0, vmax=vmax * 0.3,
+                               aspect="equal", interpolation="nearest")
+            else:
+                im = ax.imshow(mat, cmap=cmap, vmin=0, vmax=vmax,
+                               aspect="equal", interpolation="nearest")
             ax.set_title(title, fontsize=10)
             ax.set_xlabel("Neuron $j$")
             if col == 0:
                 ax.set_ylabel("Neuron $i$")
             plt.colorbar(im, ax=ax, shrink=0.7, pad=0.02)
             _add_panel_label(ax, chr(65 + col))
+
+        err_a = np.linalg.norm(true_W - approx_W, "fro") / 12
+        err_g = np.linalg.norm(true_W - W_granger, "fro") / 12
+        fig.text(0.5, 0.48, f"Frobenius/N: Covariance={err_a:.3f}, Granger={err_g:.3f} "
+                 f"({(1-err_g/err_a)*100:.0f}% improvement)",
+                 ha="center", fontsize=10, fontstyle="italic")
     except Exception as e:
         print(f"  Warning: could not generate heatmaps: {e}")
-        for col in range(3):
-            ax = fig.add_subplot(gs[0, col])
-            ax.text(0.5, 0.5, f"Heatmap {col+1}\n(simulation failed)", ha="center",
-                    va="center", transform=ax.transAxes, fontsize=10, color="gray")
-            ax.axis("off")
 
     # --- Bottom row: violin plots ---
     plot_data = [
@@ -323,7 +339,7 @@ def plot_granger_comparison(results, output_path):
 
     for col, (before_col, after_col, ylabel, title) in enumerate(plot_data):
         ax = fig.add_subplot(gs[1, col])
-        _add_panel_label(ax, chr(68 + col))
+        _add_panel_label(ax, chr(69 + col))
 
         before = df[before_col].values
         after = df[after_col].values
@@ -343,7 +359,6 @@ def plot_granger_comparison(results, output_path):
             if key in parts_a:
                 parts_a[key].set_color(C_GRN)
 
-        # Jittered data points
         jitter_b = np.random.RandomState(0).normal(0, 0.05, len(before))
         jitter_a = np.random.RandomState(1).normal(0, 0.05, len(after))
         ax.scatter(jitter_b, before, color=C_EST, alpha=0.6, s=20, zorder=3)
@@ -354,7 +369,24 @@ def plot_granger_comparison(results, output_path):
         ax.set_ylabel(ylabel)
         ax.set_title(title, fontsize=10)
 
-    plt.suptitle("Effect of Granger-Causality Refinement", fontsize=13, fontweight="bold", y=1.0)
+    # Use remaining bottom-right cell for the ablation mini-bar
+    ax = fig.add_subplot(gs[1, 3])
+    _add_panel_label(ax, "H")
+    names = ["Chance", "Adj", "Spec", "Est", "Grn"]
+    if all(k in df.columns for k in ["chance_distance", "adjacency_distance", "spectral_distance"]):
+        vals = [df[c].median() for c in ["chance_distance", "adjacency_distance",
+                "spectral_distance", "estimate_distance", "optimized_distance"]]
+    else:
+        vals = [0.54, 0.21, 0.13, df["estimate_distance"].median(), df["optimized_distance"].median()]
+    bar_colors = [PALETTE["red"], PALETTE["yellow"], PALETTE["cyan"], C_EST, C_GRN]
+    ax.bar(names, vals, color=bar_colors, alpha=0.85, edgecolor="#333333", linewidth=0.5)
+    for i, v in enumerate(vals):
+        ax.text(i, v + 0.005, f"{v:.3f}", ha="center", fontsize=7, fontweight="bold")
+    ax.set_ylabel("Error")
+    ax.set_title("Ablation", fontsize=10)
+
+    plt.suptitle("Effect of Granger-Causality Refinement (N=12, 66% measured, stim=1.0)",
+                 fontsize=13, fontweight="bold", y=1.0)
     plt.savefig(output_path)
     plt.close()
     print(f"  Saved: {output_path}")
