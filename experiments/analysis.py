@@ -511,7 +511,8 @@ def plot_nonlinearity_robustness(results, output_path):
                          color=C_GRN, alpha=0.5, s=15, zorder=4, edgecolors="none")
 
     ax_right.set_xlabel("Nonlinearity $\\phi$")
-    ax_right.set_ylabel("Recovery Error (Frobenius / $N$)")
+    ax_right.set_ylabel("Recovery Error (Frobenius / $N$, log scale)")
+    ax_right.set_yscale("log")
     ax_right.set_title("Robustness to nonlinearity mismatch", fontsize=11, fontweight="bold")
     ax_right.set_xticks(x_pos)
     ax_right.set_xticklabels(nl_names)
