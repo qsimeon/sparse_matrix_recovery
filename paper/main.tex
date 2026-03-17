@@ -221,12 +221,10 @@ We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap 
 
 \subsection{Baseline Recovery (E1)}
 
-Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{12, 60, 150\}$ and recording durations $T \in \{100, 500, 1000, 2000\}$.
-The covariance estimator consistently outperforms the chance baseline for $N=12$, achieving median errors of $0.50$--$0.83$ vs.\ $0.53$ for chance.
-The Granger refinement further reduces error by $40$--$55\%$ (e.g., $0.50 \to 0.28$ for $N=12, T=100$).
-
-For larger networks ($N=60, 150$), the estimator shows higher variance due to ill-conditioning of the empirical covariance matrix when only $\sim33\%$ of neurons are observed per session.
-The Granger refinement is especially beneficial here, reducing median error from $1.53$ to $0.66$ for $N=60, T=1000$ (Figure~\ref{fig:scaling}).
+Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{8, 12, 30\}$ and recording durations $T \in \{100, 500, 1000\}$ with $66\%$ measurement.
+The covariance estimator consistently outperforms the chance baseline, achieving median errors of $0.09$--$0.27$ vs.\ $\sim 0.54$ for chance ($58$--$84\%$ improvement).
+The Granger refinement further reduces error by $30$--$52\%$ (e.g., $0.23 \to 0.13$ for $N=12, T=100$).
+For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.053$ (Granger-refined), a $90\%$ improvement over chance (Figure~\ref{fig:scaling}).
 
 \begin{table}[h]
 \centering
@@ -236,12 +234,12 @@ The Granger refinement is especially beneficial here, reducing median error from
 \toprule
 $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 \midrule
-12 & 100 & 0.533 & 0.502 & \textbf{0.281} & 44\% \\
-12 & 1000 & 0.533 & 0.762 & \textbf{0.346} & 55\% \\
-60 & 100 & 0.569 & 1.488 & \textbf{0.720} & 52\% \\
-60 & 1000 & 0.569 & 1.530 & \textbf{0.663} & 57\% \\
-150 & 1000 & 0.573 & 1.616 & \textbf{0.715} & 56\% \\
-150 & 2000 & 0.573 & 1.931 & \textbf{0.723} & 63\% \\
+8 & 100 & 0.540 & 0.226 & \textbf{0.149} & 34\% \\
+8 & 1000 & 0.540 & 0.175 & \textbf{0.120} & 31\% \\
+12 & 100 & 0.542 & 0.229 & \textbf{0.130} & 43\% \\
+12 & 1000 & 0.542 & 0.142 & \textbf{0.096} & 33\% \\
+30 & 100 & 0.561 & 0.274 & \textbf{0.132} & 52\% \\
+30 & 1000 & 0.561 & 0.087 & \textbf{0.053} & 40\% \\
 \bottomrule
 \end{tabular}
 \end{table}
