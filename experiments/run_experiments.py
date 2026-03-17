@@ -213,19 +213,28 @@ def run_experiment(
 # ============================================================================
 
 def run_E1_baseline(seed=42, output_dir=None):
-    """E1: Baseline recovery across network sizes and recording durations."""
+    """E1: Baseline recovery across network sizes and recording durations.
+
+    Uses 66% measurement, 33% CPG, 33% sensors, stim=1.0 (favorable conditions).
+    """
     print("=" * 60)
     print("E1: Baseline Recovery")
     print("=" * 60)
 
     results = []
-    for num_nodes in [12, 60, 150]:
-        for T in [100, 500, 1000, 2000]:
-            print(f"\n  N={num_nodes}, T={T}")
+    for num_nodes in [8, 12, 30]:
+        num_cpgs = max(1, int(0.33 * num_nodes))
+        num_measured = max(2, int(0.66 * num_nodes))
+        num_sensors = max(1, int(0.33 * num_nodes))
+        for T in [100, 500, 1000]:
+            print(f"\n  N={num_nodes}, T={T}, measured={num_measured}")
             r = run_experiment(
-                random_seed=seed, num_repetitions=10, num_networks=50,
-                max_timesteps=T, num_nodes=num_nodes, stim_gain=1.0,
-                nonlinearity="tanh", save_matrices=(num_nodes == 12),
+                random_seed=seed, num_repetitions=17, num_networks=50,
+                max_timesteps=T, num_nodes=num_nodes,
+                num_cpgs=num_cpgs, num_measured=num_measured,
+                num_sensors=num_sensors,
+                stim_gain=1.0, nonlinearity="tanh",
+                save_matrices=(num_nodes <= 12),
             )
             r["config"]["experiment"] = "E1"
             results.append(r)
@@ -236,21 +245,21 @@ def run_E1_baseline(seed=42, output_dir=None):
 
 
 def run_E2_sparsity(seed=42, output_dir=None):
-    """E2: Effect of measurement sparsity."""
+    """E2: Effect of measurement sparsity at N=12."""
     print("=" * 60)
     print("E2: Measurement Sparsity Effect")
     print("=" * 60)
 
     results = []
-    num_nodes = 60
+    num_nodes = 12
     for meas_frac in [0.33, 0.5, 0.66, 0.8, 1.0]:
         num_measured = max(2, int(meas_frac * num_nodes))
         print(f"\n  meas_frac={meas_frac} (num_measured={num_measured})")
         r = run_experiment(
-            random_seed=seed, num_repetitions=30, num_networks=50,
-            max_timesteps=1000, num_nodes=num_nodes,
-            num_measured=num_measured, stim_gain=1.0,
-            nonlinearity="tanh",
+            random_seed=seed, num_repetitions=17, num_networks=50,
+            max_timesteps=900, num_nodes=num_nodes,
+            num_cpgs=4, num_measured=num_measured, num_sensors=4,
+            stim_gain=1.0, nonlinearity="tanh",
         )
         r["config"]["experiment"] = "E2"
         r["config"]["measurement_fraction"] = meas_frac
@@ -262,25 +271,29 @@ def run_E2_sparsity(seed=42, output_dir=None):
 
 
 def run_E3_stimulation(seed=42, output_dir=None):
-    """E3: Stimulation-dynamics tradeoff."""
+    """E3: Stimulation × measurement interaction (2D sweep).
+
+    Tests the control-estimation tradeoff: how does optimal stimulation
+    depend on measurement density?
+    """
     print("=" * 60)
-    print("E3: Stimulation-Dynamics Tradeoff")
+    print("E3: Stimulation × Measurement Interaction")
     print("=" * 60)
 
     results = []
-    num_nodes = 60
-    for stim_gain in [0.0, 0.25, 0.5, 0.75, 1.0]:
-        for cpg_frac in [0.1, 0.2, 0.33]:
-            num_cpgs = max(1, int(cpg_frac * num_nodes))
-            print(f"\n  stim_gain={stim_gain}, cpg_frac={cpg_frac}")
+    num_nodes = 12
+    for meas_frac in [0.33, 0.66, 1.0]:
+        num_measured = max(2, int(meas_frac * num_nodes))
+        for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0]:
+            print(f"\n  meas={meas_frac:.0%}, stim_gain={stim_gain}")
             r = run_experiment(
-                random_seed=seed, num_repetitions=10, num_networks=50,
-                max_timesteps=1000, num_nodes=num_nodes,
-                num_cpgs=num_cpgs, stim_gain=stim_gain,
-                nonlinearity="tanh",
+                random_seed=seed, num_repetitions=17, num_networks=50,
+                max_timesteps=900, num_nodes=num_nodes,
+                num_cpgs=4, num_measured=num_measured, num_sensors=4,
+                stim_gain=stim_gain, nonlinearity="tanh",
             )
             r["config"]["experiment"] = "E3"
-            r["config"]["cpg_fraction"] = cpg_frac
+            r["config"]["measurement_fraction"] = meas_frac
             results.append(r)
 
     if output_dir:
@@ -289,18 +302,22 @@ def run_E3_stimulation(seed=42, output_dir=None):
 
 
 def run_E4_granger(seed=42, output_dir=None):
-    """E4: Effect of Granger refinement."""
+    """E4: Ablation study — each step adds knowledge.
+
+    Compares: Chance > Adjacency > Spectral > Estimate > Granger-refined.
+    Uses N=12, 66% measurement, stim=1.0 (favorable conditions).
+    """
     print("=" * 60)
-    print("E4: Granger Refinement Effect")
+    print("E4: Granger Refinement / Ablation Study")
     print("=" * 60)
 
     results = []
-    num_nodes = 60
-    # Single experiment, compare estimate vs optimized in the results
+    num_nodes = 12
     r = run_experiment(
         random_seed=seed, num_repetitions=30, num_networks=50,
-        max_timesteps=1000, num_nodes=num_nodes, stim_gain=1.0,
-        nonlinearity="tanh", save_matrices=True,
+        max_timesteps=900, num_nodes=num_nodes,
+        num_cpgs=4, num_measured=8, num_sensors=4,
+        stim_gain=1.0, nonlinearity="tanh", save_matrices=True,
     )
     r["config"]["experiment"] = "E4"
     results.append(r)
@@ -311,19 +328,20 @@ def run_E4_granger(seed=42, output_dir=None):
 
 
 def run_E5_nonlinearity(seed=42, output_dir=None):
-    """E5: Robustness to nonlinearity mismatch."""
+    """E5: Robustness to nonlinearity mismatch at N=12."""
     print("=" * 60)
     print("E5: Nonlinearity Robustness")
     print("=" * 60)
 
     results = []
-    num_nodes = 60
+    num_nodes = 12
     for nl in ["tanh", "relu", "identity", "sigmoid"]:
         print(f"\n  nonlinearity={nl}")
         r = run_experiment(
-            random_seed=seed, num_repetitions=30, num_networks=50,
-            max_timesteps=1000, num_nodes=num_nodes, stim_gain=1.0,
-            nonlinearity=nl,
+            random_seed=seed, num_repetitions=17, num_networks=50,
+            max_timesteps=900, num_nodes=num_nodes,
+            num_cpgs=4, num_measured=8, num_sensors=4,
+            stim_gain=1.0, nonlinearity=nl,
         )
         r["config"]["experiment"] = "E5"
         results.append(r)
@@ -346,13 +364,13 @@ def run_E6_oracle_crossover(seed=42, output_dir=None):
     print("=" * 60)
 
     results = []
-    num_nodes = 30  # Moderate size for tractability
-    # Sweep stim gain to control effective state variance
+    num_nodes = 12
     for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]:
         print(f"\n  stim_gain={stim_gain}")
         r = run_experiment(
-            random_seed=seed, num_repetitions=15, num_networks=50,
-            max_timesteps=1000, num_nodes=num_nodes,
+            random_seed=seed, num_repetitions=17, num_networks=50,
+            max_timesteps=900, num_nodes=num_nodes,
+            num_cpgs=4, num_measured=8, num_sensors=4,
             stim_gain=stim_gain, nonlinearity="tanh",
         )
         r["config"]["experiment"] = "E6"

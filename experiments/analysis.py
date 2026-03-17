@@ -217,44 +217,42 @@ def plot_stimulation_tradeoff(results, output_path):
         inset.set_title(label, fontsize=9)
         inset.axis("off")
 
-    # --- Right panel: tradeoff curves ---
+    # --- Right panel: tradeoff curves grouped by measurement fraction ---
     _add_panel_label(ax_right, "B")
 
-    cpg_groups = {}
+    meas_groups = {}
     for r in results:
-        cpg_frac = r["config"].get("cpg_fraction", 0.2)
-        if cpg_frac not in cpg_groups:
-            cpg_groups[cpg_frac] = {"stim": [], "med": [], "lo": [], "hi": []}
-        g = cpg_groups[cpg_frac]
+        # Support both old (cpg_fraction) and new (measurement_fraction) formats
+        meas_frac = r["config"].get("measurement_fraction",
+                     r["config"].get("cpg_fraction", 0.66))
+        if meas_frac not in meas_groups:
+            meas_groups[meas_frac] = {"stim": [], "med": [], "lo": [], "hi": []}
+        g = meas_groups[meas_frac]
         g["stim"].append(r["config"]["stim_gain"])
-        g["med"].append(r["distances"]["estimate_distance"].median())
-        ci = r["confidence_intervals"]["estimate_distance"]
+        # Use Granger-refined distance for the main plot
+        dist_key = "optimized_distance" if "optimized_distance" in r["confidence_intervals"] else "estimate_distance"
+        g["med"].append(r["distances"][dist_key].median())
+        ci = r["confidence_intervals"][dist_key]
         g["lo"].append(ci["low"])
         g["hi"].append(ci["high"])
 
-    for i, (cpg_frac, g) in enumerate(sorted(cpg_groups.items())):
+    for i, (meas_frac, g) in enumerate(sorted(meas_groups.items())):
         stim = np.array(g["stim"])
         med = np.array(g["med"])
         lo, hi = np.array(g["lo"]), np.array(g["hi"])
         order = np.argsort(stim)
 
-        ax_right.plot(stim[order], med[order], "o-", color=COLORS[i],
-                      label=f"CPG = {cpg_frac:.0%}")
-        ax_right.fill_between(stim[order], lo[order], hi[order],
+        label = f"{meas_frac:.0%} measured" if meas_frac <= 1 else f"CPG = {meas_frac:.0%}"
+        ax_right.semilogy(stim[order], np.clip(med[order], 1e-3, None), "o-",
+                          color=COLORS[i], label=label)
+        ax_right.fill_between(stim[order], np.clip(lo[order], 1e-4, None),
+                              np.clip(hi[order], 1e-4, None),
                               alpha=0.15, color=COLORS[i])
 
-    # Mark optimal point
-    ax_right.plot(0, cpg_groups[min(cpg_groups)]["med"][0], "*",
-                  color=PALETTE["red"], markersize=16, zorder=5, markeredgecolor="white",
-                  markeredgewidth=1.2)
-    ax_right.annotate("Zero stim\nis optimal", xy=(0.02, 0.5), fontsize=8,
-                      fontstyle="italic", color=PALETTE["red"],
-                      xycoords=("data", "axes fraction"))
-
     ax_right.set_xlabel("Stimulation Gain ($\\sigma$)")
-    ax_right.set_ylabel("Recovery Error (Frobenius / N)")
-    ax_right.set_title("Stimulation-dynamics tradeoff", fontsize=11, fontweight="bold")
-    ax_right.legend(loc="upper left", framealpha=0.9)
+    ax_right.set_ylabel("Granger Recovery Error (log scale)")
+    ax_right.set_title("Stimulation × measurement interaction", fontsize=11, fontweight="bold")
+    ax_right.legend(loc="best", framealpha=0.9)
 
     plt.tight_layout()
     plt.savefig(output_path)
