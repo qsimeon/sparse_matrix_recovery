@@ -392,10 +392,29 @@ The approximation outperforms the oracle at \emph{every} condition, with the gap
 No crossover point exists---the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ always exceeds the bias reduction from using the correct nonlinearity.
 This confirms that the linear approximation acts as implicit regularization across all operating regimes for saturating nonlinearities.
 
+\paragraph{Error decomposition: CPG correlation dominates.}
+The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ is only partially justified.
+The extrinsic stimulation is truly independent ($\text{Cov}(\text{stim}_t, x_t) = 0$ by construction), but the CPG drive depends on the current state through $\text{cpg}(x_t)$, so $\text{Cov}(\text{cpg}_t, x_t) \neq 0$.
+Quantitatively, $E_2$ (input correlation) is $3.5\times$ larger than $E_1$ (model mismatch), making CPG correlation the \emph{dominant} error source---not the linear approximation.
+CPG nodes can be partially identified from data: they exhibit higher activity variance than non-CPG nodes, enabling detection via a simple variance threshold (F1 score $\sim 0.8$).
+Downweighting detected CPG nodes in the covariance accumulation yields an additional $10\%$ improvement beyond Granger refinement alone (Figure~\ref{fig:dynamics}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_dynamics_analysis.pdf}
+\caption{\textbf{Dynamics, CPG detection, and error analysis.}
+\textbf{(A--C)} Time series: autonomous CPG-driven dynamics produce structured oscillations; stimulation adds noise on top.
+\textbf{(D--E)} PCA phase portraits: autonomous dynamics trace low-dimensional trajectories; stimulation fills out the state space (aiding identifiability).
+\textbf{(F)} Power spectra: CPG dynamics have concentrated spectral peaks; stimulation flattens the spectrum.
+\textbf{(G)} CPG detection via per-node variance: CPG nodes (red) have systematically higher variance than non-CPG nodes (blue).
+\textbf{(H)} Error decomposition: input correlation $E_2$ (from CPG--state dependence) is $3.5\times$ larger than model mismatch $E_1$.
+\textbf{(I)} True vs.\ estimated weights: Pearson $r = 0.90$ for the Granger-refined estimator.}
+\label{fig:dynamics}
+\end{figure}
+
 \paragraph{Limitations.}
-The linear approximation $\phi(x) \approx x$ introduces systematic bias when neural activity is large.
-The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ may be violated when intrinsic CPG drive depends on the current state.
-Our current experiments use synthetic networks; validation on real connectomics data is an important next step.
+The Stein--Price characterization assumes Gaussian states, but our states are driven by a chaotic reservoir through $\tanh$---the bound is directionally correct but not tight.
+Our experiments use synthetic networks; validation on real neural recordings is an important next step.
 
 % ============================================================================
 \section{Conclusion}
