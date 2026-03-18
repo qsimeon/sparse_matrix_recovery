@@ -1,23 +1,86 @@
 {
-  "iteration": 16,
+  "iteration": 17,
   "max_iterations": 20,
   "phases": {
-    "scope": {"status": "completed", "score": 9, "notes": "6 experiments (E1-E6), general 'small brain circuits' framing, control-estimation tradeoff thesis, CPG detection as novel contribution."},
-    "literature": {"status": "completed", "score": 9, "notes": "19 references. Gemini 2.5 Pro v2 lit review. Cites Pillow GLM, transfer entropy, Price/Stein, Marder CPGs, Ahrens zebrafish, Quadrato organoids."},
-    "theory": {"status": "completed", "score": 9, "notes": "GPT-5.4 verified. Sign error in Eq 6 fixed. Price theorem (Eq 7) correct. E1=W(D'-I) simplification. Identifiability K>=log(N²/δ)/p²."},
-    "experiment": {"status": "completed", "score": 9, "notes": "All 6 experiments at consistent N=12 baseline (66% meas, stim=1.0, 17-30 reps, 50 instances). Measurement noise parameter added to core.py. E6 oracle crossover confirms approx always wins."},
-    "analyze": {"status": "completed", "score": 9, "notes": "9 figures in paper (F1-F8 + ablation in F4H). 4 architecture diagrams. All regenerated with N=12 data. Tol palette, CI shading, composite panels."},
-    "write": {"status": "completed", "score": 9, "notes": "13 pages (10 main + 3 appendix). All numbers match data. 19 citations = 19 bib entries. Noise robustness paragraph. CPG detection paragraph. 5-point limitations. r=0.90 in conclusion."},
-    "review": {"status": "completed", "score": 9, "notes": "Line-by-line PDF review completed. Sign error caught and fixed by GPT-5.4. Bad citations (Candes 2011, Strogatz) removed. REVIEW_NOTES.md documents all issues. Remaining: paper too long for workshop, ring schematics don't match random topologies."}
+    "scope": {
+      "status": "completed",
+      "score": 9,
+      "notes": "6 experiments (E1-E6), general 'small brain circuits' framing, control-estimation tradeoff thesis, CPG detection as novel contribution."
+    },
+    "literature": {
+      "status": "completed",
+      "score": 9,
+      "notes": "19 references. Gemini 2.5 Pro v2 lit review. Cites Pillow GLM, transfer entropy, Price/Stein, Marder CPGs, Ahrens zebrafish, Quadrato organoids."
+    },
+    "theory": {
+      "status": "completed",
+      "score": 9,
+      "notes": "GPT-5.4 verified. Sign error in Eq 6 fixed. Price theorem (Eq 7) correct. E1=W(D'-I) simplification. Identifiability K>=log(N\u00b2/\u03b4)/p\u00b2."
+    },
+    "experiment": {
+      "status": "completed",
+      "score": 9,
+      "notes": "All 6 experiments at consistent N=12 baseline (66% meas, stim=1.0, 17-30 reps, 50 instances). Measurement noise parameter added to core.py. E6 oracle crossover confirms approx always wins."
+    },
+    "analyze": {
+      "status": "completed",
+      "score": 9,
+      "notes": "9 figures in paper (F1-F8 + ablation in F4H). 4 architecture diagrams. All regenerated with N=12 data. Tol palette, CI shading, composite panels."
+    },
+    "write": {
+      "status": "completed",
+      "score": 9,
+      "notes": "13 pages (10 main + 3 appendix). All numbers match data. 19 citations = 19 bib entries. Noise robustness paragraph. CPG detection paragraph. 5-point limitations. r=0.90 in conclusion."
+    },
+    "review": {
+      "status": "completed",
+      "score": 9,
+      "notes": "Line-by-line PDF review completed. Sign error caught and fixed by GPT-5.4. Bad citations (Candes 2011, Strogatz) removed. REVIEW_NOTES.md documents all issues. Remaining: paper too long for workshop, ring schematics don't match random topologies."
+    }
   },
   "acceptance_threshold": 7,
   "exit_condition": "all_phases_above_threshold_or_max_iterations",
   "history": [
-    {"iteration": "1-4", "timestamp": "2026-03-15", "focus": "Infrastructure, experiments E1-E5, theory verification, GPT-5.4 math"},
-    {"iteration": "5-8", "timestamp": "2026-03-15", "focus": "Figure overhaul, captions, appendix, repo cleanup, E3 correction (zero stim NOT optimal)"},
-    {"iteration": "9-10", "timestamp": "2026-03-16", "focus": "Increase reps to 30, consistent N=12 baseline, fix all stale numbers"},
-    {"iteration": "11-13", "timestamp": "2026-03-17", "focus": "Ablation bar chart, F4 heatmap fix (stim=1.0 not 0.0), paper text updates"},
-    {"iteration": "14-15", "timestamp": "2026-03-18", "focus": "Line-by-line PDF review, sign error fix, citation cleanup, CPG detection + dynamics figure"},
-    {"iteration": 16, "timestamp": "2026-03-18", "focus": "Full repo audit: update all stale files (notebooks, run_experiments.py, progress.json, research_prd.json), add measurement noise to simulation pipeline"}
+    {
+      "iteration": "1-4",
+      "timestamp": "2026-03-15",
+      "focus": "Infrastructure, experiments E1-E5, theory verification, GPT-5.4 math"
+    },
+    {
+      "iteration": "5-8",
+      "timestamp": "2026-03-15",
+      "focus": "Figure overhaul, captions, appendix, repo cleanup, E3 correction (zero stim NOT optimal)"
+    },
+    {
+      "iteration": "9-10",
+      "timestamp": "2026-03-16",
+      "focus": "Increase reps to 30, consistent N=12 baseline, fix all stale numbers"
+    },
+    {
+      "iteration": "11-13",
+      "timestamp": "2026-03-17",
+      "focus": "Ablation bar chart, F4 heatmap fix (stim=1.0 not 0.0), paper text updates"
+    },
+    {
+      "iteration": "14-15",
+      "timestamp": "2026-03-18",
+      "focus": "Line-by-line PDF review, sign error fix, citation cleanup, CPG detection + dynamics figure"
+    },
+    {
+      "iteration": 16,
+      "timestamp": "2026-03-18",
+      "focus": "Full repo audit: update all stale files (notebooks, run_experiments.py, progress.json, research_prd.json), add measurement noise to simulation pipeline"
+    },
+    {
+      "iteration": 17,
+      "timestamp": "2026-03-18",
+      "focus": "Consistency audit (new SKILL.md protocol)",
+      "actions": [
+        "Ran full 33-item consistency checklist",
+        "All items pass",
+        "fig_ablation.pdf correctly embedded in F4 panel H"
+      ],
+      "consistency_audit": "PASS"
+    }
   ]
 }
