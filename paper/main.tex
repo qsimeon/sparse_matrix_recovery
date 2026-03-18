@@ -238,9 +238,9 @@ We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap 
 \subsection{Baseline Recovery (E1)}
 
 Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{8, 12, 30\}$ and recording durations $T \in \{100, 500, 1000\}$ with $66\%$ measurement.
-The covariance estimator consistently outperforms the chance baseline, achieving median errors of $0.09$--$0.27$ vs.\ $\sim 0.54$ for chance ($58$--$84\%$ improvement).
-The Granger refinement further reduces error by $30$--$52\%$ (e.g., $0.23 \to 0.13$ for $N=12, T=100$).
-For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.053$ (Granger-refined), a $90\%$ improvement over chance (Figure~\ref{fig:scaling}).
+The covariance estimator consistently outperforms the chance baseline, achieving median errors of $0.09$--$0.29$ vs.\ $\sim 0.54$ for chance.
+The Granger refinement further reduces error by $28$--$52\%$ (e.g., $0.29 \to 0.14$ for $N=12, T=100$).
+For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.054$ (Granger-refined), a $90\%$ improvement over chance (Figure~\ref{fig:scaling}).
 
 \begin{table}[h]
 \centering
@@ -250,12 +250,12 @@ For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.053$ (Grang
 \toprule
 $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 \midrule
-8 & 100 & 0.540 & 0.226 & \textbf{0.149} & 34\% \\
-8 & 1000 & 0.540 & 0.175 & \textbf{0.120} & 31\% \\
-12 & 100 & 0.542 & 0.229 & \textbf{0.130} & 43\% \\
-12 & 1000 & 0.542 & 0.142 & \textbf{0.096} & 33\% \\
-30 & 100 & 0.561 & 0.274 & \textbf{0.132} & 52\% \\
-30 & 1000 & 0.561 & 0.087 & \textbf{0.053} & 40\% \\
+8 & 100 & 0.540 & 0.247 & \textbf{0.140} & 43\% \\
+8 & 1000 & 0.540 & 0.176 & \textbf{0.126} & 28\% \\
+12 & 100 & 0.542 & 0.291 & \textbf{0.139} & 52\% \\
+12 & 1000 & 0.542 & 0.141 & \textbf{0.092} & 34\% \\
+30 & 100 & 0.561 & 0.196 & \textbf{0.093} & 52\% \\
+30 & 1000 & 0.561 & 0.087 & \textbf{0.054} & 38\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -399,7 +399,7 @@ Our experiments (Section~\ref{sec:experiments}) show that measurement density di
 
 \paragraph{Oracle crossover analysis.}
 We systematically test the implicit regularization hypothesis by comparing the approximate and oracle estimators across stimulation intensities $\sigma \in \{0, 0.1, 0.25, 0.5, 1, 2, 5\}$ for $N=12$, $T=900$ with $\tanh$ nonlinearity and $66\%$ measurement.
-The approximation outperforms the oracle at \emph{every} condition, with the gap widening as state variance increases: at $\sigma=0.5$ the oracle is $6.0\times$ worse, while at $\sigma=5$ it is $10.2\times$ worse.
+The approximation outperforms the oracle at \emph{every} condition, with the gap widening as state variance increases: at $\sigma=0.5$ the oracle is $5.2\times$ worse, while at $\sigma=5$ it is $10.3\times$ worse.
 No crossover point exists---the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ always exceeds the bias reduction from using the correct nonlinearity.
 This confirms that the linear approximation acts as implicit regularization across all operating regimes for saturating nonlinearities.
 
