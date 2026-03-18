@@ -782,21 +782,21 @@ def main():
                 generate_problem_schematic(output_dir / "fig1_problem_schematic.pdf")
             elif fig_name == "F2":
                 data = load_results(results_dir / "E2_sparsity.json")
-                plot_sparsity_effect(data, output_dir / "fig2_sparsity.pdf")
+                plot_sparsity_effect(data, output_dir / "fig6_sparsity.pdf")
             elif fig_name == "F3":
                 data = load_results(results_dir / "E3_stimulation.json")
-                plot_stimulation_tradeoff(data, output_dir / "fig3_stimulation_tradeoff.pdf")
+                plot_stimulation_tradeoff(data, output_dir / "fig5_stimulation.pdf")
             elif fig_name == "F4":
                 data = load_results(results_dir / "E4_granger.json")
                 plot_granger_comparison(data, output_dir / "fig4_granger_refinement.pdf")
             elif fig_name == "F5":
                 data = load_results(results_dir / "E1_baseline.json")
-                plot_scaling(data, output_dir / "fig5_scaling.pdf")
+                plot_scaling(data, output_dir / "fig3_scaling.pdf")
             elif fig_name == "F6":
                 data = load_results(results_dir / "E5_nonlinearity.json")
-                plot_nonlinearity_robustness(data, output_dir / "fig6_nonlinearity.pdf")
+                plot_nonlinearity_robustness(data, output_dir / "fig7_nonlinearity.pdf")
             elif fig_name == "F7":
-                generate_pipeline_schematic(output_dir / "fig7_pipeline_schematic.pdf")
+                generate_pipeline_schematic(output_dir / "fig2_pipeline.pdf")
         except FileNotFoundError as e:
             print(f"  Skipping {fig_name}: {e}")
             print(f"  Run the corresponding experiment first.")

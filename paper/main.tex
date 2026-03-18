@@ -204,7 +204,7 @@ The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrate
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{figures/fig7_pipeline_schematic.pdf}
+\includegraphics[width=\linewidth]{figures/fig2_pipeline.pdf}
 \caption{\textbf{Method pipeline.} Data from $K$ recording sessions yield partial covariance matrices, which are accumulated element-wise into a full covariance estimate $\hat{\Sigma}$. The connectivity matrix is estimated via least-squares inversion, then refined by projected gradient descent enforcing biological constraints (Algorithm~\ref{alg:pipeline}).}
 \label{fig:pipeline}
 \end{figure}
@@ -253,7 +253,7 @@ $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{figures/fig5_scaling.pdf}
+\includegraphics[width=\linewidth]{figures/fig3_scaling.pdf}
 \caption{\textbf{Scaling properties of the covariance estimator.} \textbf{(Left)} Median recovery error (Frobenius distance / $N$) vs.\ recording duration $T$ for three network sizes ($N \in \{8, 12, 30\}$) with $66\%$ measurement. Shaded regions show 95\% bootstrap confidence intervals over 17 random topologies (50 instances each). Error decreases with both $T$ and $N$, with the best result at $N=30$, $T=1000$: Granger-refined error of $0.053$. \textbf{(Right)} Error vs.\ network size $N$ at fixed recording durations $T \in \{100, 500, 1000\}$.}
 \label{fig:scaling}
 \end{figure}
@@ -290,7 +290,7 @@ This confirms the control-estimation tradeoff: experimentalists must balance sti
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{figures/fig3_stimulation_tradeoff.pdf}
+\includegraphics[width=\linewidth]{figures/fig5_stimulation.pdf}
 \caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=12$, $T=900$, 17 topologies $\times$ 50 instances). \textbf{(Left)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to sensor nodes. \textbf{(Right)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 66\%, 100\%). At low measurement, the effect is mild. At high measurement, zero stimulation \emph{fails} (error $>4.0$) because CPG dynamics alone leave $\Sigma_{x,x}$ rank-deficient, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery ($\sim 0.03$). This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
 \label{fig:tradeoff}
 \end{figure}
@@ -304,7 +304,7 @@ The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{figures/fig2_sparsity.pdf}
+\includegraphics[width=\linewidth]{figures/fig6_sparsity.pdf}
 \caption{\textbf{Effect of measurement density on connectivity recovery} for $N=12$, $T=900$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.094$; at $33\%$ the Granger-refined estimate ($0.279$) is $48\%$ better than the raw estimate ($0.541$). 17 topologies $\times$ 50 instances per condition.}
 \label{fig:sparsity}
 \end{figure}
@@ -319,7 +319,7 @@ The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{figures/fig6_nonlinearity.pdf}
+\includegraphics[width=\linewidth]{figures/fig7_nonlinearity.pdf}
 \caption{\textbf{Robustness to nonlinearity mismatch} for $N=12$, $T=900$, $66\%$ measured. \textbf{(Left)} The four activation functions tested. \textbf{(Right)} Median recovery error (log scale) for the raw estimator (blue) and Granger-refined (green) with bootstrap error bars. Counterintuitively, $\tanh$ yields the \emph{best} recovery ($0.094$) because it bounds state values, improving $\kappa(\Sigma_{x,x})$. Unbounded nonlinearities (identity, ReLU) allow state drift that worsens conditioning. Dots show individual topologies ($n=17$).}
 \label{fig:nonlinearity}
 \end{figure}
@@ -403,7 +403,7 @@ Downweighting detected CPG nodes in the covariance accumulation yields an additi
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{figures/fig_dynamics_analysis.pdf}
+\includegraphics[width=\linewidth]{figures/fig8_dynamics.pdf}
 \caption{\textbf{Dynamics, CPG detection, and error analysis.}
 \textbf{(A--C)} Time series: autonomous CPG-driven dynamics produce structured oscillations; stimulation adds noise on top.
 \textbf{(D--E)} PCA phase portraits: autonomous dynamics trace low-dimensional trajectories; stimulation fills out the state space (aiding identifiability).
