@@ -270,7 +270,7 @@ $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 \subsection{Granger Refinement (E4)}
 
 We evaluate the Granger-causality refinement step on $N=12$ networks with $T=900$, $66\%$ measurement, and 30 repetitions.
-The refinement reduces the median Frobenius error from $0.146$ to $0.096$ (a $34\%$ improvement).
+The refinement reduces the median Frobenius error from $0.146$ to $0.095$ (a $35\%$ improvement).
 
 Importantly, the refinement achieves \emph{perfect recall} (median $= 1.0$): all true edges in $W$ are preserved.
 Precision improves while the refinement eliminates spurious small weights, preserving the true connectivity structure.
@@ -280,7 +280,7 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, stim$=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error reduced from $0.146$ to $0.096$ ($34\%$), (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.54$) to Granger-refined ($0.10$), an $82\%$ total improvement.}
+\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, stim$=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error reduced from $0.146$ to $0.095$ ($35\%$), (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.54$) to Granger-refined ($0.10$), an $82\%$ total improvement.}
 \label{fig:granger}
 \end{figure}
 
@@ -378,7 +378,7 @@ When state variances are heterogeneous across neurons, this ratio can be large, 
 The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditioned, acting as implicit regularization---analogous to how ridge regression (biased) can outperform OLS (unbiased but high-variance), or how James--Stein shrinkage reduces total risk by trading bias for variance.
 
 \paragraph{Granger refinement is consistently beneficial.}
-The projected gradient refinement reduces error by $34\%$ at our baseline configuration and achieves perfect recall of true edges.
+The projected gradient refinement reduces error by $35\%$ at our baseline configuration and achieves perfect recall of true edges.
 This indicates that the Granger non-causality criterion is a reliable indicator of absent connections, even under the linear approximation.
 
 \paragraph{Connection to neuroscience experiments.}
@@ -399,7 +399,7 @@ Our experiments (Section~\ref{sec:experiments}) show that measurement density di
 
 \paragraph{Oracle crossover analysis.}
 We systematically test the implicit regularization hypothesis by comparing the approximate and oracle estimators across stimulation intensities $\sigma \in \{0, 0.1, 0.25, 0.5, 1, 2, 5\}$ for $N=12$, $T=900$ with $\tanh$ nonlinearity and $66\%$ measurement.
-The approximation outperforms the oracle at \emph{every} condition, with the gap widening as state variance increases: at $\sigma=0.5$ the oracle is $2.9\times$ worse, while at $\sigma=5$ it is $10.4\times$ worse.
+The approximation outperforms the oracle at \emph{every} condition, with the gap widening as state variance increases: at $\sigma=0.5$ the oracle is $6.0\times$ worse, while at $\sigma=5$ it is $10.2\times$ worse.
 No crossover point exists---the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ always exceeds the bias reduction from using the correct nonlinearity.
 This confirms that the linear approximation acts as implicit regularization across all operating regimes for saturating nonlinearities.
 
@@ -443,7 +443,7 @@ Several limitations should be noted.
 
 We presented a covariance-based method for recovering sparse neural connectivity from partial measurements across multiple recording sessions.
 The method accumulates pairwise covariance statistics from sessions with overlapping neuron observations, enabling recovery of the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons ($r = 0.90$ between true and estimated weights at our baseline configuration).
-A Granger-causality refinement step enforces biological constraints and reduces estimation error by $34\%$ while maintaining perfect recall of true connections.
+A Granger-causality refinement step enforces biological constraints and reduces estimation error by $35\%$ while maintaining perfect recall of true connections.
 Our analysis reveals that CPG--state correlation, not the linear approximation, is the dominant error source, and that CPG nodes can be partially identified from their elevated activity variance.
 Future work will extend this approach to real neural recordings, investigate structured stimulation protocols, and develop methods for jointly estimating connectivity and CPG parameters.
 
