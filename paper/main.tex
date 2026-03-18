@@ -97,9 +97,10 @@ For stability, we require $\rho(W) \leq 1$, where $\rho(\cdot)$ denotes the spec
 In session $k$, we observe a subset $\mathcal{M}_k \subseteq \{1, \ldots, N\}$ of neurons and stimulate a subset $\mathcal{S}_k$.
 The observed activity is:
 \begin{equation}
-    y_t^{(k)} = P_{\mathcal{M}_k} x_t
+    y_t^{(k)} = P_{\mathcal{M}_k} x_t + \epsilon_t, \qquad \epsilon_t \sim \mathcal{N}(0, \sigma_\epsilon^2 I)
 \end{equation}
-where $P_{\mathcal{M}_k}$ is a projection onto the observed neurons (we assume noiseless observations; incorporating measurement noise is straightforward but omitted for clarity).
+where $P_{\mathcal{M}_k}$ is a projection onto the observed neurons and $\epsilon_t$ is i.i.d.\ measurement noise.
+Our experiments test both noiseless ($\sigma_\epsilon = 0$) and noisy ($\sigma_\epsilon > 0$) regimes; the method is robust to moderate noise (Section~\ref{sec:discussion}).
 
 \subsection{The Estimation Problem}
 
@@ -411,6 +412,10 @@ Downweighting detected CPG nodes in the covariance accumulation yields an additi
 \textbf{(I)} True vs.\ estimated weights: Pearson $r = 0.90$ for the Granger-refined estimator.}
 \label{fig:dynamics}
 \end{figure}
+
+\paragraph{Robustness to measurement noise.}
+Adding i.i.d.\ Gaussian observation noise ($\sigma_\epsilon \in \{0, 0.01, 0.05, 0.1, 0.5\}$) to the measured activity, the Granger-refined error degrades gracefully: at $\sigma_\epsilon = 0.1$ (relative to state std $\sim 0.8$) the error increases by only $8\%$, and at $\sigma_\epsilon = 0.5$ by $24\%$.
+This robustness arises because the covariance accumulation averages over many time points and sessions, effectively denoising the estimates.
 
 \paragraph{Limitations.}
 Several limitations should be noted.

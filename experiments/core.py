@@ -244,6 +244,7 @@ def random_network_topology(num_nodes, non_negative_weights, force_stable, stron
 def create_network_data(
     network_idx, max_timesteps, num_nodes, num_cpgs, num_measured,
     num_sensors, fixed_sensors, stim_gain, nonlinearity, connection_weights,
+    obs_noise_std=0.0,
 ):
     """
     Simulate dynamics on a network and return recorded data.
@@ -317,7 +318,10 @@ def create_network_data(
             total_input = extrinsic_drive + intrinsic_drive
             state = connection_weights @ nonlinearity(state) + total_input
 
-        activity_data[t][measured_inds] = state[measured_inds]
+        observed = state[measured_inds]
+        if obs_noise_std > 0:
+            observed = observed + np.random.normal(0, obs_noise_std, observed.shape)
+        activity_data[t][measured_inds] = observed
         extrinsic_input_matrix[t] = extrinsic_drive
         intrinsic_input_matrix[t] = intrinsic_drive
         total_input_matrix[t] = total_input
@@ -353,11 +357,15 @@ def create_network_data(
 def create_multinetwork_dataset(
     num_networks, max_timesteps, num_nodes, num_cpgs, num_measured,
     num_sensors, fixed_sensors, stim_gain, nonlinearity,
-    non_negative_weights, force_stable,
+    non_negative_weights, force_stable, obs_noise_std=0.0,
 ):
     """
     Creates a dataset of multiple network instances with shared connectivity.
     Each instance has different initial conditions and measured/sensor nodes.
+
+    Args:
+        obs_noise_std: Standard deviation of i.i.d. Gaussian observation noise
+            added to measured neuron activity (default 0.0 = noiseless).
     """
     assert max_timesteps >= 100
     assert num_nodes >= 2
@@ -375,7 +383,7 @@ def create_multinetwork_dataset(
         joblib.delayed(create_network_data)(
             network_idx, max_timesteps, num_nodes, num_cpgs,
             num_measured, num_sensors, fixed_sensors, stim_gain,
-            nonlinearity, connection_weights,
+            nonlinearity, connection_weights, obs_noise_std,
         )
         for network_idx in range(num_networks)
     )
