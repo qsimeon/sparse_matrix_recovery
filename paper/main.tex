@@ -53,16 +53,17 @@ We discover that the ``incorrect'' linear approximation acts as implicit regular
 \label{sec:intro}
 % ============================================================================
 
-A central goal in systems neuroscience is to map the connectivity of neural circuits from functional measurements.
-In small brain circuits---such as \textit{C.~elegans} \citep{white1986structure, cook2019whole}, larval zebrafish, and cortical organoids---the number of neurons is tractable ($10^2$--$10^4$) but simultaneous recording of the entire circuit remains difficult.
+A central goal in systems neuroscience is to map the connectivity of neural circuits from functional measurements \citep{power2011functional}.
+In small brain circuits---such as \textit{C.~elegans} \citep{white1986structure, cook2019whole}, larval zebrafish \citep{ahrens2013whole}, and cortical organoids \citep{quadrato2017cell}---the number of neurons is tractable ($10^2$--$10^4$) but simultaneous recording of the entire circuit remains difficult.
 This creates a fundamental inverse problem: given partial, noisy measurements of neural dynamics across multiple sessions, can we recover the full connectivity matrix?
 
-This problem embodies a \emph{control-estimation tradeoff}: stimulating neurons with random perturbations aids connectivity estimation by exciting network modes, but disrupts the intrinsic dynamics that make the circuit biologically relevant.
+This problem embodies a \emph{control-estimation tradeoff} related to classical notions of persistent excitation in system identification \citep{ljung1998system}: stimulating neurons with random perturbations aids connectivity estimation by exciting network modes, but disrupts the intrinsic dynamics that make the circuit biologically relevant.
 An ideal experimental protocol must balance identifiability against preservation of natural dynamics.
-Furthermore, real circuits possess intrinsic oscillatory patterns (central pattern generators, or CPGs) whose detailed structure is unknown to the experimenter---they represent \emph{unmodeled autonomous dynamics} that influence the observed activity.
+Furthermore, real circuits possess intrinsic oscillatory patterns---central pattern generators (CPGs) \citep{marder2001central}---whose detailed structure is unknown to the experimenter.
+These represent \emph{unmodeled autonomous dynamics} that influence the observed activity.
 
-We formalize this as a sparse matrix recovery problem.
-Consider a network of $N$ neurons with connectivity matrix $W \in \mathbb{R}^{N \times N}$, where $W_{ij}$ represents the synaptic weight from neuron $j$ to neuron $i$.
+We formalize this as a sparse matrix recovery problem \citep{candes2011robust}.
+Consider a network of $N$ neurons with connectivity matrix $W \in \mathbb{R}^{N \times N}$, governed by discrete-time recurrent dynamics \citep{strogatz2015nonlinear}, where $W_{ij}$ represents the synaptic weight from neuron $j$ to neuron $i$.
 In each recording session, we observe a subset of neurons and stimulate a (possibly different) subset.
 Our key insight is that pairwise covariance statistics can be accumulated across sessions: whenever neurons $i$ and $j$ are simultaneously observed, their covariance contributes to estimating the $(i,j)$ block of $W$.
 
@@ -70,8 +71,8 @@ Our key insight is that pairwise covariance statistics can be accumulated across
 Our method is general, applying to any network where the same connectivity is measured across multiple partial-observation sessions.
 \begin{itemize}
     \item We derive a covariance-based estimator $\hat{W} = \Sigma_{x_{t+1},x_t} \Sigma_{x_t,x_t}^{-1}$ for connectivity recovery from partial measurements and provide identifiability conditions.
-    \item We introduce a Granger-causality refinement via projected gradient descent that enforces biological constraints (sparsity, non-negativity, no autapses).
-    \item We discover an \emph{implicit regularization} effect: the ``incorrect'' linear approximation yields a better-conditioned estimator than the oracle with known nonlinearity, analogous to the bias-variance tradeoff in ridge regression.
+    \item We introduce a Granger-causality-inspired \citep{granger1969investigating} refinement via projected gradient descent that enforces biological constraints (sparsity, non-negativity, no autapses).
+    \item We discover an \emph{implicit regularization} effect: the ``incorrect'' linear approximation yields a better-conditioned estimator than the oracle with known nonlinearity, analogous to James--Stein shrinkage \citep{james1961estimation}.
     \item We systematically characterize the tradeoff between stimulation strength and measurement density, revealing that optimal stimulation depends on the fraction of observed neurons.
 \end{itemize}
 
