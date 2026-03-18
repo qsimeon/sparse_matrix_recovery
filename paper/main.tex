@@ -347,7 +347,8 @@ Compressed sensing methods have been applied to reconstruct synaptic connections
 Our approach differs in that we recover a full matrix rather than a sparse vector, and leverage temporal covariance structure rather than random projections.
 
 \paragraph{Systems identification.}
-Classical system identification \citep{ljung1998system} addresses parameter estimation in dynamical systems.
+Classical system identification \citep{ljung1998system} addresses parameter estimation in dynamical systems, including vector autoregressive (VAR) models for multivariate time series.
+Our estimator can be viewed as a single-lag VAR model applied to partially observed data, with the key difference that we accumulate covariance statistics across sessions with different observation masks.
 Reservoir computing \citep{sussillo2009generating} has shown that random recurrent networks can generate complex temporal patterns, motivating our use of chaotic reservoir CPGs.
 
 % ============================================================================
