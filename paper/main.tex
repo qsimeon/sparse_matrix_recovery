@@ -62,8 +62,8 @@ An ideal experimental protocol must balance identifiability against preservation
 Furthermore, real circuits possess intrinsic oscillatory patterns---central pattern generators (CPGs) \citep{marder2001central}---whose detailed structure is unknown to the experimenter.
 These represent \emph{unmodeled autonomous dynamics} that influence the observed activity.
 
-We formalize this as a sparse matrix recovery problem \citep{candes2011robust}.
-Consider a network of $N$ neurons with connectivity matrix $W \in \mathbb{R}^{N \times N}$, governed by discrete-time recurrent dynamics \citep{strogatz2015nonlinear}, where $W_{ij}$ represents the synaptic weight from neuron $j$ to neuron $i$.
+We formalize this as a matrix recovery problem from partial observations.
+Consider a network of $N$ neurons with connectivity matrix $W \in \mathbb{R}^{N \times N}$, governed by discrete-time recurrent dynamics \citep{sussillo2009generating}, where $W_{ij}$ represents the synaptic weight from neuron $j$ to neuron $i$.
 In each recording session, we observe a subset of neurons and stimulate a (possibly different) subset.
 Our key insight is that pairwise covariance statistics can be accumulated across sessions: whenever neurons $i$ and $j$ are simultaneously observed, their covariance contributes to estimating the $(i,j)$ block of $W$.
 
@@ -97,9 +97,9 @@ For stability, we require $\rho(W) \leq 1$, where $\rho(\cdot)$ denotes the spec
 In session $k$, we observe a subset $\mathcal{M}_k \subseteq \{1, \ldots, N\}$ of neurons and stimulate a subset $\mathcal{S}_k$.
 The observed activity is:
 \begin{equation}
-    y_t^{(k)} = P_{\mathcal{M}_k} x_t + \epsilon_t
+    y_t^{(k)} = P_{\mathcal{M}_k} x_t
 \end{equation}
-where $P_{\mathcal{M}_k}$ is a projection onto the observed neurons and $\epsilon_t$ is measurement noise.
+where $P_{\mathcal{M}_k}$ is a projection onto the observed neurons (we assume noiseless observations; incorporating measurement noise is straightforward but omitted for clarity).
 
 \subsection{The Estimation Problem}
 
@@ -113,7 +113,7 @@ Given $K$ sessions with observations $\{y_t^{(k)}\}_{t=1}^{T_k}$ for $k = 1, \ld
 \subsection{Covariance-Based Estimator}
 
 Under the linear approximation $\phi(x) \approx x$ (valid when $\|x\|$ is small), Eq.~\eqref{eq:dynamics} simplifies to $x_{t+1} \approx W x_t + b_t$.
-Assuming statistical independence between inputs $b_t$ and states $x_t$, the cross-covariance satisfies:
+Assuming statistical independence between inputs $b_t$ and states $x_t$ (an approximation we revisit critically in Section~\ref{sec:discussion}), the cross-covariance satisfies:
 \begin{equation}
     \Sigma_{x_{t+1}, x_t} = W \Sigma_{x_t, x_t} + \underbrace{\Sigma_{b_t, x_t}}_{\approx 0}
     \label{eq:covariance}
@@ -413,8 +413,12 @@ Downweighting detected CPG nodes in the covariance accumulation yields an additi
 \end{figure}
 
 \paragraph{Limitations.}
-The Stein--Price characterization assumes Gaussian states, but our states are driven by a chaotic reservoir through $\tanh$---the bound is directionally correct but not tight.
-Our experiments use synthetic networks; validation on real neural recordings is an important next step.
+Several limitations should be noted.
+(1)~The Stein--Price bound assumes Gaussian states, but our states are driven by a chaotic reservoir through $\tanh$; the bound is directionally correct but not formally tight for non-Gaussian distributions.
+(2)~Our experiments use only synthetic networks with non-negative weights and $\rho(W) \leq 1$; real circuits may have inhibitory connections and more complex stability properties.
+(3)~We compare against a chance baseline but not against established methods such as GLMs \citep{pillow2008spatio} or vector autoregressive models; such comparisons are needed for a stronger empirical evaluation.
+(4)~The network sizes tested ($N \leq 30$) are small; scaling to $N > 100$ requires addressing the $O(N^2)$ covariance matrix conditioning.
+(5)~All experiments assume noiseless observations of measured neurons; real recordings have substantial measurement noise.
 
 % ============================================================================
 \section{Conclusion}
@@ -422,10 +426,10 @@ Our experiments use synthetic networks; validation on real neural recordings is 
 % ============================================================================
 
 We presented a covariance-based method for recovering sparse neural connectivity from partial measurements across multiple recording sessions.
-The method accumulates pairwise covariance statistics from sessions with overlapping neuron observations, enabling recovery of the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons.
+The method accumulates pairwise covariance statistics from sessions with overlapping neuron observations, enabling recovery of the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons ($r = 0.90$ between true and estimated weights at our baseline configuration).
 A Granger-causality refinement step enforces biological constraints and reduces estimation error by $34\%$ while maintaining perfect recall of true connections.
-Our systematic experiments characterize how recovery depends on network size, recording duration, measurement density, and stimulation protocol.
-Future work will extend this approach to real neural recordings from small brain circuits and investigate tighter error bounds under nonlinear dynamics.
+Our analysis reveals that CPG--state correlation, not the linear approximation, is the dominant error source, and that CPG nodes can be partially identified from their elevated activity variance.
+Future work will extend this approach to real neural recordings, investigate structured stimulation protocols, and develop methods for jointly estimating connectivity and CPG parameters.
 
 % ============================================================================
 % References
