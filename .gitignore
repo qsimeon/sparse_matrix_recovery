@@ -7,3 +7,4 @@ STATUS.md
 # Large data files (track results in git for reproducibility)
 # experiments/results/  # Uncomment to exclude large JSON results
 paper/sparse_matrix_recovery.pdf
+.ipynb_checkpoints/
