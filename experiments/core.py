@@ -398,7 +398,14 @@ def create_multinetwork_dataset(
 def estimate_connectivity_weights(num_nodes, multinet_dataset):
     """
     Estimate connectivity weights from multi-network dataset using
-    covariance-based estimator: W_hat = Cov(x_{t+1}, x_t) @ pinv(Cov(x_t, x_t))
+    covariance-based estimator: W_hat = Cov(y_{t+1}, y_t) @ pinv(Cov(y_t, y_t))
+
+    NOTE: This operates on the OBSERVED data y_t (which may include measurement noise).
+    When obs_noise_std > 0, y_t = x_t + ε_t, so:
+      Cov(y,y) = Cov(x,x) + σ²I  (noise inflates diagonal)
+      Cov(y_{t+1}, y_t) = Cov(x_{t+1}, x_t)  (cross-time noise is independent)
+    The estimator becomes: W_hat = W * Σ_xx * (Σ_xx + σ²I)^{-1}
+    This is equivalent to ridge regression with regularization parameter σ².
 
     Returns:
         dict with approx_W, true_W, oracle_W, covariance matrices, etc.

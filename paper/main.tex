@@ -114,26 +114,35 @@ Given $K$ sessions with observations $\{y_t^{(k)}\}_{t=1}^{T_k}$ for $k = 1, \ld
 \subsection{Covariance-Based Estimator}
 
 Under the linear approximation $\phi(x) \approx x$ (valid when $\|x\|$ is small), Eq.~\eqref{eq:dynamics} simplifies to $x_{t+1} \approx W x_t + b_t$.
-Assuming statistical independence between inputs $b_t$ and states $x_t$ (an approximation we revisit critically in Section~\ref{sec:discussion}), the cross-covariance satisfies:
+Assuming statistical independence between inputs $b_t$ and states $x_t$ (an approximation we revisit critically in Section~\ref{sec:discussion}), the cross-covariance of the \emph{true} states satisfies:
 \begin{equation}
     \Sigma_{x_{t+1}, x_t} = W \Sigma_{x_t, x_t} + \underbrace{\Sigma_{b_t, x_t}}_{\approx 0}
     \label{eq:covariance}
 \end{equation}
 
-This yields the estimator:
+In the noiseless case ($\sigma_\epsilon = 0$, so $y_t = x_t$), this directly yields the estimator $\hat{W} = \Sigma_{y_{t+1}, y_t} \Sigma_{y_t, y_t}^{-1}$.
+When observation noise is present ($\sigma_\epsilon > 0$), the observed covariances differ from the true state covariances.
+Since $\epsilon_t$ is i.i.d.\ and independent of $x_t$:
+\begin{align}
+    \Sigma_{y_t, y_t} &= \Sigma_{x_t, x_t} + \sigma_\epsilon^2 I \label{eq:noisy_cov} \\
+    \Sigma_{y_{t+1}, y_t} &= \Sigma_{x_{t+1}, x_t} \quad \text{(noise at $t{+}1$ independent of $y_t$)}
+\end{align}
+The estimator computed from observed data is therefore:
 \begin{equation}
-    \hat{W} = \Sigma_{x_{t+1}, x_t} \Sigma_{x_t, x_t}^{-1}
+    \hat{W} = \Sigma_{y_{t+1}, y_t} \bigl(\Sigma_{y_t, y_t}\bigr)^{-1} = W \Sigma_{x,x} \bigl(\Sigma_{x,x} + \sigma_\epsilon^2 I\bigr)^{-1}
     \label{eq:estimator}
 \end{equation}
+This is a \emph{ridge-regularized} version of the true $W$: observation noise shrinks the estimate toward zero, with $\sigma_\epsilon^2$ playing the role of the ridge parameter.
+For small noise ($\sigma_\epsilon \ll \sigma_{\min}(\Sigma_{x,x})$), the effect is negligible; for large noise, the estimate is over-regularized.
 
 \paragraph{Accumulation across sessions.}
-For each pair $(i,j)$, we compute empirical covariances only from sessions where both neurons $i$ and $j$ are simultaneously observed.
+For each pair $(i,j)$, we compute empirical covariances from the \emph{observed} data $y_t$ only in sessions where both neurons $i$ and $j$ are simultaneously measured.
 Let $S_{ij}^{(k)} = \mathbf{1}[i \in \mathcal{M}_k \wedge j \in \mathcal{M}_k]$ indicate co-measurement.
 The accumulated covariance is:
 \begin{equation}
     \hat{\Sigma}_{ij} = \frac{\sum_{k=1}^{K} S_{ij}^{(k)} \hat{\Sigma}_{ij}^{(k)}}{\sum_{k=1}^{K} S_{ij}^{(k)}}
 \end{equation}
-where $\hat{\Sigma}_{ij}^{(k)}$ is the empirical covariance from session $k$.
+where $\hat{\Sigma}_{ij}^{(k)}$ is the empirical covariance of the observed $y_t$ from session $k$.
 
 \paragraph{Error analysis.}
 The estimation error decomposes into two terms:
@@ -181,16 +190,16 @@ The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrate
 \begin{algorithmic}[1]
 \REQUIRE Sessions $\{(y_t^{(k)}, \mathcal{M}_k)\}_{k=1}^K$
 \ENSURE Estimated connectivity $\hat{W}$
-\STATE Initialize $\hat{\Sigma}_{x_{t+1},x_t} \leftarrow 0$, $\hat{\Sigma}_{x_t,x_t} \leftarrow 0$, $C \leftarrow 0$ \COMMENT{accumulators}
+\STATE Initialize $\hat{\Sigma}_{y_{t+1},y_t} \leftarrow 0$, $\hat{\Sigma}_{y_t,y_t} \leftarrow 0$, $C \leftarrow 0$ \COMMENT{accumulators}
 \FOR{$k = 1, \ldots, K$}
-    \STATE Compute session covariances from $\{y_t^{(k)}\}_{t=1}^{T_k}$
+    \STATE Compute session covariances from observed data $\{y_t^{(k)}\}_{t=1}^{T_k}$
     \STATE $S \leftarrow \mathbf{1}_{\mathcal{M}_k} \mathbf{1}_{\mathcal{M}_k}^T$ \COMMENT{co-measurement mask}
-    \STATE $\hat{\Sigma}_{x_{t+1},x_t} \mathrel{+}= S \odot \hat{\Sigma}^{(k)}_{x_{t+1},x_t}$; \quad $\hat{\Sigma}_{x_t,x_t} \mathrel{+}= S \odot \hat{\Sigma}^{(k)}_{x_t,x_t}$
+    \STATE $\hat{\Sigma}_{y_{t+1},y_t} \mathrel{+}= S \odot \hat{\Sigma}^{(k)}_{y_{t+1},y_t}$; \quad $\hat{\Sigma}_{y_t,y_t} \mathrel{+}= S \odot \hat{\Sigma}^{(k)}_{y_t,y_t}$
     \STATE $C \mathrel{+}= S$
 \ENDFOR
-\STATE $\hat{\Sigma}_{x_{t+1},x_t} \leftarrow \hat{\Sigma}_{x_{t+1},x_t} \oslash C$; \quad $\hat{\Sigma}_{x_t,x_t} \leftarrow \hat{\Sigma}_{x_t,x_t} \oslash C$ \COMMENT{average}
-\STATE $\hat{W}_{\text{approx}} \leftarrow \hat{\Sigma}_{x_{t+1},x_t} \cdot \hat{\Sigma}_{x_t,x_t}^{\dagger}$ \COMMENT{covariance estimator}
-\STATE $\hat{W} \leftarrow \text{GrangerRefine}(\hat{W}_{\text{approx}}, \hat{\Sigma}_{x_t,x_t}, \hat{\Sigma}_{x_{t+1},x_t}, \mathcal{C})$ \COMMENT{Eq.~\eqref{eq:optimization}}
+\STATE $\hat{\Sigma}_{y_{t+1},y_t} \leftarrow \hat{\Sigma}_{y_{t+1},y_t} \oslash C$; \quad $\hat{\Sigma}_{y_t,y_t} \leftarrow \hat{\Sigma}_{y_t,y_t} \oslash C$ \COMMENT{average}
+\STATE $\hat{W}_{\text{approx}} \leftarrow \hat{\Sigma}_{y_{t+1},y_t} \cdot \hat{\Sigma}_{y_t,y_t}^{\dagger}$ \COMMENT{ridge-regularized estimator, Eq.~\eqref{eq:estimator}}
+\STATE $\hat{W} \leftarrow \text{GrangerRefine}(\hat{W}_{\text{approx}}, \hat{\Sigma}_{y_t,y_t}, \hat{\Sigma}_{y_{t+1},y_t}, \mathcal{C})$ \COMMENT{Eq.~\eqref{eq:optimization}}
 \RETURN $\hat{W}$
 \end{algorithmic}
 \end{algorithm}
@@ -415,8 +424,9 @@ Downweighting detected CPG nodes in the covariance accumulation yields an additi
 \end{figure}
 
 \paragraph{Robustness to measurement noise.}
-Adding i.i.d.\ Gaussian observation noise ($\sigma_\epsilon \in \{0, 0.01, 0.05, 0.1, 0.5\}$) to the measured activity, the Granger-refined error degrades gracefully: averaged over 10 random topologies, at $\sigma_\epsilon = 0.1$ (relative to state std $\sim 0.8$) the error increases by $\sim 7\%$, and at $\sigma_\epsilon = 0.5$ by $\sim 37\%$.
-This robustness arises because the covariance accumulation averages over many time points and sessions, effectively denoising the estimates.
+When observation noise is present, Eq.~\eqref{eq:estimator} shows that the estimator becomes ridge-regularized: $\hat{W} = W\Sigma_{x,x}(\Sigma_{x,x} + \sigma_\epsilon^2 I)^{-1}$, which shrinks estimates toward zero.
+Empirically (averaged over 10 topologies), at $\sigma_\epsilon = 0.1$ (relative to state std $\sim 0.8$) the Granger-refined error increases by $\sim 7\%$, and at $\sigma_\epsilon = 0.5$ by $\sim 37\%$.
+The graceful degradation follows from the ridge structure: noise regularizes the inversion rather than corrupting it catastrophically.
 
 \paragraph{Limitations.}
 Several limitations should be noted.
