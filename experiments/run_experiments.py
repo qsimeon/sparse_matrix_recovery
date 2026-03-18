@@ -47,7 +47,7 @@ except ImportError:
 def one_repetition(
     repetition_idx, random_seed, num_networks, max_timesteps, num_nodes,
     num_cpgs, num_measured, num_sensors, fixed_sensors, stim_gain,
-    nonlinearity_func, non_negative_weights, force_stable,
+    nonlinearity_func, non_negative_weights, force_stable, obs_noise_std=0.0,
 ):
     """Run one repetition of an experiment (one random network topology)."""
     torch.manual_seed(random_seed + repetition_idx)
@@ -57,6 +57,7 @@ def one_repetition(
         num_networks, max_timesteps, num_nodes, num_cpgs,
         num_measured, num_sensors, fixed_sensors, stim_gain,
         nonlinearity_func, non_negative_weights, force_stable,
+        obs_noise_std=obs_noise_std,
     )
 
     estim = estimate_connectivity_weights(num_nodes, dataset)
@@ -150,10 +151,10 @@ def one_repetition(
 
 def run_experiment(
     random_seed=42, num_repetitions=17, num_networks=50,
-    max_timesteps=1000, num_nodes=60, num_cpgs=None, num_measured=None,
+    max_timesteps=900, num_nodes=12, num_cpgs=None, num_measured=None,
     num_sensors=None, fixed_sensors=False, stim_gain=1.0,
     nonlinearity="tanh", non_negative_weights=True, force_stable=True,
-    save_matrices=False,
+    save_matrices=False, obs_noise_std=0.0,
 ):
     """Run a full experiment with multiple repetitions."""
     assert num_repetitions > 1
@@ -181,6 +182,7 @@ def run_experiment(
             rep, random_seed, num_networks, max_timesteps, num_nodes,
             num_cpgs, num_measured, num_sensors, fixed_sensors, stim_gain,
             nonlinearity_func, non_negative_weights, force_stable,
+            obs_noise_std=obs_noise_std,
         )
         all_distances.append(distances)
         if save_matrices:

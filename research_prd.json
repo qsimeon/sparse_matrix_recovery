@@ -1,90 +1,44 @@
 {
-  "title": "Recovering Sparse Neural Connectivity from Partial Measurements",
+  "title": "Recovering Sparse Neural Connectivity from Partial Measurements: A Covariance-Based Approach with Granger-Causality Refinement",
   "authors": ["Quilee Simeon"],
-  "target_venue": "NeurIPS Workshop on Symmetry and Geometry in Neural Representations (NeurReps)",
+  "affiliation": "Massachusetts Institute of Technology",
+  "target_venue": "NeurIPS Workshop (e.g., NeurReps, MLCN, or similar)",
   "format": "workshop",
-  "page_limit": 8,
+  "page_limit": "6 main + appendix",
   "core_question": "Can we recover the connectivity matrix of a neural circuit from sparse, partial measurements across multiple recording sessions?",
-  "core_claim": "Covariance-based weight estimation with Granger-causality refinement can recover sparse neural connectivity from partial measurements, but there is a fundamental tradeoff between stimulation-driven identifiability and intrinsic dynamics richness.",
+  "core_claim": "Covariance accumulation across partial-observation sessions recovers sparse connectivity. Key findings: (1) the linear approximation provides implicit regularization via Price's theorem, (2) stimulation-measurement interaction determines optimal experimental protocol, (3) CPG-state correlation is the dominant error source and CPG nodes are detectable.",
+  "framing": "General method for small brain circuits (C. elegans, zebrafish, organoids as examples, not focus)",
   "hypotheses": [
-    {
-      "id": "H1",
-      "statement": "The covariance estimator W_hat = Cov(x_{t+1}, x_t) @ pinv(Cov(x_t, x_t)) recovers W better than chance baselines",
-      "experiment": "E1",
-      "metric": "Frobenius error normalized by network size"
-    },
-    {
-      "id": "H2",
-      "statement": "Recovery accuracy improves with measurement fraction (more neurons observed simultaneously)",
-      "experiment": "E2",
-      "metric": "Recovery accuracy vs measurement fraction"
-    },
-    {
-      "id": "H3",
-      "statement": "There exists a tradeoff: higher stimulation gain improves identifiability but disrupts intrinsic dynamics",
-      "experiment": "E3",
-      "metric": "Recovery error and dynamics quality vs stimulation gain"
-    },
-    {
-      "id": "H4",
-      "statement": "Granger-causality refinement improves precision and recall of edge detection",
-      "experiment": "E4",
-      "metric": "Precision/recall of nonzero entries in W"
-    },
-    {
-      "id": "H5",
-      "statement": "The linear approximation phi(x) ≈ x degrades gracefully under model mismatch",
-      "experiment": "E5",
-      "metric": "Recovery error across different nonlinearities"
-    }
+    {"id": "H1", "statement": "Covariance estimator recovers W better than chance", "experiment": "E1", "status": "CONFIRMED", "result": "82% improvement over chance at N=12, 66% measurement"},
+    {"id": "H2", "statement": "Recovery improves with measurement fraction", "experiment": "E2", "status": "CONFIRMED", "result": "Error 0.279 at 33% → 0.094 at 100%"},
+    {"id": "H3", "statement": "Stimulation-measurement interaction determines optimal protocol", "experiment": "E3", "status": "CONFIRMED (CORRECTED)", "result": "Zero stim fails at high measurement; moderate stim (σ≈0.5) optimal"},
+    {"id": "H4", "statement": "Granger refinement improves precision/recall", "experiment": "E4", "status": "CONFIRMED", "result": "34% error reduction, perfect recall (1.0)"},
+    {"id": "H5", "statement": "Linear approximation degrades gracefully with nonlinearity mismatch", "experiment": "E5", "status": "NUANCED", "result": "tanh BEST (bounded states → good κ), identity worse (unbounded drift)"},
+    {"id": "H6", "statement": "Approximate estimator beats oracle at all operating regimes", "experiment": "E6", "status": "CONFIRMED", "result": "Oracle 2.9-10.4x worse across all stim levels"}
   ],
   "experiments": [
-    {
-      "id": "E1",
-      "name": "Baseline recovery",
-      "variables": {"network_size": [12, 60, 150], "T": [100, 500, 1000, 2000, 5000]},
-      "fixed": {"stim_gain": 1.0, "nonlinearity": "tanh", "num_measured_frac": 0.66}
-    },
-    {
-      "id": "E2",
-      "name": "Sparsity effect",
-      "variables": {"measurement_fraction": [0.33, 0.5, 0.66, 0.8, 1.0]},
-      "fixed": {"num_nodes": 60, "T": 1000, "stim_gain": 1.0}
-    },
-    {
-      "id": "E3",
-      "name": "Stimulation tradeoff",
-      "variables": {"stim_gain": [0.0, 0.25, 0.5, 0.75, 1.0], "num_cpgs_frac": [0.1, 0.2, 0.33]},
-      "fixed": {"num_nodes": 60, "T": 1000}
-    },
-    {
-      "id": "E4",
-      "name": "Granger refinement",
-      "variables": {"with_granger": [true, false]},
-      "fixed": {"num_nodes": 60, "T": 1000, "stim_gain": 1.0}
-    },
-    {
-      "id": "E5",
-      "name": "Nonlinearity robustness",
-      "variables": {"nonlinearity": ["tanh", "relu", "identity", "sigmoid"]},
-      "fixed": {"num_nodes": 60, "T": 1000, "stim_gain": 1.0}
-    }
+    {"id": "E1", "name": "Baseline scaling", "variables": {"N": [8, 12, 30], "T": [100, 500, 1000]}, "fixed": {"measurement": "66%", "stim": 1.0, "reps": 17}},
+    {"id": "E2", "name": "Measurement density", "variables": {"measurement_fraction": [0.33, 0.5, 0.66, 0.8, 1.0]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 17}},
+    {"id": "E3", "name": "Stimulation × measurement interaction", "variables": {"stim": [0.0, 0.1, 0.25, 0.5, 1.0, 2.0], "measurement": [0.33, 0.66, 1.0]}, "fixed": {"N": 12, "T": 900, "reps": 17}},
+    {"id": "E4", "name": "Granger refinement / ablation", "variables": {"method": ["chance", "adjacency", "spectral", "estimate", "granger"]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 30}},
+    {"id": "E5", "name": "Nonlinearity robustness", "variables": {"phi": ["tanh", "relu", "identity", "sigmoid"]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 17}},
+    {"id": "E6", "name": "Oracle crossover", "variables": {"stim": [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]}, "fixed": {"N": 12, "T": 900, "measurement": "66%", "reps": 17}}
   ],
-  "figures_needed": [
-    {"id": "F1", "description": "Problem setup schematic (network with measured/unmeasured/CPG nodes)", "type": "schematic"},
-    {"id": "F2", "description": "True vs estimated W heatmaps at varying measurement density", "type": "heatmap"},
-    {"id": "F3", "description": "Recovery error vs stimulation gain (the core tradeoff curve)", "type": "line_plot"},
-    {"id": "F4", "description": "Effect of Granger refinement (before/after comparison)", "type": "comparison"},
-    {"id": "F5", "description": "Scaling with network size and recording duration", "type": "line_plot"},
-    {"id": "F6", "description": "C. elegans application: recovery on biologically realistic topology", "type": "heatmap"}
+  "key_contributions": [
+    "Covariance accumulation framework for partial observations with identifiability theorem",
+    "Implicit regularization: linear approximation beats oracle (Price's theorem characterization)",
+    "Stimulation-measurement interaction (corrected finding: moderate stim needed at high measurement)",
+    "CPG-state correlation as dominant error source + variance-based CPG detection",
+    "Granger-causality refinement with perfect recall"
   ],
-  "acceptance_criteria": {
-    "scope": "Research question is specific, falsifiable, and novel",
-    "literature": "Key prior works cited, positioning clear, gaps identified",
-    "theory": "Derivations correct, assumptions stated, bounds provided",
-    "experiment": "Experiments test stated claims, baselines included, reproducible",
-    "analyze": "Figures clear, results support claims, failure cases discussed",
-    "write": "Writing clear and concise, paper self-contained, meets format",
-    "review": "Reviewer would accept, weaknesses addressed, rebuttal ready"
-  }
+  "figures": [
+    {"id": "F1", "description": "Problem schematic (network + covariance accumulation)", "in_paper": true},
+    {"id": "F2", "description": "Method pipeline flowchart", "in_paper": true},
+    {"id": "F3", "description": "Scaling (error vs T and N)", "in_paper": true},
+    {"id": "F4", "description": "Granger refinement (heatmaps + violins + ablation)", "in_paper": true},
+    {"id": "F5", "description": "Stimulation × measurement interaction", "in_paper": true},
+    {"id": "F6", "description": "Measurement sparsity effect", "in_paper": true},
+    {"id": "F7", "description": "Nonlinearity robustness (log scale)", "in_paper": true},
+    {"id": "F8", "description": "Dynamics, CPG detection, error decomposition (9-panel)", "in_paper": true}
+  ]
 }
