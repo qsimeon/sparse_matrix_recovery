@@ -238,9 +238,9 @@ We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap 
 \subsection{Baseline Recovery (E1)}
 
 Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{8, 12, 30\}$ and recording durations $T \in \{100, 500, 1000\}$ with $66\%$ measurement.
-The covariance estimator consistently outperforms the chance baseline, achieving median errors of $0.09$--$0.29$ vs.\ $\sim 0.54$ for chance.
-The Granger refinement further reduces error by $28$--$52\%$ (e.g., $0.29 \to 0.14$ for $N=12, T=100$).
-For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.054$ (Granger-refined), a $90\%$ improvement over chance (Figure~\ref{fig:scaling}).
+The covariance estimator (with diagonal zeroed) consistently outperforms the chance baseline, achieving median errors of $0.06$--$0.23$ vs.\ $\sim 0.54$ for chance.
+Note that the estimate already enforces the no-autapse prior ($W_{ii} = 0$), which removes the autocorrelation-dominated diagonal.
+For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.053$ (Granger-refined), an $91\%$ improvement over chance (Figure~\ref{fig:scaling}).
 
 \begin{table}[h]
 \centering
@@ -250,12 +250,12 @@ For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.054$ (Grang
 \toprule
 $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 \midrule
-8 & 100 & 0.540 & 0.247 & \textbf{0.140} & 43\% \\
-8 & 1000 & 0.540 & 0.176 & \textbf{0.126} & 28\% \\
-12 & 100 & 0.542 & 0.291 & \textbf{0.139} & 52\% \\
-12 & 1000 & 0.542 & 0.141 & \textbf{0.092} & 34\% \\
-30 & 100 & 0.561 & 0.196 & \textbf{0.093} & 52\% \\
-30 & 1000 & 0.561 & 0.087 & \textbf{0.054} & 38\% \\
+8 & 100 & 0.540 & 0.157 & \textbf{0.150} & 4\% \\
+8 & 1000 & 0.540 & 0.131 & \textbf{0.127} & 3\% \\
+12 & 100 & 0.542 & 0.234 & \textbf{0.154} & 34\% \\
+12 & 1000 & 0.542 & 0.112 & \textbf{0.095} & 15\% \\
+30 & 100 & 0.561 & 0.185 & \textbf{0.106} & 43\% \\
+30 & 1000 & 0.561 & 0.060 & \textbf{0.053} & 12\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -270,17 +270,17 @@ $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 \subsection{Granger Refinement (E4)}
 
 We evaluate the Granger-causality refinement step on $N=12$ networks with $T=900$, $66\%$ measurement, and 30 repetitions.
-The refinement reduces the median Frobenius error from $0.146$ to $0.095$ (a $35\%$ improvement).
+After enforcing the no-autapse prior ($W_{ii} = 0$, a known structural constraint applied to the raw estimate), the Granger refinement further reduces error by an additional $\sim 6\%$.
 
 Importantly, the refinement achieves \emph{perfect recall} (median $= 1.0$): all true edges in $W$ are preserved.
 Precision improves while the refinement eliminates spurious small weights, preserving the true connectivity structure.
-Crucially, the estimator achieves an $80\%$ improvement over the chance baseline ($0.096$ vs.\ $0.54$), demonstrating that the covariance accumulation framework extracts genuine connectivity information.
+Crucially, the estimator achieves an $83\%$ improvement over the chance baseline ($0.094$ vs.\ $0.54$), demonstrating that the covariance accumulation framework extracts genuine connectivity information.
 The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, stim$=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error reduced from $0.146$ to $0.095$ ($35\%$), (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.54$) to Granger-refined ($0.10$), an $82\%$ total improvement.}
+\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, stim$=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error (estimate already has diagonal zeroed) reduced from $0.100$ to $0.094$ with Granger ($6\%$), (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.54$) to Granger-refined ($0.09$), an $83\%$ total improvement.}
 \label{fig:granger}
 \end{figure}
 
@@ -307,14 +307,14 @@ This confirms the control-estimation tradeoff: experimentalists must balance sti
 \subsection{Measurement Sparsity (E2)}
 
 We vary the fraction of neurons observed per session from $33\%$ to $100\%$ for $N=12$, $T=900$.
-Full observability ($100\%$) yields error of $0.094$ compared to $0.279$ at $33\%$ measurement (Granger-refined), confirming that measurement sparsity is a significant challenge.
-The Granger refinement substantially mitigates partial measurement: at $33\%$, the refined estimate ($0.279$) is $48\%$ better than the raw estimate ($0.541$).
+Full observability ($100\%$) yields error of $0.094$ compared to $0.307$ at $33\%$ measurement (Granger-refined), confirming that measurement sparsity is a significant challenge.
+At $33\%$ measurement, the raw estimate ($0.592$) is substantially worse due to ill-conditioning; the Granger refinement reduces this to $0.307$ ($48\%$ improvement).
 The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:sparsity}).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig6_sparsity.pdf}
-\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=12$, $T=900$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.094$; at $33\%$ the Granger-refined estimate ($0.279$) is $48\%$ better than the raw estimate ($0.541$). 17 topologies $\times$ 50 instances per condition.}
+\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=12$, $T=900$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.094$; at $33\%$ the Granger-refined estimate ($0.307$) is $48\%$ better than the raw estimate ($0.592$). 17 topologies $\times$ 50 instances per condition.}
 \label{fig:sparsity}
 \end{figure}
 
@@ -378,7 +378,8 @@ When state variances are heterogeneous across neurons, this ratio can be large, 
 The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditioned, acting as implicit regularization---analogous to how ridge regression (biased) can outperform OLS (unbiased but high-variance), or how James--Stein shrinkage reduces total risk by trading bias for variance.
 
 \paragraph{Granger refinement is consistently beneficial.}
-The projected gradient refinement reduces error by $35\%$ at our baseline configuration and achieves perfect recall of true edges.
+The no-autapse constraint ($W_{ii} = 0$), applied as a known structural prior before any refinement, accounts for the majority of the improvement over the raw estimate (the diagonal is dominated by autocorrelation, $3$--$4\times$ larger than off-diagonal entries).
+The projected gradient refinement provides an additional $\sim 6\%$ improvement and achieves perfect recall of true edges.
 This indicates that the Granger non-causality criterion is a reliable indicator of absent connections, even under the linear approximation.
 
 \paragraph{Connection to neuroscience experiments.}
@@ -443,7 +444,7 @@ Several limitations should be noted.
 
 We presented a covariance-based method for recovering sparse neural connectivity from partial measurements across multiple recording sessions.
 The method accumulates pairwise covariance statistics from sessions with overlapping neuron observations, enabling recovery of the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons ($r = 0.90$ between true and estimated weights at our baseline configuration).
-A Granger-causality refinement step enforces biological constraints and reduces estimation error by $35\%$ while maintaining perfect recall of true connections.
+Enforcing the no-autapse structural prior and a Granger-causality refinement step maintains perfect recall of true connections.
 Our analysis reveals that CPG--state correlation, not the linear approximation, is the dominant error source, and that CPG nodes can be partially identified from their elevated activity variance.
 Future work will extend this approach to real neural recordings, investigate structured stimulation protocols, and develop methods for jointly estimating connectivity and CPG parameters.
 

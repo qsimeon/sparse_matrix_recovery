@@ -458,7 +458,14 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset):
     cov_bx = np.divide(cov_bx, total_mask)
 
     approx_W = cov_dtx @ np.linalg.pinv(cov_x)
+    # Enforce no-autapse constraint: W_ii = 0 is a known structural prior,
+    # not something learned from data. The diagonal of the raw estimate is
+    # dominated by autocorrelation (3-4x larger than off-diagonal) and carries
+    # no connectivity information. Zeroing it is a basic preprocessing step.
+    np.fill_diagonal(approx_W, 0)
+
     oracle_W = (cov_dtx - cov_bx) @ np.linalg.pinv(cov_phix)
+    np.fill_diagonal(oracle_W, 0)
 
     # Diagnostics: condition number and error bound components
     # The estimation error decomposes as:
