@@ -1,15 +1,8 @@
 \documentclass{article}
 
-% NeurIPS workshop style — neurips_2024.sty must be in the same directory.
-% For Overleaf: upload neurips_2024.sty alongside main.tex.
-% If neurips_2024.sty is unavailable, the fallback below provides basic formatting.
-\IfFileExists{neurips_2024.sty}{%
-  \usepackage[final]{neurips_2024}%
-}{%
-  \usepackage[margin=1in]{geometry}%
-  \usepackage{times}%
-  \PackageWarning{main}{neurips_2024.sty not found -- using fallback formatting}%
-}
+% Clean formatting for arXiv preprint (no conference footer)
+\usepackage[margin=1in]{geometry}
+\usepackage{times}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{hyperref}

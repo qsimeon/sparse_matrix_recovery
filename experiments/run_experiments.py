@@ -1,7 +1,7 @@
 """
 Experiment Runner for Sparse Matrix Recovery
 
-Runs systematic experiments (E1-E5) for the workshop paper.
+Runs systematic experiments (E1-E6) for the paper.
 Each experiment tests a specific hypothesis about connectivity recovery.
 
 Usage:
