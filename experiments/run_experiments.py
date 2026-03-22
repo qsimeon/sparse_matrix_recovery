@@ -383,6 +383,41 @@ def run_E6_oracle_crossover(seed=42, output_dir=None):
     return results
 
 
+def run_E7_sensor_fraction(seed=42, output_dir=None):
+    """E7: How many neurons to stimulate (sensor coverage).
+
+    Varies the fraction of neurons receiving extrinsic stimulation,
+    independently of stimulation gain. This answers: 'Does it matter
+    how many neurons you poke, or just how hard?'
+
+    Sensor fraction controls the rank of the stimulation covariance:
+    with 1 sensor, only 1 direction in state space is directly excited;
+    with N sensors, all directions receive independent noise.
+    """
+    print("=" * 60)
+    print("E7: Sensor Fraction Sweep")
+    print("=" * 60)
+
+    results = []
+    num_nodes = 12
+    for num_sensors in [1, 2, 4, 8, 12]:
+        sensor_frac = num_sensors / num_nodes
+        print(f"\n  num_sensors={num_sensors} ({sensor_frac:.0%} of N={num_nodes})")
+        r = run_experiment(
+            random_seed=seed, num_repetitions=17, num_networks=50,
+            max_timesteps=900, num_nodes=num_nodes,
+            num_cpgs=4, num_measured=8, num_sensors=num_sensors,
+            stim_gain=1.0, nonlinearity="tanh",
+        )
+        r["config"]["experiment"] = "E7"
+        r["config"]["sensor_fraction"] = sensor_frac
+        results.append(r)
+
+    if output_dir:
+        save_results(results, output_dir / "E7_sensor_fraction.json")
+    return results
+
+
 # ============================================================================
 # I/O Helpers
 # ============================================================================
@@ -445,6 +480,7 @@ EXPERIMENTS = {
     "E4": run_E4_granger,
     "E5": run_E5_nonlinearity,
     "E6": run_E6_oracle_crossover,
+    "E7": run_E7_sensor_fraction,
 }
 
 

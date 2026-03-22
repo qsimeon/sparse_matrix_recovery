@@ -663,7 +663,7 @@ nb = {
     "nbformat_minor": 5
 }
 
-out_path = "qsimeon_SparseMatrixRecovery.ipynb"
+out_path = "notebooks/qsimeon_SparseMatrixRecovery.ipynb"
 with open(out_path, "w") as f:
     json.dump(nb, f, indent=1)
 

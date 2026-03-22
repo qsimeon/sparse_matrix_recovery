@@ -359,6 +359,18 @@ The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:
 \label{fig:nonlinearity}
 \end{figure}
 
+\subsection{Sensor Coverage (E7)}
+
+The experiments above hold the number of stimulated neurons (\emph{sensor fraction}) fixed at $33\%$.
+But how many neurons receive stimulation is a distinct experimental knob from how intensely they are stimulated---sensor fraction controls the \emph{rank} of the stimulation covariance, while gain controls its \emph{magnitude}.
+In practice, sensor fraction is determined by the choice of optogenetic tool (e.g., the number of neurons expressing a light-sensitive channel in a SPARC transgenic line).
+
+We vary `num\_sensors' $\in \{1, 2, 4, 8, 12\}$ ($8\%$--$100\%$ of $N=12$) at fixed stim$=1.0$ and $66\%$ measurement.
+Stimulating a single neuron ($8\%$) yields poor recovery (error $0.244$) with high variance across topologies---a single noise direction is insufficient to excite all network modes.
+Adding just one more sensor ($17\%$) halves the error to $0.128$.
+Beyond $33\%$ ($4$ sensors), performance plateaus near $0.10$, indicating that moderate sensor coverage suffices when stimulation gain is adequate.
+The Granger refinement provides the largest relative improvement at low sensor count ($31\%$ at $1$ sensor vs.\ $2\%$ at $4+$ sensors), consistent with its role in cleaning up noisy estimates.
+
 % ============================================================================
 \section{Related Work}
 \label{sec:related}
