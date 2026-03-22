@@ -180,7 +180,7 @@ def state_to_cpg(state, cpg_net):
 def calculate_spectral_radius(matrix):
     """Calculate the spectral radius of a square matrix."""
     assert matrix.shape[0] == matrix.shape[1], "Input matrix must be square."
-    eigenvalues = np.linalg.eigvals(matrix).real
+    eigenvalues = np.linalg.eigvals(matrix)
     return max(abs(eigenvalues))
 
 
