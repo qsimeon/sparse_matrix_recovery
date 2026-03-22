@@ -158,7 +158,7 @@ For small noise ($\sigma_\epsilon \ll \sigma_{\min}(\Sigma_{x,x})$), the effect 
 \paragraph{No-autapse prior.}
 Before any further refinement, we enforce the structural constraint $\hat{W}_{ii} = 0$ for all $i$.
 The diagonal of the raw estimate $\hat{\Sigma}_{y_{t+1},y_t} \hat{\Sigma}_{y_t,y_t}^{-1}$ is dominated by single-neuron autocorrelation, which does not reflect genuine self-connectivity (since we imposed $W_{ii} = 0$ by construction).
-Zeroing the diagonal removes this artifact and is the single most impactful step in the pipeline: in ablation experiments (E4, Section~\ref{sec:granger}), it accounts for the majority of the improvement over the chance baseline.
+Zeroing the diagonal removes this artifact and is the single most impactful step in the pipeline: in ablation experiments (E4, Section~\ref{sec:experiments}), it accounts for the majority of the improvement over the chance baseline.
 
 \paragraph{Accumulation across sessions.}
 For each pair $(i,j)$, we compute empirical covariances from the \emph{observed} data $y_t$ only in sessions where both neurons $i$ and $j$ are simultaneously measured.
@@ -306,7 +306,7 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, stim$=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error (estimate already has diagonal zeroed) reduced from $0.100$ to $0.094$ with Granger ($6\%$), (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.54$) to Granger-refined ($0.09$), an $83\%$ total improvement.}
+\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, stim$=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error (estimate already has diagonal zeroed) reduced from $0.098$ to $0.095$ with Granger, (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.533$) to Granger-refined ($0.095$), an $82\%$ total improvement.}
 \label{fig:granger}
 \end{figure}
 
