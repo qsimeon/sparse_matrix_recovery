@@ -14,7 +14,8 @@
     {"id": "H3", "statement": "Stimulation-measurement interaction determines optimal protocol", "experiment": "E3", "status": "CONFIRMED (CORRECTED)", "result": "Zero stim fails at high measurement; moderate stim (σ≈0.5) optimal"},
     {"id": "H4", "statement": "Granger refinement improves precision/recall", "experiment": "E4", "status": "CONFIRMED", "result": "34% error reduction, perfect recall (1.0)"},
     {"id": "H5", "statement": "Linear approximation degrades gracefully with nonlinearity mismatch", "experiment": "E5", "status": "NUANCED", "result": "tanh BEST (bounded states → good κ), identity worse (unbounded drift)"},
-    {"id": "H6", "statement": "Approximate estimator beats oracle at all operating regimes", "experiment": "E6", "status": "CONFIRMED", "result": "Oracle 2.9-10.4x worse across all stim levels"}
+    {"id": "H6", "statement": "Approximate estimator beats oracle at all operating regimes", "experiment": "E6", "status": "CONFIRMED", "result": "Oracle 2.9-10.4x worse across all stim levels"},
+    {"id": "H7", "statement": "Recovery improves with sensor coverage (number of stimulated neurons)", "experiment": "E7", "status": "CONFIRMED", "result": "1 sensor: 0.244 error; plateaus at 33%+ (~0.10). Sensor fraction controls rank of stimulation covariance."}
   ],
   "experiments": [
     {"id": "E1", "name": "Baseline scaling", "variables": {"N": [8, 12, 30], "T": [100, 500, 1000]}, "fixed": {"measurement": "66%", "stim": 1.0, "reps": 17}},
@@ -22,7 +23,8 @@
     {"id": "E3", "name": "Stimulation × measurement interaction", "variables": {"stim": [0.0, 0.1, 0.25, 0.5, 1.0, 2.0], "measurement": [0.33, 0.66, 1.0]}, "fixed": {"N": 12, "T": 900, "reps": 17}},
     {"id": "E4", "name": "Granger refinement / ablation", "variables": {"method": ["chance", "adjacency", "spectral", "estimate", "granger"]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 30}},
     {"id": "E5", "name": "Nonlinearity robustness", "variables": {"phi": ["tanh", "relu", "identity", "sigmoid"]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 17}},
-    {"id": "E6", "name": "Oracle crossover", "variables": {"stim": [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]}, "fixed": {"N": 12, "T": 900, "measurement": "66%", "reps": 17}}
+    {"id": "E6", "name": "Oracle crossover", "variables": {"stim": [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]}, "fixed": {"N": 12, "T": 900, "measurement": "66%", "reps": 17}},
+    {"id": "E7", "name": "Sensor fraction", "variables": {"num_sensors": [1, 2, 4, 8, 12]}, "fixed": {"N": 12, "T": 900, "measurement": "66%", "stim": 1.0, "reps": 17}}
   ],
   "key_contributions": [
     "Covariance accumulation framework for partial observations with identifiability theorem",

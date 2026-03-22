@@ -258,8 +258,31 @@ We generate synthetic networks modeling small brain circuits:
     \item Extrinsic stimulation as \emph{independent} i.i.d.\ Gaussian noise applied to each sensor node at each timestep (the most favorable case for identifiability; correlated or shared stimulation would reduce the rank of the input covariance)
 \end{itemize}
 
-Each experiment uses 15--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib across CPU cores.
+Each node in the network is characterized by three (non-exclusive) Boolean roles: whether it is a \emph{CPG node} (receives autonomous intrinsic drive), a \emph{sensor node} (receives extrinsic stimulation), and a \emph{measured node} (its activity is recorded).
+These roles are assigned randomly per session, modeling the experimental reality that different recording sessions observe and stimulate different neuron subsets.
+
+Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=12$, $T=900$, $66\%$ measured, $33\%$ sensors, $33\%$ CPGs, stim$=1.0$, $\phi=\tanh$).
+Each experiment uses 15--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib.
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
+
+\begin{table}[h]
+\centering
+\caption{Experimental design: each experiment varies one or two parameters while holding others at baseline.}
+\label{tab:design}
+\begin{tabular}{clll}
+\toprule
+Exp & Parameter swept & Values & Question \\
+\midrule
+E1 & Network size $N$, duration $T$ & $N \in \{8,12,30\}$, $T \in \{100,500,1000\}$ & How does recovery scale? \\
+E2 & Measurement fraction & $33$--$100\%$ & How much observation is needed? \\
+E3 & Stim gain $\times$ measurement & $\sigma \in [0,2]$, meas $\in \{33,66,100\%\}$ & Is there a stim-measurement interaction? \\
+E4 & Method ablation & Chance $\to$ Estimate $\to$ Granger & What does each step add? \\
+E5 & Nonlinearity $\phi$ & tanh, ReLU, identity, sigmoid & How robust to model mismatch? \\
+E6 & Oracle vs.\ approximation & $\sigma \in [0,5]$ & Does the oracle ever win? \\
+E7 & Sensor fraction & $8$--$100\%$ & How many neurons to stimulate? \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Baseline Recovery (E1)}
 
@@ -369,7 +392,14 @@ We vary `num\_sensors' $\in \{1, 2, 4, 8, 12\}$ ($8\%$--$100\%$ of $N=12$) at fi
 Stimulating a single neuron ($8\%$) yields poor recovery (error $0.244$) with high variance across topologies---a single noise direction is insufficient to excite all network modes.
 Adding just one more sensor ($17\%$) halves the error to $0.128$.
 Beyond $33\%$ ($4$ sensors), performance plateaus near $0.10$, indicating that moderate sensor coverage suffices when stimulation gain is adequate.
-The Granger refinement provides the largest relative improvement at low sensor count ($31\%$ at $1$ sensor vs.\ $2\%$ at $4+$ sensors), consistent with its role in cleaning up noisy estimates.
+The Granger refinement provides the largest relative improvement at low sensor count ($31\%$ at $1$ sensor vs.\ $2\%$ at $4+$ sensors), consistent with its role in cleaning up noisy estimates (Figure~\ref{fig:sensors}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{figures/fig9_sensor_fraction.pdf}
+\caption{\textbf{Effect of sensor coverage} on connectivity recovery for $N=12$, $T=900$, $66\%$ measured, stim$=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation (sensor fraction). Stimulating just $1$ neuron ($8\%$) yields high error with large variance; $2$ sensors ($17\%$) halves the error; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=17$). Sensor coverage controls the \emph{rank} of the stimulation covariance, distinct from stimulation intensity (E3).}
+\label{fig:sensors}
+\end{figure}
 
 % ============================================================================
 \section{Related Work}
