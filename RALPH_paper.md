@@ -13,7 +13,7 @@ Produce a NeurIPS-ready paper, a 1-2 slide poster, and a 3-minute lightning talk
 - [ ] All 10 figure captions describe what's shown in detail (axes, colors, key observations)
 - [ ] Paper reads as a coherent story, not a list of experiments
 - [x] 1-2 slide poster created (paper/poster.tex or paper/poster.html)
-- [ ] 3-minute lightning talk script created (paper/lightning_talk.md)
+- [x] 3-minute lightning talk script created (paper/lightning_talk.md)
 - [ ] No broken \ref, no "??" in PDF
 - [ ] No unsupported claims — every assertion has a citation or data reference
 
