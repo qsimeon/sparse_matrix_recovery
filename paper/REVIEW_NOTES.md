@@ -2,9 +2,25 @@
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
-## New Session — Iteration 1 (resumed)
+## New Session — RALPH Paper Loop (fresh)
 
-### Fixed overfull hbox in Table 1 (experimental design)
+### Removed second undefined SPARC reference in E7 (line 414)
+
+**Problem**: Line 414 (Sensor Coverage, E7) said "the number of neurons expressing a light-sensitive channel in a SPARC transgenic line" — but SPARC was never defined, never cited, and was already identified as problematic in a prior iteration (the identical issue at line 493 in the Discussion was fixed, but this second instance in E7 was missed). A neuroscience reviewer would flag this undefined acronym.
+
+**Fix**: Changed "a light-sensitive channel in a SPARC transgenic line" → "a light-sensitive opsin". This is the correct general term for optogenetic proteins and avoids the undefined/misattributed SPARC reference, consistent with the prior fix at line 493.
+
+**Verification**:
+- `grep SPARC paper/main.tex` returns 0 results — all instances removed ✓
+- `grep SPARC paper/poster.tex` and `lightning_talk.md` also clean ✓
+- Recompiled with tectonic — no errors, no overfull hboxes ✓
+- Sentence reads naturally and conveys the same meaning ✓
+
+**Files changed**: `paper/main.tex` (line 414)
+
+---
+
+### (Prior session) Fixed overfull hbox in Table 1 (experimental design)
 
 **Problem**: Table 1 (lines 274-287) was 100.56917pt too wide — a severe layout issue that would cause text to overflow into the margin. The `clll` column format allowed unbounded column widths.
 

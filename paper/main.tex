@@ -411,7 +411,7 @@ This confirms that the linear approximation provides implicit regularization ana
 
 The experiments above hold the number of stimulated neurons (\emph{sensor fraction}) fixed at $33\%$.
 But how many neurons receive stimulation is a distinct experimental knob from how intensely they are stimulated---sensor fraction controls the \emph{rank} of the stimulation covariance, while gain controls its \emph{magnitude}.
-In practice, sensor fraction is determined by the choice of optogenetic tool (e.g., the number of neurons expressing a light-sensitive channel in a SPARC transgenic line).
+In practice, sensor fraction is determined by the choice of optogenetic tool (e.g., the number of neurons expressing a light-sensitive opsin).
 
 We vary the number of sensor neurons $n_s \in \{1, 2, 4, 8, 12\}$ ($8\%$--$100\%$ of $N=12$) at fixed $\sigma=1.0$ and $66\%$ measurement.
 Stimulating a single neuron ($8\%$) yields poor recovery (error $0.244$) with high variance across topologies---a single noise direction is insufficient to excite all network modes.
