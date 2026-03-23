@@ -476,8 +476,8 @@ Our experiments (Section~\ref{sec:experiments}) show that measurement density di
 
 \paragraph{Oracle crossover analysis.}
 We systematically test the implicit regularization hypothesis by comparing the approximate and oracle estimators across stimulation intensities $\sigma \in \{0, 0.1, 0.25, 0.5, 1, 2, 5\}$ for $N=12$, $T=900$ with $\tanh$ nonlinearity and $66\%$ measurement.
-The approximation outperforms the oracle at \emph{every} condition tested: at $\sigma=0.5$ the oracle is $3.7\times$ worse, while at $\sigma=5$ it is $1.5\times$ worse.
-No crossover point exists---the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ consistently exceeds the bias reduction from using the correct nonlinearity, though the gap narrows at extreme stimulation levels where both estimators degrade.
+The approximation outperforms the oracle across all tested conditions: at zero stimulation the oracle is $4.0\times$ worse, at $\sigma=0.5$ it is $2.6\times$ worse, and the gap narrows to $1.4$--$1.6\times$ for $\sigma \geq 1$.
+No crossover point exists---the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ consistently exceeds the bias reduction from using the correct nonlinearity, though the gap narrows at higher stimulation levels where both estimators degrade.
 This confirms that the linear approximation acts as implicit regularization across all operating regimes for saturating nonlinearities.
 
 \paragraph{Error decomposition: CPG correlation dominates.}
