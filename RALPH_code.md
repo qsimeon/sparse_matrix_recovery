@@ -25,6 +25,9 @@ Deep line-by-line review of ALL code. Verify correctness, completeness, clarity.
   - Internal F-numbering (F1–F9) maps correctly to paper fig numbers (fig1–fig10) via generate_all_figures.py
   - Each plot function correctly: loads data, extracts medians + CIs, plots with correct labels/axes/colors
 - [ ] Re-run E1-E7 fresh, compare results to paper claims (flag ANY discrepancy)
+  - Data verified against paper claims: E4 est=0.101/grn=0.096/chance=0.53/recall=1.0 ✓, E5 tanh=0.095/relu=0.19/identity=0.19/sigmoid=0.14 ✓, E7 1sensor=0.30/4+=0.10 ✓, E6 oracle always worse ✓
+  - Fixed: joblib workers had non-deterministic random state — added per-worker seeding for exact reproducibility
+  - Re-run needed with fixed code to regenerate deterministic results (old results used non-deterministic parallelism)
 - [ ] Regenerate all figures, visually inspect each one (read the PDFs!)
 - [x] Execute all 3 notebooks end-to-end, verify they produce sensible output
   - explore_dynamics.ipynb: 9 code cells, 8 figures, 0 errors — demonstrates topology generation, CPG dynamics, chaotic reservoir, stimulation tradeoff
