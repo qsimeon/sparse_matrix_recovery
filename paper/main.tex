@@ -613,14 +613,16 @@ For random measurement with per-neuron observation probability $p$, a union boun
 \subsection{Why the Oracle Can Be Worse: Bias-Variance Analysis}
 \label{sec:app_oracle}
 
-The oracle estimator $\hat{W}_{\text{oracle}} = (\Sigma_{x_{t+1},x} - \Sigma_{b,x}) \Sigma_{\phi(x),x}^{-1}$ uses the true nonlinearity $\phi$ and input statistics.
+The oracle estimator $\hat{W}_{\text{oracle}} = (\hat{\Sigma}_{x_{t+1},x} - \hat{\Sigma}_{b,x}) \hat{\Sigma}_{\phi(x),x}^{-1}$ uses the true nonlinearity $\phi$ and input statistics, where hats denote finite-sample estimates.
+With infinite data, the oracle recovers $W$ exactly; in practice, the finite-sample estimation error $E_{\text{samp}} = \hat{\Sigma}_{x_{t+1},x} - \Sigma_{x_{t+1},x}$ is amplified by the covariance inversion, and more so when the inverted matrix is ill-conditioned.
 By the Stein--Price identity, $\Sigma_{\phi(x),x} = D \Sigma_{x,x}$ where $D = \text{diag}(\mathbb{E}[\text{sech}^2(x_i)])$ with $0 < d_i < 1$.
-This makes $\Sigma_{\phi(x),x}$ a \emph{row-compressed} version of $\Sigma_{x,x}$, with potentially worse conditioning.
-The crossover condition for the approximation to outperform the oracle is:
+This makes $\Sigma_{\phi(x),x}$ a \emph{row-compressed} version of $\Sigma_{x,x}$, with potentially worse conditioning: $\kappa(\Sigma_{\phi(x),x}) \leq \kappa(\Sigma_{x,x}) \cdot d_{\max}/d_{\min}$.
+Defining $\Delta = D - I$ (the linearization error; each diagonal entry satisfies $-1 < \Delta_{ii} < 0$), the approximation outperforms the oracle when its bias is smaller than the oracle's excess variance:
 \begin{equation}
-    \|W\|_F \|\Delta\|_2 + \|\Sigma_{b,x}\|_F \|\Sigma_{x,x}^{-1}\|_2 < \|\Sigma_{\varepsilon,x}\|_F \big(\|\Sigma_{\phi(x),x}^{-1}\|_2 - \|\Sigma_{x,x}^{-1}\|_2\big)
+    \underbrace{\|W\|_F \|\Delta\|_2 + \|\Sigma_{b,x}\|_F \|\Sigma_{x,x}^{-1}\|_2}_{\text{approximation bias}} < \underbrace{\|E_{\text{samp}}\|_F \big(\|\Sigma_{\phi(x),x}^{-1}\|_2 - \|\Sigma_{x,x}^{-1}\|_2\big)}_{\text{oracle excess variance}}
 \end{equation}
-The left side is the approximation's bias; the right side is the oracle's excess variance amplification.
+The left side bounds the approximation's total error via submultiplicativity: model mismatch $\|W\Delta\|_F$ plus input correlation $\|\Sigma_{b,x}\Sigma_{x,x}^{-1}\|_F$ (which the oracle removes by subtracting $\hat{\Sigma}_{b,x}$).
+The right side captures how the same finite-sample noise $E_{\text{samp}}$ is amplified \emph{more} through the oracle's worse-conditioned $\Sigma_{\phi(x),x}^{-1}$ than through the approximation's $\Sigma_{x,x}^{-1}$.
 When state variances are heterogeneous across neurons (common in biological networks), $d_{\max}/d_{\min}$ can be large, making the oracle unstable.
 This is a concrete instance of the bias-variance tradeoff: like ridge regression or James--Stein shrinkage, a biased estimator with lower variance can achieve better total risk.
 

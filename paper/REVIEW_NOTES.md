@@ -1,10 +1,34 @@
-# Paper Review Notes — Iteration 43 (RALPH iter 12)
+# Paper Review Notes — Iteration 44 (RALPH iter 13)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed two factual inaccuracies in experimental setup and fig3 caption
+### Fixed undefined variables in Appendix A.3 crossover equation
+
+**Problem**: The bias-variance crossover condition in Appendix A.3 (line 621) contained two undefined symbols:
+1. $\Delta$ — used in $\|W\|_F \|\Delta\|_2$ but never defined
+2. $\Sigma_{\varepsilon,x}$ — used on the right side but never introduced
+
+A reviewer following the `\ref{sec:app_oracle}` links from Section 4.6 or the Discussion would immediately flag these undefined quantities. Additionally, the oracle estimator was written with population covariances, obscuring the key insight: the oracle is exact with infinite data, and its disadvantage comes from finite-sample noise amplification through the worse-conditioned $\Sigma_{\phi(x),x}^{-1}$.
+
+**Fixes**:
+1. Defined $\Delta = D - I$ explicitly, with note that $-1 < \Delta_{ii} < 0$
+2. Replaced undefined $\Sigma_{\varepsilon,x}$ with $E_{\text{samp}} = \hat{\Sigma}_{x_{t+1},x} - \Sigma_{x_{t+1},x}$ (the finite-sample estimation error in the cross-covariance)
+3. Added hats to oracle estimator definition to distinguish finite-sample from population quantities
+4. Added `\underbrace` labels to the equation: "approximation bias" vs. "oracle excess variance"
+5. Added condition number bound: $\kappa(\Sigma_{\phi(x),x}) \leq \kappa(\Sigma_{x,x}) \cdot d_{\max}/d_{\min}$
+6. Added explanatory sentences after the equation connecting each side to the quantities being bounded
+
+**Verification**:
+- $\Delta = D - I$ with $0 < d_i < 1$ gives $-1 < \Delta_{ii} < 0$ ✓
+- $\kappa(D\Sigma_{x,x}) \leq (d_{\max}/d_{\min})\kappa(\Sigma_{x,x})$ by submultiplicativity ✓
+- Consistent with Discussion (line 473-474) which already uses $D$, $d_{\max}/d_{\min}$, and the same condition number bound ✓
+- Consistent with Eq. (8) and A.1 notation ($D'$ in those sections, $D$ in Discussion/A.3 — existing inconsistency not introduced by this fix)
+
+**Files changed**: `paper/main.tex` (lines 616-627, Appendix A.3)
+
+### Previous: Fixed two factual inaccuracies in experimental setup and fig3 caption
 
 **Problem 1**: Line 267 claimed "15--30 repetitions" but no experiment uses 15 topologies. Actual range: E1-E3, E5-E7 use 17; E4 uses 30.
 
@@ -279,6 +303,7 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] E3 numbers match JSON data: σ=0 at 100% meas → 0.4506 (paper: 0.45), σ=0.5 → 0.0926 (paper: ~0.09), 4.87× ratio (paper: ~5×)
 - [x] Repetitions range: "17--30" matches actual data (17 for E1-E3/E5-E7, 30 for E4); was incorrectly "15--30"
 - [x] Fig3 caption: "Error generally decreases with T and N" — accurate hedge, with discretization explanation for T=100 non-monotonicity (N=12 gets 7/12=58% measured, worse than N=8 at 5/8=62.5%)
+- [x] Appendix A.3 crossover equation: all variables now defined ($\Delta = D-I$, $E_{\text{samp}}$); oracle uses finite-sample hats; \underbrace labels added; condition number bound included
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
