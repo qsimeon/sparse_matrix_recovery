@@ -1,8 +1,26 @@
-# Paper Review Notes — Iteration 49 (RALPH iter 18)
+# Paper Review Notes — Iteration 50 (RALPH iter 19)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
+
+### Fixed misattributed SPARC/Ahrens citation in Discussion (line 493)
+
+**Problem**: Line 493 said "in optogenetic experiments (e.g., using SPARC transgenic lines \citep{ahrens2013whole})" — but Ahrens et al. 2013 ("Whole-brain functional imaging at cellular resolution using light-sheet microscopy", Nature Methods) is about **light-sheet calcium imaging**, not SPARC optogenetics. SPARC (Specific Photoactivatable Recombinase for Cell-type-specific labeling) is an entirely different technology developed by other groups. A zebrafish neuroscience reviewer would immediately catch this misattribution: citing an imaging paper as evidence for an optogenetic stimulation technique undermines the paper's neuroscience credibility.
+
+**Fix**: Removed the incorrect SPARC reference and misplaced citation, replacing with a general statement:
+- Old: "in optogenetic experiments (e.g., using SPARC transgenic lines \citep{ahrens2013whole}), an experimenter need not achieve pan-neuronal actuator expression"
+- New: "in optogenetic experiments on small circuits, an experimenter need not achieve pan-neuronal actuator expression"
+
+**Verification**:
+- Ahrens 2013 still cited once at line 49 for "larval zebrafish" (correct usage: general model system reference) ✓
+- No orphaned bib entries: all 20 references still cited in main.tex ✓
+- Sentence reads naturally without the parenthetical, and the practical implication is unchanged ✓
+- No other misattributed citations found in the paper ✓
+
+**Files changed**: `paper/main.tex` (line 493)
+
+### Previous Changes
 
 ### Fixed unreferenced Figure 2 (pipeline diagram)
 
