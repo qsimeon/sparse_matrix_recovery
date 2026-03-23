@@ -1,10 +1,24 @@
-# Paper Review Notes — Iteration 41 (RALPH iter 14)
+# Paper Review Notes — Iteration 42 (RALPH iter 15)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed unsupported CPG downweighting claim and labeled noise numbers as preliminary
+### Clarified Table 2 "Improvement" column (was ambiguous)
+
+**Problem**: Table 2's column header said "Improvement" without defining what it measured. The column shows the relative reduction from Estimate to Granger-refined (3–42%), but the surrounding text repeatedly uses "improvement over chance" (82% on line 333, 91% on line 296), which gives much larger numbers. A reviewer seeing "91% improvement over chance" in the text but only "10%" in the table's Improvement column for the same row (N=30, T=1000) would be immediately confused.
+
+**Fix**:
+1. Renamed column header from "Improvement" to "Gr. Improv." (making clear it's about the Granger step)
+2. Added definition to caption: "Gr. Improv. is the relative reduction from Estimate to Granger: $(E_{\text{est}} - E_{\text{gr}}) / E_{\text{est}}$."
+
+**Verification**: All 9 improvement percentages re-verified against the Estimate and Granger columns:
+- (0.172−0.156)/0.172 = 9.3% → 9% ✓ (and 8 more rows, all match within rounding)
+- E3 in-text numbers also verified against E3_stimulation.json: σ=0 at 100% meas → 0.4506 (paper: 0.45 ✓), σ=0.5 → 0.0926 (paper: ~0.09 ✓), ratio 4.87× (paper: ~5× ✓)
+
+**Files changed**: `paper/main.tex` (lines 300, 304)
+
+### Previous: Fixed unsupported CPG downweighting claim and labeled noise numbers as preliminary
 
 **Problem**: Line 518 claimed "Downweighting detected CPG nodes in the covariance accumulation yields an additional $10\%$ improvement beyond Granger refinement alone (Figure~\ref{fig:dynamics})." This was the weakest point in the paper for three reasons:
 1. No panel in fig8 shows CPG downweighting results (the figure reference was misleading)
@@ -243,6 +257,8 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] Unsupported CPG downweighting claim (10% improvement) removed — converted to future work suggestion; no code or data backed the claim
 - [x] Noise robustness numbers (7%, 37%) labeled as "preliminary" in both Discussion and Limitations, matching the absence of a formal noise experiment
 - [x] All \label and \ref cross-references verified: 30 labels, all referenced targets exist, no orphan refs
+- [x] Table 2 "Improvement" column: renamed to "Gr. Improv." with explicit formula in caption; no longer ambiguous vs. text's "improvement over chance"
+- [x] E3 numbers match JSON data: σ=0 at 100% meas → 0.4506 (paper: 0.45), σ=0.5 → 0.0926 (paper: ~0.09), 4.87× ratio (paper: ~5×)
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
