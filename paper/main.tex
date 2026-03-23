@@ -34,7 +34,7 @@ A Covariance-Based Approach with Granger-Causality Refinement}
 \begin{abstract}
 Inferring the connectivity of neural circuits from incomplete observations is a fundamental challenge in neuroscience.
 We present a covariance-based method for recovering the weight matrix of a recurrent neural network from partial measurements across multiple recording sessions, accumulating pairwise covariance estimates from sessions with overlapping neuron subsets.
-A Granger-causality refinement step enforces biological constraints via projected gradient descent, achieving $r = 0.91$ correlation with true connectivity and $82\%$ improvement over chance using only $67\%$ neuron coverage per session.
+A Granger-causality refinement step enforces biological constraints via projected gradient descent, achieving $r = 0.91$ correlation with true connectivity and $82\%$ improvement over chance using only $66\%$ neuron coverage per session.
 Through systematic experiments on synthetic networks modeling small brain circuits, we characterize a fundamental \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
 We discover that the ``incorrect'' linear approximation acts as implicit regularization---matching or outperforming the oracle estimator with known nonlinearity at all tested regimes---a concrete instance of James--Stein shrinkage.
 Error decomposition reveals that correlation from central pattern generators, not model mismatch, is the dominant error bottleneck ($3.4\times$ larger), identifying intrinsic dynamics modeling as the key target for further improvement.
@@ -261,8 +261,8 @@ We generate synthetic networks modeling small brain circuits:
 Each node in the network is characterized by three (non-exclusive) Boolean roles: whether it is a \emph{CPG node} (receives autonomous intrinsic drive), a \emph{sensor node} (receives extrinsic stimulation), and a \emph{measured node} (its activity is recorded).
 These roles are assigned randomly per session, modeling the experimental reality that different recording sessions observe and stimulate different neuron subsets.
 
-Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=12$, $T=900$, 8 measured neurons, 4 sensors, 4 CPG nodes, stim$=1.0$, $\phi=\tanh$).
-Since $N=12$, converting fractions to integer neuron counts introduces discretization: the baseline uses $8/12 \approx 67\%$ measured, $4/12 \approx 33\%$ sensors and CPGs.
+Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=12$, $T=900$, 8 measured neurons, 4 sensors, 4 CPG nodes, $\sigma=1.0$, $\phi=\tanh$).
+Since $N=12$, converting fractions to integer neuron counts introduces discretization: the baseline uses $8/12 \approx 66\%$ measured, $4/12 \approx 33\%$ sensors and CPGs.
 In sweep experiments (E2, E3), we report the target fraction (e.g., ``$33\%$'') while noting that the actual count $\lfloor p \cdot N \rfloor$ may differ slightly (e.g., $\lfloor 0.33 \times 12 \rfloor = 3$ neurons $= 25\%$).
 Each experiment uses 15--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib.
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
@@ -336,7 +336,7 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, stim$=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error (estimate already has diagonal zeroed) reduced from $0.098$ to $0.095$ with Granger, (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.533$) to Granger-refined ($0.095$), an $82\%$ total improvement.}
+\caption{\textbf{Effect of Granger-causality refinement} ($N=12$, $66\%$ measured, $\sigma=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 30 random topologies: (E)~Frobenius error (estimate already has diagonal zeroed) reduced from $0.098$ to $0.095$ with Granger, (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Ablation: each step adds knowledge, from chance ($0.533$) to Granger-refined ($0.095$), an $82\%$ total improvement.}
 \label{fig:granger}
 \end{figure}
 
@@ -376,7 +376,7 @@ The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:
 
 \subsection{Nonlinearity Robustness (E5)}
 
-We test four nonlinearities at $N=12$ with $66\%$ measurement and $\text{stim}=1.0$.
+We test four nonlinearities at $N=12$ with $66\%$ measurement and $\sigma=1.0$.
 Surprisingly, $\tanh$ yields the \emph{best} recovery (Granger error $0.095$), while identity and ReLU---for which the linear approximation is exact---perform worse (error $\sim 0.19$).
 This occurs because $\tanh$ \emph{bounds} the state values (std $\sim 0.8$, $\kappa(\Sigma) \approx 19$), while unbounded nonlinearities allow state drift (identity: std $\sim 40$, $\kappa(\Sigma) \approx 700$), severely degrading the conditioning of $\Sigma_{x,x}$.
 Sigmoid achieves intermediate error ($0.14$): its boundedness helps conditioning relative to identity and ReLU, but its non-zero mean ($\phi(0) = 0.5$) biases the covariance estimate.
@@ -412,7 +412,7 @@ The experiments above hold the number of stimulated neurons (\emph{sensor fracti
 But how many neurons receive stimulation is a distinct experimental knob from how intensely they are stimulated---sensor fraction controls the \emph{rank} of the stimulation covariance, while gain controls its \emph{magnitude}.
 In practice, sensor fraction is determined by the choice of optogenetic tool (e.g., the number of neurons expressing a light-sensitive channel in a SPARC transgenic line).
 
-We vary `num\_sensors' $\in \{1, 2, 4, 8, 12\}$ ($8\%$--$100\%$ of $N=12$) at fixed stim$=1.0$ and $66\%$ measurement.
+We vary the number of sensor neurons $n_s \in \{1, 2, 4, 8, 12\}$ ($8\%$--$100\%$ of $N=12$) at fixed $\sigma=1.0$ and $66\%$ measurement.
 Stimulating a single neuron ($8\%$) yields poor recovery (error $0.244$) with high variance across topologies---a single noise direction is insufficient to excite all network modes.
 Adding just one more sensor ($17\%$) halves the error to $0.128$.
 Beyond $33\%$ ($4$ sensors), performance plateaus near $0.10$, indicating that moderate sensor coverage suffices when stimulation gain is adequate.
@@ -421,7 +421,7 @@ The Granger refinement provides the largest relative improvement at low sensor c
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\linewidth]{figures/fig9_sensor_fraction.pdf}
-\caption{\textbf{Effect of sensor coverage} on connectivity recovery for $N=12$, $T=900$, $66\%$ measured, stim$=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation (sensor fraction). Stimulating just $1$ neuron ($8\%$) yields high error with large variance; $2$ sensors ($17\%$) halves the error; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=17$). Sensor coverage controls the \emph{rank} of the stimulation covariance, distinct from stimulation intensity (E3).}
+\caption{\textbf{Effect of sensor coverage} on connectivity recovery for $N=12$, $T=900$, $66\%$ measured, $\sigma=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation (sensor fraction). Stimulating just $1$ neuron ($8\%$) yields high error with large variance; $2$ sensors ($17\%$) halves the error; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=17$). Sensor coverage controls the \emph{rank} of the stimulation covariance, distinct from stimulation intensity (E3).}
 \label{fig:sensors}
 \end{figure}
 
@@ -515,14 +515,14 @@ The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ is only partially j
 The extrinsic stimulation is truly independent ($\text{Cov}(\text{stim}_t, x_t) = 0$ by construction), but the CPG drive depends on the current state through $\text{cpg}(x_t)$, so $\text{Cov}(\text{cpg}_t, x_t) \neq 0$.
 Quantitatively, $\|E_2\|_F$ (input correlation) is $3.4\times$ larger than $\|E_1\|_F$ (model mismatch), making CPG correlation the \emph{dominant} error source---not the linear approximation (Figure~\ref{fig:dynamics}H).
 CPG nodes can be partially identified from data: they exhibit higher activity variance than non-CPG nodes, enabling detection via a simple variance threshold (F1 score $\sim 0.8$).
-Downweighting detected CPG nodes in the covariance accumulation yields an additional $10\%$ improvement beyond Granger refinement alone (Figure~\ref{fig:dynamics}).
+This suggests a natural extension: downweighting detected CPG nodes during covariance accumulation could mitigate the dominant error source, a direction we leave to future work.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig8_dynamics.pdf}
 \caption{\textbf{Network dynamics, CPG detection, and error decomposition} ($N{=}12$, $\phi{=}\tanh$, $\rho(W){=}1.0$).
-\textbf{(A)} Activity time series under \emph{autonomous} dynamics (stim${}=0$): each trace is one neuron's activity $x_i(t)$ over 200 timesteps. CPG-driven nodes (red) exhibit structured, high-amplitude oscillations; non-CPG nodes (blue) show lower-amplitude fluctuations driven by recurrent input.
-\textbf{(B)} Same network under \emph{stimulated} dynamics (stim${}=1.0$, i.i.d.\ Gaussian per sensor node per timestep): extrinsic noise elevates overall variance across all nodes while preserving CPG structure.
+\textbf{(A)} Activity time series under \emph{autonomous} dynamics ($\sigma=0$): each trace is one neuron's activity $x_i(t)$ over 200 timesteps. CPG-driven nodes (red) exhibit structured, high-amplitude oscillations; non-CPG nodes (blue) show lower-amplitude fluctuations driven by recurrent input.
+\textbf{(B)} Same network under \emph{stimulated} dynamics ($\sigma=1.0$, i.i.d.\ Gaussian per sensor node per timestep): extrinsic noise elevates overall variance across all nodes while preserving CPG structure.
 \textbf{(C)} Intrinsic CPG drive signals $b_{\mathrm{CPG},i}(t)$ for 4 CPG nodes, generated by a chaotic reservoir network. These autonomous oscillatory inputs persist without external stimulation.
 \textbf{(D)} PCA phase portrait of autonomous dynamics: scatter of the first 3 principal components of $X \in \mathbb{R}^{T \times N}$, colored by time (dark$\to$light). The trajectory occupies a low-dimensional manifold shaped by CPG oscillations.
 \textbf{(E)} PCA phase portrait under stimulation: the trajectory fills a larger volume in PC space, indicating that stochastic input excites network modes beyond those driven by CPGs---this expanded coverage is what enables covariance-based estimation.
@@ -535,7 +535,7 @@ Downweighting detected CPG nodes in the covariance accumulation yields an additi
 
 \paragraph{Robustness to measurement noise.}
 When observation noise is present, Eq.~\eqref{eq:estimator} shows that the estimator becomes ridge-regularized: $\hat{W} = W\Sigma_{x,x}(\Sigma_{x,x} + \sigma_\epsilon^2 I)^{-1}$, which shrinks estimates toward zero.
-Empirically (averaged over 10 topologies), at $\sigma_\epsilon = 0.1$ (relative to state std $\sim 0.8$) the Granger-refined error increases by $\sim 7\%$, and at $\sigma_\epsilon = 0.5$ by $\sim 37\%$.
+In preliminary tests (10 topologies, baseline configuration), at $\sigma_\epsilon = 0.1$ (relative to state std $\sim 0.8$) the Granger-refined error increases by $\sim 7\%$, and at $\sigma_\epsilon = 0.5$ by $\sim 37\%$.
 The graceful degradation follows from the ridge structure: noise regularizes the inversion rather than corrupting it catastrophically.
 
 \paragraph{Limitations.}
