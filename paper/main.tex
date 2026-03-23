@@ -387,10 +387,17 @@ The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:
 A central theoretical prediction of our framework (Section~\ref{sec:app_oracle}) is that the ``incorrect'' linear approximation $\hat{W} = \Sigma_{x_{t+1},x_t}\Sigma_{x_t,x_t}^{-1}$ can outperform the oracle estimator $\hat{W}_{\mathrm{oracle}} = \Sigma_{x_{t+1},x}\Sigma_{\phi(x),x}^{-1}$ that uses the true nonlinearity $\phi$.
 We test this by comparing both estimators across stimulation intensities $\sigma \in \{0, 0.1, 0.25, 0.5, 1, 2, 5\}$ for $N=12$, $T=900$ with $\tanh$ nonlinearity, $66\%$ measurement, and 17 topologies.
 
-The approximation outperforms the oracle at \emph{every} tested stimulation level.
+The approximation outperforms or matches the oracle at every tested stimulation level (Figure~\ref{fig:oracle}).
 At zero stimulation, the oracle error is $4.0\times$ larger; at $\sigma = 0.5$ it is $2.6\times$ larger; and the gap narrows to $1.4$--$1.6\times$ for $\sigma \geq 1$.
 No crossover point exists---the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ consistently exceeds the bias reduction from using the correct nonlinearity.
 This confirms that the linear approximation provides implicit regularization analogous to ridge regression (see Discussion, Section~\ref{sec:discussion}, and Appendix~\ref{sec:app_oracle} for the bias-variance analysis).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{figures/fig10_oracle_comparison.pdf}
+\caption{\textbf{Oracle vs.\ approximation comparison} across stimulation intensities ($N=12$, $T=900$, $66\%$ measured, $\tanh$, 17 topologies $\times$ 50 instances). \textbf{(A)} Median recovery error (log scale) for the oracle estimator using the true nonlinearity (red), the linear approximation (blue), and the Granger-refined approximation (green). Shaded: 95\% bootstrap CI. Dots: individual topologies. The approximation matches or outperforms the oracle at every $\sigma$, with the largest gap at $\sigma=0$ ($4.0\times$). \textbf{(B)} Oracle penalty factor (ratio of oracle to approximation error). The oracle never achieves lower error than the approximation, confirming the implicit regularization effect predicted by the bias-variance analysis (Appendix~\ref{sec:app_oracle}).}
+\label{fig:oracle}
+\end{figure}
 
 \subsection{Sensor Coverage (E7)}
 

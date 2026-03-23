@@ -1,10 +1,28 @@
-# Paper Review Notes — Iteration 33 (RALPH iter 6)
+# Paper Review Notes — Iteration 34 (RALPH iter 7)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed E2 (Measurement Sparsity) numerical discrepancies in text and caption
+### Added missing E6 (Oracle vs. Approximation) figure
+
+**Problem**: E6 was the only experiment without a figure. All other experiments (E1-E5, E7) had dedicated figures, but E6 — one of the paper's three key findings (implicit regularization / James-Stein phenomenon) — was text-only. A reviewer would expect visual evidence for such a central claim.
+
+**Fix**: Created `fig10_oracle_comparison.pdf` with two panels:
+- **(A)** Recovery error vs. stimulation gain (log scale) for oracle, approximation, and Granger-refined estimators with bootstrap CIs and individual topology dots
+- **(B)** Oracle penalty factor (ratio) showing the oracle is 1.0-4.0× worse across all σ
+
+Added `\includegraphics` and full caption to §4.6 (E6 subsection) with `\label{fig:oracle}` and `\ref{fig:oracle}` in the text.
+
+Also softened "outperforms at every" → "outperforms or matches at every" since at σ=0.1 the median ratio is 1.0× (oracle 1.000 vs. approx 1.006 — within noise).
+
+**Verification**:
+- Figure numbers match paper text: 4.0× at σ=0, 2.6× at σ=0.5, 1.4-1.6× for σ≥1 ✓
+- Figure style matches other paper figures (same color palette, spines, grid, bootstrap CIs) ✓
+- Cross-references: `\ref{fig:oracle}` in text, `\label{fig:oracle}` in figure ✓
+- Script: `scripts/generate_fig10_oracle.py` for reproducibility ✓
+
+### Previous iteration: Fixed E2 (Measurement Sparsity) numerical discrepancies in text and caption
 
 **Problem**: The E2 section text and fig6 caption reported incorrect numbers for the 33% measurement condition. The text claimed raw estimate = 0.592 and Granger = 0.307 (48% improvement), but the actual data (E2_sparsity.json medians) gives 0.477 and 0.270 (43% improvement). These stale numbers likely came from a previous experimental run and were not updated when figures were regenerated on 2026-03-22. A reviewer cross-checking the figure against the text would immediately spot this — the blue dot at 33% is clearly around 0.48 in the figure, not 0.59.
 
@@ -74,12 +92,13 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] Fig8 caption numbers now match figure bars (0.081, 0.276, 0.097)
 - [x] Granger improvement: ~5% matches data (mean 5.2%, median 4.8%)
 - [x] 19/19 citations verified
-- [x] All 9 figures from fresh data (2026-03-22)
+- [x] All 10 figures from fresh data (2026-03-22/23): fig1-fig9 + fig10 (E6 oracle)
 - [x] GPT-5.4 math verification: all 5 claims correct
 - [x] Section 2.1 fully motivates design choices
 - [x] E7 Discussion paragraph integrates sensor coverage findings
 - [x] Figures visually inspected: fig1, fig3, fig4, fig5, fig8, fig9 — all publication quality
 - [x] Figures visually inspected: fig2, fig6, fig7 — all publication quality (iter 6). All 9/9 complete.
+- [x] Fig10 (E6 oracle) visually inspected — publication quality, numbers match text (iter 7)
 - [x] E2 numbers match JSON data: 0.477 (raw at 33%), 0.270 (Granger at 33%), 0.095 (Granger at 100%), 43% improvement
 
 ## Remaining Items to Check
