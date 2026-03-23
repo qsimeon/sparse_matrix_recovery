@@ -319,7 +319,7 @@ $N$ & $T$ & Chance & Estimate & Granger & Improvement \\
 \subsection{Granger Refinement (E4)}
 
 We evaluate the Granger-causality refinement step on $N=12$ networks with $T=900$, $66\%$ measurement, and 30 repetitions.
-After enforcing the no-autapse prior ($W_{ii} = 0$, a known structural constraint applied to the raw estimate), the Granger refinement further reduces error by an additional $\sim 6\%$.
+After enforcing the no-autapse prior ($W_{ii} = 0$, a known structural constraint applied to the raw estimate), the Granger refinement further reduces error by an additional $\sim 5\%$.
 
 Importantly, the refinement achieves \emph{perfect recall} (median $= 1.0$): all true edges in $W$ are preserved.
 Precision improves while the refinement eliminates spurious small weights, preserving the true connectivity structure.
@@ -457,7 +457,7 @@ The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditione
 
 \paragraph{Granger refinement is consistently beneficial.}
 The no-autapse constraint ($W_{ii} = 0$), applied as a known structural prior before any refinement, accounts for the majority of the improvement over the raw estimate (the diagonal is dominated by autocorrelation, $3$--$4\times$ larger than off-diagonal entries).
-The projected gradient refinement provides an additional $\sim 6\%$ improvement and achieves perfect recall of true edges.
+The projected gradient refinement provides an additional $\sim 5\%$ improvement and achieves perfect recall of true edges.
 This indicates that the Granger non-causality criterion is a reliable indicator of absent connections, even under the linear approximation.
 
 \paragraph{Connection to neuroscience experiments.}
@@ -493,7 +493,7 @@ The practical implication is that experimentalists need not characterize the pre
 \paragraph{Error decomposition: CPG correlation dominates.}
 The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ is only partially justified.
 The extrinsic stimulation is truly independent ($\text{Cov}(\text{stim}_t, x_t) = 0$ by construction), but the CPG drive depends on the current state through $\text{cpg}(x_t)$, so $\text{Cov}(\text{cpg}_t, x_t) \neq 0$.
-Quantitatively, $\|E_2\|_F$ (input correlation) is $3.3\times$ larger than $\|E_1\|_F$ (model mismatch), making CPG correlation the \emph{dominant} error source---not the linear approximation (Figure~\ref{fig:dynamics}H).
+Quantitatively, $\|E_2\|_F$ (input correlation) is $3.4\times$ larger than $\|E_1\|_F$ (model mismatch), making CPG correlation the \emph{dominant} error source---not the linear approximation (Figure~\ref{fig:dynamics}H).
 CPG nodes can be partially identified from data: they exhibit higher activity variance than non-CPG nodes, enabling detection via a simple variance threshold (F1 score $\sim 0.8$).
 Downweighting detected CPG nodes in the covariance accumulation yields an additional $10\%$ improvement beyond Granger refinement alone (Figure~\ref{fig:dynamics}).
 
@@ -508,7 +508,7 @@ Downweighting detected CPG nodes in the covariance accumulation yields an additi
 \textbf{(E)} PCA phase portrait under stimulation: the trajectory fills a larger volume in PC space, indicating that stochastic input excites network modes beyond those driven by CPGs---this expanded coverage is what enables covariance-based estimation.
 \textbf{(F)} Power spectral density (Welch's method) of neural activity, averaged across neurons. Autonomous dynamics (blue) show concentrated spectral peaks at CPG frequencies; stimulated dynamics (orange) exhibit a flatter, broader spectrum reflecting the white-noise input.
 \textbf{(G)} Per-node activity variance (bar chart, sorted). CPG nodes (red) have systematically higher variance than non-CPG nodes (blue), enabling detection via a variance threshold (F1$\sim$0.8).
-\textbf{(H)} Error decomposition: $\|E_1\|_F/N$ (model mismatch, $0.082$) vs.\ $\|E_2\|_F/N$ (CPG--state correlation, $0.272$) vs.\ total estimation error $\|\hat{W} - W\|_F/N$ ($0.100$). $E_1$ and $E_2$ are Frobenius norms of the \emph{individual error components} (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel in different matrix entries.  $E_2$ is $3.3\times$ larger than $E_1$, confirming that CPG correlation---not the linear approximation---is the dominant error source.
+\textbf{(H)} Error decomposition: $\|E_1\|_F/N$ (model mismatch, $0.081$) vs.\ $\|E_2\|_F/N$ (CPG--state correlation, $0.276$) vs.\ total estimation error $\|\hat{W} - W\|_F/N$ ($0.097$). $E_1$ and $E_2$ are Frobenius norms of the \emph{individual error components} (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel in different matrix entries.  $E_2$ is $3.4\times$ larger than $E_1$, confirming that CPG correlation---not the linear approximation---is the dominant error source.
 \textbf{(I)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical). Pearson $r = 0.91$; dashed line: $y=x$.}
 \label{fig:dynamics}
 \end{figure}
@@ -541,7 +541,7 @@ First, a fundamental \emph{control-estimation tradeoff} governs experimental des
 The optimal operating regime---moderate stimulation gain ($\sigma \approx 0.5$--$1.0$) applied to a modest subset of neurons ($\sim 33\%$ sensor coverage)---defines a practical target for optogenetic experimental protocols.
 Second, the ``incorrect'' linear approximation outperforms the oracle estimator with known nonlinearity at \emph{all} tested regimes, a concrete instance of the James--Stein phenomenon where implicit regularization reduces total risk.
 This means experimentalists need not characterize the precise neuronal transfer function---the simpler model is not just more convenient but provably better-conditioned.
-Third, error decomposition reveals that CPG--state correlation ($3.3\times$ larger than model mismatch) is the dominant bottleneck, suggesting that future gains will come from modeling intrinsic dynamics rather than refining the nonlinear approximation.
+Third, error decomposition reveals that CPG--state correlation ($3.4\times$ larger than model mismatch) is the dominant bottleneck, suggesting that future gains will come from modeling intrinsic dynamics rather than refining the nonlinear approximation.
 
 Several directions merit future investigation.
 Extending the framework to real neural recordings---particularly \textit{C.~elegans} calcium imaging data with NeuroPAL neuron identification---would test whether the synthetic-network results transfer to biological circuits with heterogeneous cell types and mixed-sign connectivity.
