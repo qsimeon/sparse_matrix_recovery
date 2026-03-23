@@ -1,10 +1,29 @@
-# Paper Review Notes — Iteration 38 (RALPH iter 11)
+# Paper Review Notes — Iteration 39 (RALPH iter 12)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Strengthened Abstract: added concrete numbers and CPG dominance finding
+### Fixed Table 2 (E1 baseline): added missing T=500 rows
+
+**Problem**: The text (line 293) claims "Table 2 shows recovery error across network sizes $N \in \{8, 12, 30\}$ and recording durations $T \in \{100, 500, 1000\}$" — but the table only contained 6 rows (T=100 and T=1000 for each N). The T=500 data existed in `E1_baseline.json` (all 9 conditions present) but was never included in the table. A reviewer cross-checking the text against the table would immediately notice the missing rows.
+
+**Fix**: Added 3 rows for T=500 to Table 2:
+- N=8, T=500: Chance=0.540, Estimate=0.143, Granger=0.134, Improvement=6%
+- N=12, T=500: Chance=0.542, Estimate=0.109, Granger=0.100, Improvement=8%
+- N=30, T=500: Chance=0.561, Estimate=0.063, Granger=0.054, Improvement=13%
+
+Table now has 9 rows (3 N × 3 T), matching the text and the figure (fig3), which already plotted all three T values.
+
+**Verification**: All 9 rows verified against `E1_baseline.json` medians:
+- Chance, Estimate, Granger columns match median values at 3-decimal precision
+- Improvement percentages match (Estimate→Granger improvement, floor-rounded)
+- Best result claim (N=30, T=1000, 0.053, 91% over chance) unchanged ✓
+- Text range "$0.06$--$0.26$" for estimate errors still correct (actual range 0.059–0.263) ✓
+
+**Files changed**: `paper/main.tex` (Table 2, lines 306-314)
+
+### Previous iteration: Strengthened Abstract: added concrete numbers and CPG dominance finding
 
 **Problem**: The abstract was the weakest part of an otherwise polished paper. It lacked concrete performance numbers (r=0.91, 82% improvement over chance) and omitted the CPG dominance finding — one of the paper's three key results highlighted in the Conclusion. Reviewers read the abstract first, and missing headline numbers weakens the first impression. The Conclusion enumerates three key findings (control-estimation tradeoff, implicit regularization, CPG dominance), but the abstract only mentioned the first two.
 
@@ -167,6 +186,7 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] E2 numbers match JSON data: 0.477 (raw at 33%), 0.270 (Granger at 33%), 0.095 (Granger at 100%), 43% improvement
 - [x] E5 numbers now match JSON data: tanh=0.095, sigmoid=0.143, identity=0.190, ReLU=0.190; ranking corrected in text
 - [x] E5 sigmoid ranking: correctly described as "intermediate" (2nd best), not "worst"
+- [x] Table 2 (E1 baseline): all 9 rows (3N × 3T) now present, matching text claim of T ∈ {100, 500, 1000}; all values verified against E1_baseline.json
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
