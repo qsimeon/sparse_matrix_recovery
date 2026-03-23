@@ -534,10 +534,19 @@ Preliminary tests with mixed-sign weights yield qualitatively similar recovery a
 % ============================================================================
 
 We presented a covariance-based method for recovering sparse neural connectivity from partial measurements across multiple recording sessions.
-The method accumulates pairwise covariance statistics from sessions with overlapping neuron observations, enabling recovery of the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons ($r = 0.91$ between true and estimated weights at our baseline configuration).
-Enforcing the no-autapse structural prior and a Granger-causality refinement step maintains perfect recall of true connections.
-Our analysis reveals that CPG--state correlation, not the linear approximation, is the dominant error source, and that CPG nodes can be partially identified from their elevated activity variance.
-Future work will extend this approach to real neural recordings, investigate structured stimulation protocols, and develop methods for jointly estimating connectivity and CPG parameters.
+By accumulating pairwise covariance statistics from sessions with overlapping neuron observations, the method reconstructs the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons, achieving $r = 0.91$ correlation between true and estimated weights and an $82\%$ improvement over chance at our baseline configuration.
+
+Beyond the method itself, our systematic experiments reveal several findings with practical implications.
+First, a fundamental \emph{control-estimation tradeoff} governs experimental design: stimulation is necessary for identifiability (zero stimulation fails at high measurement density), but excessive stimulation degrades the covariance structure.
+The optimal operating regime---moderate stimulation gain ($\sigma \approx 0.5$--$1.0$) applied to a modest subset of neurons ($\sim 33\%$ sensor coverage)---defines a practical target for optogenetic experimental protocols.
+Second, the ``incorrect'' linear approximation outperforms the oracle estimator with known nonlinearity at \emph{all} tested regimes, a concrete instance of the James--Stein phenomenon where implicit regularization reduces total risk.
+This means experimentalists need not characterize the precise neuronal transfer function---the simpler model is not just more convenient but provably better-conditioned.
+Third, error decomposition reveals that CPG--state correlation ($3.3\times$ larger than model mismatch) is the dominant bottleneck, suggesting that future gains will come from modeling intrinsic dynamics rather than refining the nonlinear approximation.
+
+Several directions merit future investigation.
+Extending the framework to real neural recordings---particularly \textit{C.~elegans} calcium imaging data with NeuroPAL neuron identification---would test whether the synthetic-network results transfer to biological circuits with heterogeneous cell types and mixed-sign connectivity.
+Structured stimulation protocols (e.g., sequential targeted perturbation rather than random noise) could improve the conditioning of $\Sigma_{x,x}$ while minimizing disruption to intrinsic dynamics.
+Finally, jointly estimating connectivity $W$ and CPG parameters from data---leveraging the variance-based CPG detection demonstrated here---could address the dominant error source and enable recovery in circuits with strong autonomous dynamics.
 
 % ============================================================================
 % References

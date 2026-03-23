@@ -1,10 +1,18 @@
-# Paper Review Notes — Iteration 30 (RALPH iter 3)
+# Paper Review Notes — Iteration 31 (RALPH iter 4)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Added missing E6 subsection to Experiments (Section 4)
+### Strengthened Conclusion section (was single paragraph)
+The Conclusion was just one paragraph summarizing the method with a throwaway future-work sentence. Expanded to three structured paragraphs:
+1. **Method summary** with quantitative results (r=0.91, 82% over chance)
+2. **Three key findings**: control-estimation tradeoff + optimal operating regime, implicit regularization (James-Stein), CPG dominance as error bottleneck
+3. **Concrete future directions**: real C. elegans data, structured stimulation protocols, joint W+CPG estimation
+
+All numbers verified against paper body: r=0.91 (fig8 caption), 82% (E4 results), 3.3× (dynamics paragraph).
+
+### Previous iteration: Added missing E6 subsection to Experiments (Section 4)
 Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subsection in the Experiments section — readers would see E6 in the table and not find it. Added §4.7 "Oracle vs. Approximation (E6)" between E5 and E7 with:
 - Experimental setup (σ sweep, 17 topologies)
 - Key finding: approximation outperforms oracle at all σ, no crossover
@@ -38,4 +46,4 @@ The "Oracle crossover analysis" paragraph cited wrong ratios:
 - [ ] Notebooks: do they include E7 sensor fraction demo?
 - [ ] Narrative flow: re-read paper top-to-bottom for coherence
 - [ ] Verify figures at print size / visual quality audit
-- [ ] Conclusion is only one paragraph — may need strengthening
+- [x] Conclusion is only one paragraph — **FIXED** this iteration: expanded to 3 paragraphs
