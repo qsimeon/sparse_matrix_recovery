@@ -24,14 +24,20 @@ Do NOT touch: paper/ (the other ralph loop handles that)
 - Figure generation: `python scripts/generate_all_figures.py`
 - Experiments: `python experiments/run_experiments.py --experiment E1 --seed 42`
 
-## Iteration Plan
-1. Run `python experiments/run_experiments.py --experiment all --seed 42` — re-run everything
-2. Compare fresh results to experiments/results/*.json — flag any discrepancies
-3. Run `python scripts/generate_all_figures.py` — regenerate all figures
-4. Execute each notebook: `jupyter nbconvert --execute notebooks/*.ipynb`
-5. Review core.py line by line — check math matches paper equations
-6. Review run_experiments.py — verify E1-E7 configs match paper Table 2
-7. Clean up any stale files, fix any issues found
+## RESUMING — Previous run completed 3 real iterations then died (API credits/OAuth)
+Previous run accomplished:
+- [x] Added Fig 9 + Fig 10 to generate_all_figures.py pipeline
+- [x] Fixed sys.path in main notebook for notebooks/ directory execution
+- [x] Figures regenerated, notebooks execute, analysis.py works
+
+REMAINING (start here):
+1. Re-run ALL experiments: `python experiments/run_experiments.py --experiment all --seed 42`
+2. Compare fresh results to experiments/results/*.json — flag any discrepancies with paper
+3. Review core.py line by line — check math matches paper equations (use GPT-5.4)
+4. Review run_experiments.py — verify E1-E7 configs match paper Table 2
+5. Verify no stale data — everything from current code
+6. Run scripts/verify_citations.py
+7. Clean up any stale files
 
 ## Self-Improvement
 You CAN edit this RALPH_code.md, ralph_code.sh, or any tool in tools/ if you find issues. If a tool is broken or could be better, fix it.

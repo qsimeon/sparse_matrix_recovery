@@ -28,16 +28,21 @@ Do NOT touch: experiments/, notebooks/ (the other ralph loop handles that)
 - PDF compilation: `cd paper && pdflatex -interaction=nonstopmode main.tex` (or `tectonic main.tex`)
 - Read PDF: Use the Read tool on paper/main.pdf or paper/sparse_matrix_recovery.pdf
 
-## Iteration Plan
-1. Compile PDF, read every page, note ALL issues in paper/REVIEW_NOTES.md
-2. Fix the most critical issue found
-3. Verify all equations match code (use GPT-5.4 for non-trivial ones)
-4. Verify all citations are real papers (use Gemini search grounding)
-5. Verify all numbers match data files
-6. Improve figure captions for clarity
-7. Write poster (1-2 slides, key results + method diagram)
-8. Write lightning talk script (3 min, structured as: problem → insight → method → results → impact)
-9. Final compilation and visual check
+## RESUMING — Previous run completed 3 real iterations then died (API credits/OAuth)
+Previous run accomplished:
+- [x] Fixed LaTeX float specifier warnings ([h] → [ht])
+- [x] Created A1 landscape poster (paper/poster.tex)
+- [x] Created 3-minute lightning talk script (paper/lightning_talk.md)
+
+REMAINING (start here):
+1. Compile PDF and READ every page visually — note ALL issues in paper/REVIEW_NOTES.md
+2. Verify all equations match code implementations (use GPT-5.4: `python tools/openai_math.py --model gpt-5.4 --task "..."`)
+3. Verify all citations are real papers (use Gemini: `python tools/gemini_research.py --query "verify: [author] [year] [title]"`)
+4. Verify all numerical claims match experiments/results/*.json data files
+5. Improve figure captions — each subplot needs axes, colors, key observation described
+6. Ensure experimental paradigm clearly described: what we vary, control, measure per experiment
+7. Review poster and lightning talk for accuracy against current paper
+8. Final PDF compilation and visual quality check
 
 ## Key Facts (ground truth)
 - SPARC = "Sparse Predictive Activity through Recombinase Competition" (NOT "random perturbation" or "ensemble stimulation")
