@@ -1,0 +1,233 @@
+% NeurIPS Poster — Sparse Neural Connectivity Recovery
+% Compile: pdflatex poster.tex
+\documentclass[final]{beamer}
+\usepackage[orientation=landscape,size=a1,scale=1.2]{beamerposter}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+
+% ── Theme ──────────────────────────────────────────────────────────────────
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+
+% Colors
+\definecolor{neuripsblue}{HTML}{2E4057}
+\definecolor{neuripsaccent}{HTML}{0077B6}
+\definecolor{neuripsgray}{HTML}{F0F0F0}
+\definecolor{neuripsgreen}{HTML}{2A9D8F}
+\definecolor{neuripsred}{HTML}{E76F51}
+\definecolor{boxbg}{HTML}{FAFAFA}
+
+\setbeamercolor{block title}{fg=white,bg=neuripsblue}
+\setbeamercolor{block body}{fg=black,bg=boxbg}
+\setbeamercolor{title}{fg=neuripsblue}
+
+% Box style
+\tcbset{
+  posterbox/.style={
+    enhanced,
+    colback=white,
+    colframe=neuripsblue,
+    boxrule=1.5pt,
+    arc=4mm,
+    left=8mm,right=8mm,top=6mm,bottom=6mm,
+    fonttitle=\Large\bfseries\color{white},
+    coltitle=white,
+    colbacktitle=neuripsblue,
+    attach boxed title to top left={xshift=6mm,yshift=-3mm},
+    boxed title style={sharp corners,colback=neuripsblue}
+  }
+}
+
+\begin{document}
+\begin{frame}[t]
+
+% ════════════════════════════════════════════════════════════════════════════
+% TITLE BAR
+% ════════════════════════════════════════════════════════════════════════════
+\vspace{-1cm}
+\begin{center}
+{\fontsize{52}{58}\selectfont\bfseries\color{neuripsblue}%
+Recovering Sparse Neural Connectivity from Partial Measurements:\\[6pt]
+A Covariance-Based Approach with Granger-Causality Refinement}\\[12pt]
+{\LARGE Quilee Simeon \hspace{1cm} Massachusetts Institute of Technology \hspace{1cm} \texttt{qsimeon@mit.edu}}
+\end{center}
+\vspace{0.5cm}
+
+\begin{columns}[T]
+
+% ════════════════════════════════════════════════════════════════════════════
+% COLUMN 1 — Problem + Method
+% ════════════════════════════════════════════════════════════════════════════
+\begin{column}{0.32\linewidth}
+
+% ── Problem ──
+\begin{tcolorbox}[posterbox,title=Problem]
+\large
+\textbf{Goal}: Recover full $N{\times}N$ connectivity matrix $W$ from \textbf{partial measurements} across multiple recording sessions.
+
+\vspace{6mm}
+\textbf{Challenge}: In small brain circuits (\textit{C.\ elegans}, zebrafish), we can only observe a \emph{subset} of neurons per session.
+
+\vspace{6mm}
+\textbf{Dynamical model}:
+\[
+  x_{t+1} = W\phi(x_t) + b_t
+\]
+
+Each session $k$ observes $\mathcal{M}_k \subset \{1,\ldots,N\}$ and stimulates $\mathcal{S}_k$.
+
+\vspace{6mm}
+\textbf{Key insight}: Pairwise covariance statistics can be \textbf{accumulated across sessions} whenever neurons $i,j$ are co-observed.
+\end{tcolorbox}
+
+\vspace{1cm}
+
+% ── Method ──
+\begin{tcolorbox}[posterbox,title=Method]
+\large
+\textbf{Step 1 --- Covariance accumulation} over $K{=}50$ sessions:
+\[
+  \hat{\Sigma}_{x_{t+1},x_t}(i,j) = \frac{1}{n_{ij}} \sum_{k: i,j\in\mathcal{M}_k} \hat{\Sigma}^{(k)}(i,j)
+\]
+
+\vspace{4mm}
+\textbf{Step 2 --- Linear estimator}:
+\[
+  \hat{W} = \hat{\Sigma}_{x_{t+1},x_t}\, \hat{\Sigma}_{x_t,x_t}^{-1}
+\]
+with diagonal zeroed ($W_{ii}{=}0$, no autapses).
+
+\vspace{4mm}
+\textbf{Step 3 --- Granger-causality refinement}: Projected gradient descent enforcing:
+\begin{itemize}
+  \item[\color{neuripsgreen}\textbullet] Sparsity (zero non-causal edges)
+  \item[\color{neuripsgreen}\textbullet] Non-negativity ($W_{ij} \geq 0$)
+  \item[\color{neuripsgreen}\textbullet] No autapses ($W_{ii} = 0$)
+\end{itemize}
+
+\vspace{4mm}
+\textbf{Identifiability}: $K \geq \log(N^2/\delta)/p^2$ sessions suffice for all-pairs coverage with probability $\geq 1{-}\delta$.
+\end{tcolorbox}
+
+\vspace{1cm}
+
+% ── Pipeline Figure ──
+\begin{tcolorbox}[posterbox,title=Pipeline]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig2_pipeline.pdf}
+\end{tcolorbox}
+
+\end{column}
+
+% ════════════════════════════════════════════════════════════════════════════
+% COLUMN 2 — Key Results
+% ════════════════════════════════════════════════════════════════════════════
+\begin{column}{0.32\linewidth}
+
+% ── Headline Results ──
+\begin{tcolorbox}[posterbox,title=Key Results,colframe=neuripsaccent,colbacktitle=neuripsaccent]
+\large
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{>{\bfseries\color{neuripsaccent}}l l}
+  Weight correlation & $r = 0.91$ (Granger-refined) \\
+  Improvement over chance & $82\%$ ($0.095$ vs.\ $0.533$) \\
+  Best recovery & $N{=}30,\, T{=}1000$: error $0.053$ \\
+  Sessions needed & $K{=}50$ at $66\%$ coverage \\
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+\vspace{1cm}
+
+% ── Scaling ──
+\begin{tcolorbox}[posterbox,title=Scaling (E1)]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig3_scaling.pdf}
+\\[4mm]
+\large Error decreases with network size $N$ and duration $T$. Best result: $N{=}30$, $T{=}1000$ achieves Granger-refined error of $0.053$ ($91\%$ over chance).
+\end{tcolorbox}
+
+\vspace{1cm}
+
+% ── Control-Estimation Tradeoff ──
+\begin{tcolorbox}[posterbox,title=Control--Estimation Tradeoff (E3)]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig5_stimulation.pdf}
+\\[4mm]
+\large Stimulation is \textbf{necessary} for identifiability but \textbf{excessive} noise degrades recovery. Optimal: $\sigma \approx 0.5$--$1.0$ at $66\%$+ measurement.
+\end{tcolorbox}
+
+\end{column}
+
+% ════════════════════════════════════════════════════════════════════════════
+% COLUMN 3 — Discoveries + Impact
+% ════════════════════════════════════════════════════════════════════════════
+\begin{column}{0.32\linewidth}
+
+% ── Oracle Comparison ──
+\begin{tcolorbox}[posterbox,title=Implicit Regularization (E6),colframe=neuripsred,colbacktitle=neuripsred]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig10_oracle_comparison.pdf}
+\\[4mm]
+\large The ``incorrect'' linear approximation \textbf{outperforms the oracle} with known nonlinearity at \emph{all} tested regimes --- a James--Stein phenomenon.
+
+\vspace{4mm}
+\textbf{Why?}\; $\Sigma_{\phi(x),x} = D\Sigma_{x,x}$ where $\tanh$ compression makes $D$ ill-conditioned, amplifying noise in the oracle inversion.
+
+\vspace{4mm}
+{\color{neuripsred}\textbf{Practical implication:}} No need to characterize neuronal nonlinearity --- the simpler model is \emph{better}.
+\end{tcolorbox}
+
+\vspace{1cm}
+
+% ── Error Decomposition ──
+\begin{tcolorbox}[posterbox,title=Error Decomposition]
+\large
+\textbf{Dominant bottleneck}: CPG--state correlation, \textbf{not} model mismatch.
+
+\vspace{4mm}
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{lcc}
+  \toprule
+  \textbf{Error source} & $\|E\|_F / N$ & \textbf{Fraction} \\
+  \midrule
+  Model mismatch ($E_1$) & $0.081$ & $1\times$ \\
+  \rowcolor{neuripsred!15} CPG correlation ($E_2$) & $0.276$ & $3.4\times$ \\
+  Total estimation & $0.097$ & --- \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{4mm}
+$\Rightarrow$ Future gains from modeling \textbf{intrinsic dynamics}, not refining the nonlinear approximation.
+\end{tcolorbox}
+
+\vspace{1cm}
+
+% ── Practical Guidelines ──
+\begin{tcolorbox}[posterbox,title=Practical Guidelines for Experimentalists,colframe=neuripsgreen,colbacktitle=neuripsgreen]
+\large
+\begin{enumerate}
+  \item[\color{neuripsgreen}\textbf{1.}] \textbf{Measurement}: $\geq 50\%$ neuron coverage per session (error plateaus above this)
+  \item[\color{neuripsgreen}\textbf{2.}] \textbf{Stimulation}: Moderate gain ($\sigma \approx 0.5$--$1.0$) on $\sim 33\%$ of neurons
+  \item[\color{neuripsgreen}\textbf{3.}] \textbf{Sessions}: $K \geq 50$ with random masks ensures all-pairs coverage
+  \item[\color{neuripsgreen}\textbf{4.}] \textbf{Model}: Use the linear approximation --- it's simpler \emph{and} better
+  \item[\color{neuripsgreen}\textbf{5.}] \textbf{Next frontier}: Model CPG dynamics to address the $3.4\times$ dominant error
+\end{enumerate}
+\end{tcolorbox}
+
+\end{column}
+
+\end{columns}
+
+\end{frame}
+\end{document}
