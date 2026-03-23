@@ -8,6 +8,9 @@
 
 set -euo pipefail
 
+# Use Max subscription (OAuth) instead of API key credits
+unset ANTHROPIC_API_KEY 2>/dev/null || true
+
 MAX_ITER=${1:-20}
 TIME_BUDGET_HOURS=${2:-8}
 TIME_BUDGET_SECS=$((TIME_BUDGET_HOURS * 3600))
@@ -72,7 +75,7 @@ If you believe the paper is ready for submission, output:
 RALPH_STOP: [reason]"
 
     # Run Claude Code with the prompt
-    OUTPUT=$(claude --print --dangerously-skip-permissions -p "$PROMPT" 2>&1) || true
+    OUTPUT=$(claude --print --dangerously-skip-permissions --max-turns 30 -p "$PROMPT" 2>&1) || true
 
     # Log the iteration
     TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

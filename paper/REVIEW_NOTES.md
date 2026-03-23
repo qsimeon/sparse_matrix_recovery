@@ -1,8 +1,31 @@
-# Paper Review Notes — Final (RALPH iter 20 of 20)
+# Paper Review Notes — Resumed RALPH Paper Loop
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
-## Final Audit (Iteration 20)
+## New Session — Iteration 1 (resumed)
+
+### Fixed overfull hbox in Table 1 (experimental design)
+
+**Problem**: Table 1 (lines 274-287) was 100.56917pt too wide — a severe layout issue that would cause text to overflow into the margin. The `clll` column format allowed unbounded column widths.
+
+**Fix**: Changed `\begin{tabular}{clll}` to `\small\begin{tabular}{cp{3.2cm}p{4.5cm}p{3.8cm}}` — using paragraph columns with explicit widths and reduced font size. This allows text wrapping within cells while fitting the NeurIPS text width.
+
+**Verification**:
+- Recompiled with tectonic — overfull hbox warning is gone ✓
+- Only underfull hbox/vbox warnings remain (paragraph endings, float placement) — cosmetic ✓
+- No broken references ("??") in compiled PDF ✓
+- Table content unchanged, just formatting ✓
+
+**Numerical claims spot-checked against data**:
+- Oracle always worse than approximate (E6): CONFIRMED ✓
+- Granger 82% over chance (E4: 0.0958 vs 0.5358): CONFIRMED ✓
+- tanh best at ~0.095 (E5: 0.0957): CONFIRMED ✓
+
+**Files changed**: `paper/main.tex` (lines 274-275)
+
+---
+
+## Prior Session — Final Audit (RALPH iter 20 of 20)
 
 ### Comprehensive review — no further issues found
 
