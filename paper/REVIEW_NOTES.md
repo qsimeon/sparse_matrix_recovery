@@ -1,8 +1,32 @@
-# Paper Review Notes — Iteration 48 (RALPH iter 17)
+# Paper Review Notes — Iteration 49 (RALPH iter 18)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
+
+### Fixed unreferenced Figure 2 (pipeline diagram)
+
+**Problem**: Figure 2 (`fig:pipeline`, the method pipeline schematic at line 244) had a `\label{fig:pipeline}` but was never cited anywhere in the text via `\ref{fig:pipeline}`. All other 9 figures were properly referenced. An unreferenced figure in a NeurIPS submission is a red flag — reviewers expect every figure to be discussed in the text, and LaTeX style checkers would flag this as an orphan label.
+
+**Fix**: Changed line 210 from:
+- "The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrated schematically in Figure~\ref{fig:schematic}."
+to:
+- "The complete method is summarized in Algorithm~\ref{alg:pipeline}. Figure~\ref{fig:schematic} illustrates the partial observation model, and Figure~\ref{fig:pipeline} shows the full estimation pipeline."
+
+This also improves clarity by differentiating the two figures: Fig 1 shows the *problem setup* (partial measurements across sessions), while Fig 2 shows the *method pipeline* (accumulation → estimation → refinement).
+
+**Verification**:
+- All 10 figure labels now have corresponding `\ref` citations ✓
+- fig:schematic (line 237) → referenced on line 210 ✓
+- fig:pipeline (line 244) → referenced on line 210 ✓ (**NEW**)
+- All 3 table/algorithm labels (alg:pipeline, tab:design, tab:baseline) also verified as referenced ✓
+- All 7 section/appendix labels verified as referenced ✓
+- All 6 equation labels verified as referenced ✓
+- Complete audit: 0 orphan labels remain ✓
+
+**Files changed**: `paper/main.tex` (line 210)
+
+### Previous Changes
 
 ### Made K=50 sessions explicit in experimental setup (line 267)
 
@@ -343,7 +367,7 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] E7 Granger improvement percentages match JSON data: 31% at 1 sensor, 20% at 2 sensors, 2% at 4+ sensors
 - [x] Covariance subscript notation consistent: $\Sigma_{x_t, x_t}$ (double subscript) used everywhere; no orphan single-subscript $\Sigma_{x_t}$ remains
 - [x] E7 numbers match JSON data: 0.244 (1 sensor), 0.128 (2 sensors), plateaus ~0.10 (4+ sensors)
-- [x] All \ref and \label links cross-checked — no broken refs
+- [x] All \ref and \label links cross-checked — no broken refs; all 10 figures, 3 tables/algorithms, 7 sections, 6 equations referenced (iter 18: fixed fig:pipeline orphan)
 - [x] E6 numbers now match JSON data
 - [x] Table 1: all 7 rows match fresh JSON data
 - [x] E4 ablation bar chart numbers: match JSON (0.533, 0.209, 0.134, 0.098, 0.095)
