@@ -244,7 +244,7 @@ def random_network_topology(num_nodes, non_negative_weights, force_stable, stron
 def create_network_data(
     network_idx, max_timesteps, num_nodes, num_cpgs, num_measured,
     num_sensors, fixed_sensors, stim_gain, nonlinearity, connection_weights,
-    obs_noise_std=0.0,
+    obs_noise_std=0.0, worker_seed=None,
 ):
     """
     Simulate dynamics on a network and return recorded data.
@@ -260,10 +260,17 @@ def create_network_data(
         stim_gain: std of Gaussian stimulation noise
         nonlinearity: activation function
         connection_weights: (num_nodes, num_nodes) weight matrix
+        worker_seed: per-worker random seed for reproducibility with joblib
 
     Returns:
         dict with all simulation data
     """
+    # Seed each worker deterministically so results don't depend on
+    # joblib scheduling order.
+    if worker_seed is not None:
+        np.random.seed(worker_seed)
+        torch.manual_seed(worker_seed)
+
     assert connection_weights.shape == (num_nodes, num_nodes)
 
     warmup_timesteps = max_timesteps // 3
@@ -379,11 +386,16 @@ def create_multinetwork_dataset(
         num_nodes, non_negative_weights, force_stable
     )
 
+    # Pre-generate per-worker seeds from parent RNG so results are
+    # deterministic regardless of joblib scheduling order.
+    worker_seeds = np.random.randint(0, 2**31, size=num_networks).tolist()
+
     results = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(create_network_data)(
             network_idx, max_timesteps, num_nodes, num_cpgs,
             num_measured, num_sensors, fixed_sensors, stim_gain,
             nonlinearity, connection_weights, obs_noise_std,
+            worker_seed=worker_seeds[network_idx],
         )
         for network_idx in range(num_networks)
     )
