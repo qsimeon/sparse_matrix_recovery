@@ -1,10 +1,19 @@
-# Paper Review Notes — Iteration 34 (RALPH iter 7)
+# Paper Review Notes — Iteration 35 (RALPH iter 8)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Added missing E6 (Oracle vs. Approximation) figure
+### Added experiment ordering roadmap to Section 4.1
+
+**Problem**: Table 1 lists experiments E1–E7 in numerical order, but the subsections present them in narrative order: E1, E4, E3, E2, E5, E6, E7. A reader expects E2 after E1 but instead encounters E4, which is disorienting. No text explained this deliberate reordering.
+
+**Fix**: Added one sentence after Table 1 (before §4.2) explaining the narrative order:
+> "The subsections below present experiments in narrative order rather than numerical order: we first establish baseline scaling (E1) and ablate method components (E4), then examine the key experimental design tradeoffs—stimulation intensity (E3) and measurement density (E2)—and finally test robustness to nonlinearity (E5), the oracle comparison (E6), and sensor coverage (E7)."
+
+**Verification**: Confirmed the sentence matches the actual subsection ordering (E1→E4→E3→E2→E5→E6→E7) by grepping for `\subsection{.*E[0-9]}` in main.tex.
+
+### Previous iteration: Added missing E6 (Oracle vs. Approximation) figure
 
 **Problem**: E6 was the only experiment without a figure. All other experiments (E1-E5, E7) had dedicated figures, but E6 — one of the paper's three key findings (implicit regularization / James-Stein phenomenon) — was text-only. A reviewer would expect visual evidence for such a central claim.
 
@@ -103,7 +112,7 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
-- [ ] Narrative flow: re-read paper top-to-bottom for coherence (read top-to-bottom in iter 6 — structure is sound, experiments tell a logical story)
+- [x] Narrative flow: structure is sound (iter 6); added experiment ordering roadmap to §4.1 (iter 8) explaining why subsections follow E1→E4→E3→E2→E5→E6→E7 order
 - [x] Verify figures at print size / visual quality audit — **DONE**: all 9/9 figures inspected, all look good
 - [x] Conclusion is only one paragraph — **FIXED** iter 4: expanded to 3 paragraphs
 - [x] E6 has no subsection in Experiments — **FIXED** iter 3: added §4.7

@@ -37,7 +37,7 @@ We present a covariance-based method for estimating the weight matrix of a recur
 By accumulating pairwise covariance estimates across sessions where different subsets of neurons are observed, we reconstruct the full connectivity matrix without requiring simultaneous recording of all neurons.
 A Granger-causality refinement step enforces biological constraints via projected gradient descent.
 Through systematic experiments on synthetic networks modeling small brain circuits, we characterize a fundamental \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
-We discover that the ``incorrect'' linear approximation acts as implicit regularization---outperforming the oracle estimator with known nonlinearity at all operating regimes---and provide an exact characterization via the Stein--Price identity.
+We discover that the ``incorrect'' linear approximation acts as implicit regularization---matching or outperforming the oracle estimator with known nonlinearity at all tested regimes---and provide an exact characterization via the Stein--Price identity.
 \end{abstract}
 
 % ============================================================================
@@ -284,6 +284,8 @@ E7 & Sensor fraction & $8$--$100\%$ & How many neurons to stimulate? \\
 \end{tabular}
 \end{table}
 
+The subsections below present experiments in narrative order rather than numerical order: we first establish baseline scaling (E1) and ablate method components (E4), then examine the key experimental design tradeoffs---stimulation intensity (E3) and measurement density (E2)---and finally test robustness to nonlinearity (E5), the oracle comparison (E6), and sensor coverage (E7).
+
 \subsection{Baseline Recovery (E1)}
 
 Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{8, 12, 30\}$ and recording durations $T \in \{100, 500, 1000\}$ with $66\%$ measurement.
@@ -492,7 +494,7 @@ Beyond this \emph{structural} identifiability, \emph{practical} identifiability 
 Our experiments (Section~\ref{sec:experiments}) show that measurement density directly controls $\kappa(\Sigma_{x,x})$, creating a gap between the two.
 
 \paragraph{Oracle crossover analysis.}
-The E6 results (Section~\ref{sec:experiments}) confirm the bias-variance prediction of Appendix~\ref{sec:app_oracle}: across all seven stimulation intensities tested, the approximate estimator outperforms the oracle that uses the true nonlinearity.
+The E6 results (Section~\ref{sec:experiments}) confirm the bias-variance prediction of Appendix~\ref{sec:app_oracle}: across all seven stimulation intensities tested, the approximate estimator matches or outperforms the oracle that uses the true nonlinearity.
 The gap is largest at low stimulation ($4.0\times$ at $\sigma=0$) and narrows at high stimulation ($1.4$--$1.6\times$ for $\sigma \geq 1$) as both estimators degrade.
 This is a concrete instance of the James--Stein phenomenon: the ``incorrect'' linear covariance is better-conditioned because $\tanh$ compression makes $\Sigma_{\phi(x),x}$ a row-scaled version of $\Sigma_{x,x}$ with heterogeneous scaling, amplifying noise during inversion.
 The practical implication is that experimentalists need not characterize the precise neuronal nonlinearity---the linear approximation is not just simpler but \emph{better}.
@@ -546,7 +548,7 @@ By accumulating pairwise covariance statistics from sessions with overlapping ne
 Beyond the method itself, our systematic experiments reveal several findings with practical implications.
 First, a fundamental \emph{control-estimation tradeoff} governs experimental design: stimulation is necessary for identifiability (zero stimulation fails at high measurement density), but excessive stimulation degrades the covariance structure.
 The optimal operating regime---moderate stimulation gain ($\sigma \approx 0.5$--$1.0$) applied to a modest subset of neurons ($\sim 33\%$ sensor coverage)---defines a practical target for optogenetic experimental protocols.
-Second, the ``incorrect'' linear approximation outperforms the oracle estimator with known nonlinearity at \emph{all} tested regimes, a concrete instance of the James--Stein phenomenon where implicit regularization reduces total risk.
+Second, the ``incorrect'' linear approximation matches or outperforms the oracle estimator with known nonlinearity at \emph{all} tested regimes, a concrete instance of the James--Stein phenomenon where implicit regularization reduces total risk.
 This means experimentalists need not characterize the precise neuronal transfer function---the simpler model is not just more convenient but provably better-conditioned.
 Third, error decomposition reveals that CPG--state correlation ($3.4\times$ larger than model mismatch) is the dominant bottleneck, suggesting that future gains will come from modeling intrinsic dynamics rather than refining the nonlinear approximation.
 
