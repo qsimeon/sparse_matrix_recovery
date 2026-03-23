@@ -1,7 +1,7 @@
 """
 Experiment Runner for Sparse Matrix Recovery
 
-Runs systematic experiments (E1-E6) for the paper.
+Runs systematic experiments (E1-E7) for the paper.
 Each experiment tests a specific hypothesis about connectivity recovery.
 
 Usage:
@@ -11,7 +11,6 @@ Usage:
     python experiments/run_experiments.py --experiment E3 --wandb
 """
 
-import os
 import sys
 import json
 import argparse
@@ -211,7 +210,7 @@ def run_experiment(
 
 
 # ============================================================================
-# Experiment Definitions (E1-E5)
+# Experiment Definitions (E1-E7)
 # ============================================================================
 
 def run_E1_baseline(seed=42, output_dir=None):

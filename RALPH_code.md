@@ -1,51 +1,58 @@
 # RALPH Code Loop — Sparse Matrix Recovery
 
 ## Mission
-Ensure all code, experiments, notebooks, and data are complete, correct, and reproducible. Every experiment result in the paper must be reproducible from the code.
+Deep line-by-line review of ALL code. Verify correctness, completeness, clarity. Ensure every experiment is reproducible and every result matches what the paper claims.
 
 ## Success Criteria
-- [x] All 7 experiments (E1-E7) re-run with seed=42, results match paper claims
-- [x] All 10 figures regenerated from fresh data via scripts/generate_all_figures.py
-- [x] All 3 notebooks in notebooks/ execute end-to-end without errors
-- [x] experiments/core.py has no bugs (spectral radius, diagonal zeroing, CPG, etc.)
-- [x] experiments/run_experiments.py E1-E7 configs match paper's Table 2
-- [x] experiments/analysis.py generates all 10 figures correctly
-- [x] No stale data in experiments/results/ — everything from current code
-- [x] scripts/verify_citations.py passes (20/20 citations)
+- [x] Read experiments/core.py line by line — verify every function's math matches paper equations
+  - Dynamics: `state = W @ phi(state) + total_input` matches paper eq (1)
+  - Estimator: `approx_W = cov_dtx @ pinv(cov_x)` matches paper eq W_hat = Σ_{x_{t+1},x_t} Σ_{x_t,x_t}^{-1}
+  - Covariance accumulation across sessions with mask correctly handles partial observations
+  - Oracle estimator, Granger projected gradient, spectral radius adjustment all correct
+- [x] Read experiments/run_experiments.py line by line — verify E1-E7 configs match paper Table 2 exactly
+  - E1: N∈{8,12,30}, T∈{100,500,1000}, 66% measured, 33% CPG/sensors, stim=1.0, tanh ✓
+  - E2: N=12, T=900, meas∈{33%,50%,66%,80%,100%} ✓
+  - E3: N=12, T=900, 2D sweep meas×stim ✓
+  - E4: N=12, T=900, 30 reps, 50 sessions, save_matrices=True ✓
+  - E5: N=12, tanh/relu/identity/sigmoid ✓
+  - E6: stim sweep {0,0.1,...,5.0} for oracle crossover ✓
+  - E7: sensors∈{1,2,4,8,12} ✓
+  - Fixed: docstring "E1-E6"→"E1-E7", section header "E1-E5"→"E1-E7", removed unused `import os`
+- [ ] Read experiments/analysis.py — verify each figure function produces what the paper caption describes
+- [ ] Re-run E1-E7 fresh, compare results to paper claims (flag ANY discrepancy)
+- [ ] Regenerate all figures, visually inspect each one (read the PDFs!)
+- [ ] Execute all 3 notebooks end-to-end, verify they produce sensible output
+- [x] Review scripts/generate_all_figures.py — does it generate all 11 figure PDFs?
+  - Generates 10 figures (fig1–fig10), NOT 11. Script says "All 10 figures generated!"
+  - fig1: problem schematic, fig2: pipeline, fig3: scaling(E1), fig4: granger(E4)
+  - fig5: stim tradeoff(E3), fig6: sparsity(E2), fig7: nonlinearity(E5)
+  - fig8: dynamics(live sim), fig9: sensor fraction(E7), fig10: oracle(E6)
+- [x] Check for dead code, unused imports, stale comments in ALL .py files
+  - Fixed: `import os` unused in run_experiments.py
+  - Fixed: "E1-E6" and "E1-E5" stale comments in run_experiments.py
+  - Note: analysis.py internal figure labels (F1-F9) differ from paper figure numbers (fig1-fig10) but this is handled by generate_all_figures.py mapping — not a bug, just legacy naming
+- [ ] Verify tools/openai_math.py and tools/gemini_research.py work (test them)
 
 ## Scope
-ONLY touch: experiments/, notebooks/, scripts/, tools/
-Do NOT touch: paper/ (the other ralph loop handles that)
+Touch: experiments/, notebooks/, scripts/, tools/
+Do NOT touch: paper/ (the other loop handles that)
 
-## Tools Available
-- Math verification: `python tools/openai_math.py --model gpt-5.4 --task "..."`
-- Lit research: `python tools/gemini_research.py --query "..."`
-- Citation check: `python scripts/verify_citations.py`
-- Figure generation: `python scripts/generate_all_figures.py`
-- Experiments: `python experiments/run_experiments.py --experiment E1 --seed 42`
+## Tools
+- Run experiments: `conda run -n work_env python experiments/run_experiments.py --experiment E1 --seed 42`
+- Generate figures: `conda run -n work_env python scripts/generate_all_figures.py`
+- Execute notebook: `conda run -n work_env jupyter nbconvert --to notebook --execute notebooks/X.ipynb --output X.ipynb`
+- Math verify: `conda run -n work_env python tools/openai_math.py --model gpt-5.4 --task "..."`
+- Citations: `conda run -n work_env python scripts/verify_citations.py`
 
-## RESUMING — Previous run completed 3 real iterations then died (API credits/OAuth)
-Previous run accomplished:
-- [x] Added Fig 9 + Fig 10 to generate_all_figures.py pipeline
-- [x] Fixed sys.path in main notebook for notebooks/ directory execution
-- [x] Figures regenerated, notebooks execute, analysis.py works
-
-REMAINING (start here):
-1. Re-run ALL experiments: `python experiments/run_experiments.py --experiment all --seed 42`
-2. Compare fresh results to experiments/results/*.json — flag any discrepancies with paper
-3. Review core.py line by line — check math matches paper equations (use GPT-5.4)
-4. Review run_experiments.py — verify E1-E7 configs match paper Table 2
-5. Verify no stale data — everything from current code
-6. Run scripts/verify_citations.py
-7. Clean up any stale files
-
-## Self-Improvement
-You CAN edit this RALPH_code.md, ralph_code.sh, or any tool in tools/ if you find issues. If a tool is broken or could be better, fix it.
+## Rules
+- ONE change per iteration. Read → identify weakest thing → fix it → verify → commit.
+- Actually READ your output. If a figure looks wrong, fix it. If code has a bug, fix it.
+- Prefix commits: `code: [description]`
+- RALPH_STOP when all criteria checked OR stuck for 3 iterations.
+- You CAN edit this file, ralph_code.sh, or tools/ (self-improvement allowed).
 
 ## Stop Conditions
 - max_iterations: 15
-- All criteria checked: RALPH_STOP
+- time_budget: 6h
+- All criteria checked: RALPH_STOP: all criteria met
 - 3 iterations no progress: RALPH_STOP: stuck
-
-## Commit Convention
-Prefix all commits with `code:` e.g. `code: re-run E1-E7 with seed=42, verify results`
