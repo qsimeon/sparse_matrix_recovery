@@ -26,7 +26,11 @@ Deep line-by-line review of ALL code. Verify correctness, completeness, clarity.
   - Each plot function correctly: loads data, extracts medians + CIs, plots with correct labels/axes/colors
 - [ ] Re-run E1-E7 fresh, compare results to paper claims (flag ANY discrepancy)
 - [ ] Regenerate all figures, visually inspect each one (read the PDFs!)
-- [ ] Execute all 3 notebooks end-to-end, verify they produce sensible output
+- [x] Execute all 3 notebooks end-to-end, verify they produce sensible output
+  - explore_dynamics.ipynb: 9 code cells, 8 figures, 0 errors — demonstrates topology generation, CPG dynamics, chaotic reservoir, stimulation tradeoff
+  - complete_analysis.ipynb: 8 code cells, 7 figures, 0 errors — Price's theorem, covariance accumulation, ablation chart, noise robustness (σ_ε=0.00: Granger error=0.0992)
+  - qsimeon_SparseMatrixRecovery.ipynb: 10 code cells, 6 figures, 0 errors — full method demonstration including 10 reps × 50 networks experiment
+  - All outputs sensible, no warnings except cosmetic urllib3 RequestsDependencyWarning in last notebook
 - [x] Review scripts/generate_all_figures.py — does it generate all 11 figure PDFs?
   - Generates 10 figures (fig1–fig10), NOT 11. Script says "All 10 figures generated!"
   - fig1: problem schematic, fig2: pipeline, fig3: scaling(E1), fig4: granger(E4)
