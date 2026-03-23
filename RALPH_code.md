@@ -36,7 +36,11 @@ Deep line-by-line review of ALL code. Verify correctness, completeness, clarity.
   - Fixed: `import os` unused in run_experiments.py
   - Fixed: "E1-E6" and "E1-E5" stale comments in run_experiments.py
   - Note: analysis.py internal figure labels (F1-F9) differ from paper figure numbers (fig1-fig10) but this is handled by generate_all_figures.py mapping — not a bug, just legacy naming
-- [ ] Verify tools/openai_math.py and tools/gemini_research.py work (test them)
+- [x] Verify tools/openai_math.py and tools/gemini_research.py work (test them)
+  - openai_math.py: --list-models works, imports clean, API call via OpenRouter (gpt-4o) returns proper math verification with LaTeX, usage stats, timestamps
+  - gemini_research.py: imports clean (urllib3 version warning only), API call via Gemini (2.0-flash) returns research synthesis with 4 grounded sources
+  - Both tools: batch mode, file input, JSON output all structurally correct
+  - Minor: gemini_research.py shows RequestsDependencyWarning from urllib3 version mismatch — cosmetic, not functional
 
 ## Scope
 Touch: experiments/, notebooks/, scripts/, tools/
