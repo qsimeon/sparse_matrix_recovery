@@ -1,10 +1,24 @@
-# Paper Review Notes — Iteration 46 (RALPH iter 15)
+# Paper Review Notes — Iteration 47 (RALPH iter 16)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed hat notation inconsistency in Granger refinement optimization (Eq. 7)
+### Fixed covariance subscript inconsistency in E4 Granger criterion (line 334)
+
+**Problem**: Line 334 wrote the Granger non-causality condition as $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}(i,j)$ — using a single subscript $\Sigma_{x_t}$ for the contemporaneous covariance. But the formal definition on line 196 uses the double-subscript form $\Sigma_{x_t, x_t}(i,j)$, and every other occurrence in the paper (lines 65, 139, 147, 202, 206, 394, 467) consistently uses $\Sigma_{x_t,x_t}$. A reviewer following the math from the Methods definition (line 196) to the Experiments reference (line 334) would flag this as a different, undefined quantity.
+
+**Fix**: Changed `$\Sigma_{x_t}(i,j)$` → `$\Sigma_{x_t, x_t}(i,j)$` on line 334, matching the definition and all other uses.
+
+**Verification**:
+- Line 334 now matches line 196 exactly: both use `$\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$` ✓
+- Grepped for remaining single-subscript `$\Sigma_{x_t}$` (not part of double-subscript): 0 occurrences ✓
+- All 7+ other uses of $\Sigma_{x_t,x_t}$ in the paper are consistent ✓
+- Also verified E7 sensor fraction numbers against data: all correct (0.244, 0.128, plateau ~0.10, 31% improvement at 1 sensor, 2% at 4+) ✓
+
+**Files changed**: `paper/main.tex` (line 334)
+
+### Previous: Fixed hat notation inconsistency in Granger refinement optimization (Eq. 7)
 
 **Problem**: Eq. (7) (line 202) mixed estimated and population quantities: the objective used $\hat{\Sigma}_{x_{t+1}, x_t}$ (with hat = empirical estimate) but the constraint used $\Sigma_{x_t, x_t}^{-1}$ (without hat = population covariance). Line 206 had the same issue: $W = A \Sigma_{x_t, x_t}^{-1}$ (no hat). Meanwhile, Algorithm 1 (line 228) correctly passes estimated covariances $\hat{\Sigma}_{y_t,y_t}$ to GrangerRefine. A reviewer would flag this: the optimization cannot use the unknown true covariance in the constraint while using the estimated covariance in the objective.
 
@@ -306,6 +320,8 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - **After**: "at zero stimulation the oracle is 4.0× worse, at σ=0.5 it is 2.6× worse, and the gap narrows to 1.4–1.6× for σ ≥ 1"
 
 ### Verified (cumulative)
+- [x] E7 Granger improvement percentages match JSON data: 31% at 1 sensor, 20% at 2 sensors, 2% at 4+ sensors
+- [x] Covariance subscript notation consistent: $\Sigma_{x_t, x_t}$ (double subscript) used everywhere; no orphan single-subscript $\Sigma_{x_t}$ remains
 - [x] E7 numbers match JSON data: 0.244 (1 sensor), 0.128 (2 sensors), plateaus ~0.10 (4+ sensors)
 - [x] All \ref and \label links cross-checked — no broken refs
 - [x] E6 numbers now match JSON data

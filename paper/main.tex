@@ -331,7 +331,7 @@ After enforcing the no-autapse prior ($W_{ii} = 0$, a known structural constrain
 Importantly, the refinement achieves \emph{perfect recall} (median $= 1.0$): all true edges in $W$ are preserved.
 Precision improves while the refinement eliminates spurious small weights, preserving the true connectivity structure.
 Crucially, the estimator achieves an $82\%$ improvement over the chance baseline ($0.095$ vs.\ $0.533$), demonstrating that the covariance accumulation framework extracts genuine connectivity information.
-The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
+The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
 
 \begin{figure}[h]
 \centering
