@@ -5,7 +5,7 @@ Generate ALL paper figures from experiment data.
 Run this single script to regenerate every figure in the paper:
     uv run python scripts/generate_all_figures.py
 
-Figures are saved to paper/figures/fig1_*.pdf through fig8_*.pdf.
+Figures are saved to paper/figures/fig1_*.pdf through fig10_*.pdf.
 Requires experiment results in experiments/results/ (run experiments first).
 """
 
@@ -30,6 +30,8 @@ from experiments.analysis import (
     plot_stimulation_tradeoff,
     plot_sparsity_effect,
     plot_nonlinearity_robustness,
+    plot_sensor_fraction,
+    plot_oracle_crossover,
 )
 from experiments.core import (
     random_network_topology,
@@ -210,8 +212,18 @@ def main():
     print("\nFig 8: Dynamics analysis")
     generate_fig8_dynamics(FIGURES_DIR / "fig8_dynamics.pdf")
 
+    # Fig 9: Sensor fraction (E7 data)
+    print("\nFig 9: Sensor fraction (E7)")
+    data = load_results(RESULTS_DIR / "E7_sensor_fraction.json")
+    plot_sensor_fraction(data, FIGURES_DIR / "fig9_sensor_fraction.pdf")
+
+    # Fig 10: Oracle vs Approximation crossover (E6 data)
+    print("\nFig 10: Oracle vs Approximation (E6)")
+    data = load_results(RESULTS_DIR / "E6_oracle_crossover.json")
+    plot_oracle_crossover(data, FIGURES_DIR / "fig10_oracle_comparison.pdf")
+
     print("\n" + "=" * 60)
-    print("  All 8 figures generated!")
+    print("  All 10 figures generated!")
     print("=" * 60)
     print(f"\n  Output: {FIGURES_DIR}/")
     for f in sorted(FIGURES_DIR.glob("fig*.pdf")):

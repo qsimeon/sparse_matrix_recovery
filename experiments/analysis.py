@@ -555,6 +555,167 @@ def plot_nonlinearity_robustness(results, output_path):
 
 
 # ============================================================================
+# Figure F8: Sensor Fraction — E7
+# ============================================================================
+
+def plot_sensor_fraction(results, output_path):
+    """Composite: sensor coverage schematic + recovery error vs sensor fraction."""
+    fig, (ax_left, ax_right) = plt.subplots(
+        1, 2, figsize=(11, 4.5), gridspec_kw={"width_ratios": [1, 2.2]})
+
+    # --- Left panel: schematic mini networks showing sensor coverage ---
+    _add_panel_label(ax_left, "A")
+    ax_left.axis("off")
+    ax_left.set_title("Sensor coverage patterns", fontsize=11, fontweight="bold", pad=10)
+
+    fracs_show = [0.08, 0.33, 1.0]
+    labels_show = ["8%", "33%", "100%"]
+    for i, (frac, lab) in enumerate(zip(fracs_show, labels_show)):
+        inset = ax_left.inset_axes([0.05, 0.68 - i * 0.35, 0.9, 0.30])
+        _draw_mini_network(inset, n_nodes=8, frac_measured=frac, title=f"Sensors: {lab}")
+
+    # --- Right panel: error vs sensor fraction ---
+    _add_panel_label(ax_right, "B")
+
+    fracs, est_med, est_lo, est_hi = [], [], [], []
+    opt_med, opt_lo, opt_hi = [], [], []
+    chance_val = None
+
+    for r in results:
+        frac = r["config"].get("sensor_fraction",
+                               r["config"]["num_sensors"] / r["config"]["num_nodes"])
+        fracs.append(frac)
+        est_med.append(r["distances"]["estimate_distance"].median())
+        est_lo.append(r["confidence_intervals"]["estimate_distance"]["low"])
+        est_hi.append(r["confidence_intervals"]["estimate_distance"]["high"])
+        opt_med.append(r["distances"]["optimized_distance"].median())
+        opt_lo.append(r["confidence_intervals"]["optimized_distance"]["low"])
+        opt_hi.append(r["confidence_intervals"]["optimized_distance"]["high"])
+        if chance_val is None:
+            chance_val = r["distances"]["chance_distance"].median()
+
+    order = np.argsort(fracs)
+    fracs = np.array(fracs)[order]
+    est_med, est_lo, est_hi = [np.array(a)[order] for a in [est_med, est_lo, est_hi]]
+    opt_med, opt_lo, opt_hi = [np.array(a)[order] for a in [opt_med, opt_lo, opt_hi]]
+
+    ax_right.plot(fracs, est_med, "o-", color=C_EST, label="Covariance estimate", zorder=3)
+    ax_right.fill_between(fracs, est_lo, est_hi, alpha=0.2, color=C_EST)
+
+    ax_right.plot(fracs, opt_med, "s-", color=C_GRN, label="Granger refined", zorder=3)
+    ax_right.fill_between(fracs, opt_lo, opt_hi, alpha=0.2, color=C_GRN)
+
+    if chance_val is not None:
+        ax_right.axhline(chance_val, color=C_CHANCE, ls="--", lw=1.5, label="Chance baseline")
+
+    ax_right.set_xlabel("Sensor Fraction (stimulated neurons / N)")
+    ax_right.set_ylabel("Recovery Error (Frobenius / N)")
+    ax_right.set_title("Effect of sensor coverage on recovery", fontsize=11, fontweight="bold")
+    ax_right.legend(loc="upper right", framealpha=0.9)
+
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+    print(f"  Saved: {output_path}")
+
+
+# ============================================================================
+# Figure F9: Oracle vs. Approximation Crossover — E6
+# ============================================================================
+
+def plot_oracle_crossover(results, output_path):
+    """Oracle vs approximation comparison across stimulation levels."""
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, figsize=(12, 5), gridspec_kw={"width_ratios": [2, 1]})
+
+    stim_gains = []
+    oracle_med, approx_med, granger_med = [], [], []
+    oracle_all, approx_all, granger_all = [], [], []
+
+    for r in results:
+        stim_gains.append(r["config"]["stim_gain"])
+        o_vals = r["distances"]["oracle_distance"].values
+        a_vals = r["distances"]["estimate_distance"].values
+        g_vals = r["distances"]["optimized_distance"].values
+
+        oracle_med.append(np.median(o_vals))
+        approx_med.append(np.median(a_vals))
+        granger_med.append(np.median(g_vals))
+        oracle_all.append(o_vals)
+        approx_all.append(a_vals)
+        granger_all.append(g_vals)
+
+    stim_gains = np.array(stim_gains)
+    oracle_med = np.array(oracle_med)
+    approx_med = np.array(approx_med)
+    granger_med = np.array(granger_med)
+
+    # Bootstrap 95% CI
+    def _bootstrap_ci(vals_list, n_boot=1000, seed=42):
+        rng = np.random.RandomState(seed)
+        lows, highs = [], []
+        for vals in vals_list:
+            arr = np.asarray(vals)
+            boots = [np.median(rng.choice(arr, size=len(arr), replace=True))
+                     for _ in range(n_boot)]
+            lows.append(np.percentile(boots, 2.5))
+            highs.append(np.percentile(boots, 97.5))
+        return np.array(lows), np.array(highs)
+
+    o_lo, o_hi = _bootstrap_ci(oracle_all)
+    a_lo, a_hi = _bootstrap_ci(approx_all)
+    g_lo, g_hi = _bootstrap_ci(granger_all)
+
+    x_plot = np.arange(len(stim_gains))
+    x_labels = [str(s) for s in stim_gains]
+
+    # Left panel: recovery error vs stimulation
+    _add_panel_label(ax1, "A")
+    ax1.plot(x_plot, oracle_med, "o-", color=PALETTE["red"],
+             label=r"Oracle ($\Sigma_{\phi(x),x}^{-1}$)", markersize=8, zorder=3)
+    ax1.fill_between(x_plot, o_lo, o_hi, color=PALETTE["red"], alpha=0.15)
+
+    ax1.plot(x_plot, approx_med, "s-", color=C_EST,
+             label=r"Approximation ($\Sigma_{x,x}^{-1}$)", markersize=8, zorder=3)
+    ax1.fill_between(x_plot, a_lo, a_hi, color=C_EST, alpha=0.15)
+
+    ax1.plot(x_plot, granger_med, "D-", color=C_GRN,
+             label="Granger-refined", markersize=7, zorder=3)
+    ax1.fill_between(x_plot, g_lo, g_hi, color=C_GRN, alpha=0.15)
+
+    ax1.set_yscale("log")
+    ax1.set_xticks(x_plot)
+    ax1.set_xticklabels(x_labels)
+    ax1.set_xlabel(r"Stimulation gain $\sigma$")
+    ax1.set_ylabel(r"Median recovery error ($\|W - \hat{W}\|_F / N$)")
+    ax1.set_title("Oracle vs. Approximation across stimulation levels",
+                   fontsize=11, fontweight="bold")
+    ax1.legend(fontsize=9, loc="upper right")
+
+    # Right panel: ratio (oracle / approximation)
+    _add_panel_label(ax2, "B")
+    ratios = oracle_med / approx_med
+    ax2.bar(x_plot, ratios, color=PALETTE["purple"], alpha=0.8,
+            edgecolor="#333333", linewidth=0.5)
+    for i, r in enumerate(ratios):
+        ax2.text(i, r + 0.1, f"{r:.1f}x", ha="center", fontsize=9, fontweight="bold")
+    ax2.axhline(1.0, color="gray", ls="--", lw=1, label="Parity")
+    ax2.set_xticks(x_plot)
+    ax2.set_xticklabels(x_labels)
+    ax2.set_xlabel(r"Stimulation gain $\sigma$")
+    ax2.set_ylabel("Error ratio (oracle / approximation)")
+    ax2.set_title("Oracle penalty factor", fontsize=11, fontweight="bold")
+    ax2.legend(fontsize=8)
+
+    plt.suptitle("Oracle vs. Approximation: Implicit Regularization (E6)",
+                 fontsize=13, fontweight="bold", y=1.02)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved: {output_path}")
+
+
+# ============================================================================
 # Utility figures (kept for optional use)
 # ============================================================================
 
