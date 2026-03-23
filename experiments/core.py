@@ -427,14 +427,9 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset):
         network = f"network{network_idx}"
         network_data = multinet_dataset[network]
 
-        if true_W is None:
-            true_W = network_data["connection_weights"]
-            Adj = network_data["adjacency_matrix"]
-            phi = network_data["nonlinearity"]
-        else:
-            true_W = network_data["connection_weights"]
-            Adj = network_data["adjacency_matrix"]
-            phi = network_data["nonlinearity"]
+        true_W = network_data["connection_weights"]
+        Adj = network_data["adjacency_matrix"]
+        phi = network_data["nonlinearity"]
 
         mask = network_data["measured_nodes_mask"].reshape(-1, 1)
         data = network_data["activity_data"]
