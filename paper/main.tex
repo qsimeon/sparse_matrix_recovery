@@ -33,11 +33,11 @@ A Covariance-Based Approach with Granger-Causality Refinement}
 
 \begin{abstract}
 Inferring the connectivity of neural circuits from incomplete observations is a fundamental challenge in neuroscience.
-We present a covariance-based method for estimating the weight matrix of a recurrent neural network from sparse, partial measurements across multiple recording sessions.
-By accumulating pairwise covariance estimates across sessions where different subsets of neurons are observed, we reconstruct the full connectivity matrix without requiring simultaneous recording of all neurons.
-A Granger-causality refinement step enforces biological constraints via projected gradient descent.
+We present a covariance-based method for recovering the weight matrix of a recurrent neural network from partial measurements across multiple recording sessions, accumulating pairwise covariance estimates from sessions with overlapping neuron subsets.
+A Granger-causality refinement step enforces biological constraints via projected gradient descent, achieving $r = 0.91$ correlation with true connectivity and $82\%$ improvement over chance using only $67\%$ neuron coverage per session.
 Through systematic experiments on synthetic networks modeling small brain circuits, we characterize a fundamental \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
-We discover that the ``incorrect'' linear approximation acts as implicit regularization---matching or outperforming the oracle estimator with known nonlinearity at all tested regimes---and provide an exact characterization via the Stein--Price identity.
+We discover that the ``incorrect'' linear approximation acts as implicit regularization---matching or outperforming the oracle estimator with known nonlinearity at all tested regimes---a concrete instance of James--Stein shrinkage.
+Error decomposition reveals that correlation from central pattern generators, not model mismatch, is the dominant error bottleneck ($3.4\times$ larger), identifying intrinsic dynamics modeling as the key target for further improvement.
 \end{abstract}
 
 % ============================================================================

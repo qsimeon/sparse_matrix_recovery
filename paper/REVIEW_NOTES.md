@@ -1,10 +1,28 @@
-# Paper Review Notes — Iteration 37 (RALPH iter 10)
+# Paper Review Notes — Iteration 38 (RALPH iter 11)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Strengthened Related Work: added matrix completion paragraph
+### Strengthened Abstract: added concrete numbers and CPG dominance finding
+
+**Problem**: The abstract was the weakest part of an otherwise polished paper. It lacked concrete performance numbers (r=0.91, 82% improvement over chance) and omitted the CPG dominance finding — one of the paper's three key results highlighted in the Conclusion. Reviewers read the abstract first, and missing headline numbers weakens the first impression. The Conclusion enumerates three key findings (control-estimation tradeoff, implicit regularization, CPG dominance), but the abstract only mentioned the first two.
+
+**Fix**: Rewrote the abstract (6 sentences, ~160 words) to include:
+1. Concrete performance: "$r = 0.91$ correlation with true connectivity and $82\%$ improvement over chance using only $67\%$ neuron coverage per session"
+2. Named the James-Stein connection explicitly: "a concrete instance of James--Stein shrinkage"
+3. Added CPG dominance finding: "correlation from central pattern generators, not model mismatch, is the dominant error bottleneck ($3.4\times$ larger)"
+4. Tightened method description by combining method + accumulation into one sentence
+
+**Verification**: All four numbers verified against paper data:
+- r = 0.91: fig8 panel I Pearson correlation (line 529)
+- 82%: (0.533 − 0.095) / 0.533 = 82.2% (line 330, E4 data)
+- 67%: 8/12 baseline measurement fraction (line 264)
+- 3.4×: E2/E1 = 0.276/0.081 = 3.41 (line 513, fig8 panel H)
+
+**Files changed**: `paper/main.tex` (lines 34-41, abstract)
+
+### Previous iteration: Strengthened Related Work: added matrix completion paragraph
 
 **Problem**: The paper's title says "Sparse Matrix Recovery" but the Related Work section (4 paragraphs) did not cite the foundational matrix completion literature. This is the most directly relevant mathematical framework — recovering a matrix from partial observations — and its omission would be immediately noticed by a reviewer. The compressed sensing paragraph cites Candès et al. 2006 for sparse *vector* recovery, but that's a different problem. Matrix completion (Candès & Recht 2009) is closer to our setting.
 
