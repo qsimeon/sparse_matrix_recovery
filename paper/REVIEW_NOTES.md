@@ -1,10 +1,18 @@
-# Paper Review Notes — Iteration 29 (RALPH iter 2)
+# Paper Review Notes — Iteration 30 (RALPH iter 3)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed incorrect E6 oracle crossover numbers in Discussion
+### Added missing E6 subsection to Experiments (Section 4)
+Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subsection in the Experiments section — readers would see E6 in the table and not find it. Added §4.7 "Oracle vs. Approximation (E6)" between E5 and E7 with:
+- Experimental setup (σ sweep, 17 topologies)
+- Key finding: approximation outperforms oracle at all σ, no crossover
+- Cross-references to Discussion and Appendix A.3
+
+Also refactored the Discussion "Oracle crossover analysis" paragraph to avoid redundantly repeating the same numbers — it now references E6 and focuses on interpretation (James-Stein analogy, practical implication for experimentalists).
+
+### Previous iteration: Fixed incorrect E6 oracle crossover numbers in Discussion
 The "Oracle crossover analysis" paragraph cited wrong ratios:
 - **Before**: "at σ=0.5 the oracle is 3.7× worse, while at σ=5 it is 1.5× worse"
 - **After**: "at zero stimulation the oracle is 4.0× worse, at σ=0.5 it is 2.6× worse, and the gap narrows to 1.4–1.6× for σ ≥ 1"
@@ -26,7 +34,7 @@ The "Oracle crossover analysis" paragraph cited wrong ratios:
 - E7 Discussion paragraph integrates sensor coverage findings
 
 ## Remaining Items to Check
-- [ ] E6 has no subsection in Experiments (only in Discussion) — Table 1 lists it but readers can't find it in Section 4
+- [x] E6 has no subsection in Experiments — **FIXED** this iteration: added §4.7
 - [ ] Notebooks: do they include E7 sensor fraction demo?
 - [ ] Narrative flow: re-read paper top-to-bottom for coherence
 - [ ] Verify figures at print size / visual quality audit
