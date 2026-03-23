@@ -1,10 +1,31 @@
-# Paper Review Notes — Iteration 32 (RALPH iter 5)
+# Paper Review Notes — Iteration 33 (RALPH iter 6)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed numerical discrepancies between text/captions and figures/data
+### Fixed E2 (Measurement Sparsity) numerical discrepancies in text and caption
+
+**Problem**: The E2 section text and fig6 caption reported incorrect numbers for the 33% measurement condition. The text claimed raw estimate = 0.592 and Granger = 0.307 (48% improvement), but the actual data (E2_sparsity.json medians) gives 0.477 and 0.270 (43% improvement). These stale numbers likely came from a previous experimental run and were not updated when figures were regenerated on 2026-03-22. A reviewer cross-checking the figure against the text would immediately spot this — the blue dot at 33% is clearly around 0.48 in the figure, not 0.59.
+
+**Fixes applied**:
+
+1. **Section 4.5 text** (lines 359-360):
+   - Raw estimate at 33%: **0.592 → 0.477** (actual median of 17 topologies)
+   - Granger at 33%: **0.307 → 0.270** (actual median)
+   - Improvement: **48% → 43%** (recalculated)
+   - Granger at 100%: **0.094 → 0.095** (actual median = 0.0948)
+
+2. **Fig6 caption** (line 366): Same corrections applied
+   - **0.094 → 0.095**, **0.307 → 0.270**, **48% → 43%**, **0.592 → 0.477**
+
+**Verification**: All corrected numbers verified against `E2_sparsity.json`:
+- 33% measurement: median estimate_distance = 0.4768, median optimized_distance = 0.2700
+- 100% measurement: median optimized_distance = 0.0948
+- Improvement: (0.477 - 0.270) / 0.477 = 43.4%
+- Figure fig6 visual inspection: blue dot at 33% ≈ 0.48, green square ≈ 0.27 — matches corrected values
+
+### Previous iteration: Fixed numerical discrepancies between text/captions and figures/data (E4, fig8)
 
 **Problem**: Several numbers in the paper text and fig8 caption did not match the actual figure data or the experiment JSON files. A reviewer cross-checking the figure labels against the caption would spot these inconsistencies.
 
@@ -58,11 +79,14 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] Section 2.1 fully motivates design choices
 - [x] E7 Discussion paragraph integrates sensor coverage findings
 - [x] Figures visually inspected: fig1, fig3, fig4, fig5, fig8, fig9 — all publication quality
+- [x] Figures visually inspected: fig2, fig6, fig7 — all publication quality (iter 6). All 9/9 complete.
+- [x] E2 numbers match JSON data: 0.477 (raw at 33%), 0.270 (Granger at 33%), 0.095 (Granger at 100%), 43% improvement
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
-- [ ] Narrative flow: re-read paper top-to-bottom for coherence
-- [x] Verify figures at print size / visual quality audit — **DONE**: 6/9 figures inspected, all look good
+- [ ] Narrative flow: re-read paper top-to-bottom for coherence (read top-to-bottom in iter 6 — structure is sound, experiments tell a logical story)
+- [x] Verify figures at print size / visual quality audit — **DONE**: all 9/9 figures inspected, all look good
 - [x] Conclusion is only one paragraph — **FIXED** iter 4: expanded to 3 paragraphs
 - [x] E6 has no subsection in Experiments — **FIXED** iter 3: added §4.7
-- [x] Numerical discrepancies — **FIXED** this iteration
+- [x] Numerical discrepancies (E4, fig8) — **FIXED** iter 5
+- [x] Numerical discrepancies (E2, fig6) — **FIXED** iter 6

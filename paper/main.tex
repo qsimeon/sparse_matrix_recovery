@@ -356,14 +356,14 @@ This confirms the control-estimation tradeoff: experimentalists must balance sti
 \subsection{Measurement Sparsity (E2)}
 
 We vary the fraction of neurons observed per session from $33\%$ to $100\%$ for $N=12$, $T=900$.
-Full observability ($100\%$) yields error of $0.094$ compared to $0.307$ at $33\%$ measurement (Granger-refined), confirming that measurement sparsity is a significant challenge.
-At $33\%$ measurement, the raw estimate ($0.592$) is substantially worse due to ill-conditioning; the Granger refinement reduces this to $0.307$ ($48\%$ improvement).
+Full observability ($100\%$) yields error of $0.095$ compared to $0.270$ at $33\%$ measurement (Granger-refined), confirming that measurement sparsity is a significant challenge.
+At $33\%$ measurement, the raw estimate ($0.477$) is substantially worse due to ill-conditioning; the Granger refinement reduces this to $0.270$ ($43\%$ improvement).
 The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:sparsity}).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig6_sparsity.pdf}
-\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=12$, $T=900$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.094$; at $33\%$ the Granger-refined estimate ($0.307$) is $48\%$ better than the raw estimate ($0.592$). 17 topologies $\times$ 50 instances per condition.}
+\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=12$, $T=900$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.095$; at $33\%$ the Granger-refined estimate ($0.270$) is $43\%$ better than the raw estimate ($0.477$). 17 topologies $\times$ 50 instances per condition.}
 \label{fig:sparsity}
 \end{figure}
 
