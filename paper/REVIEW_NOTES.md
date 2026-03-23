@@ -1,10 +1,24 @@
-# Paper Review Notes — Iteration 44 (RALPH iter 13)
+# Paper Review Notes — Iteration 45 (RALPH iter 14)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed undefined variables in Appendix A.3 crossover equation
+### Unified $D'$ → $D$ notation for Stein-Price diagonal matrix
+
+**Problem**: The Stein-Price diagonal matrix $\mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$ was called $D'$ in the Methods section (Eq. 8, lines 181-185) and Appendix A.1 (lines 596-597), but $D$ in the Discussion (line 473) and Appendix A.3 (lines 618-620). A reviewer following the derivation from Methods → Discussion → Appendix would see the same quantity with two different names — an immediate credibility flag. This inconsistency was explicitly noted in the iter 13 review ("existing inconsistency not introduced by this fix") but never addressed.
+
+**Fix**: Replaced all 8 occurrences of $D'$ with $D$ in the Methods (lines 181, 184, 185) and Appendix A.1 (lines 596, 597). The Discussion and Appendix A.3 already used $D$, so no changes needed there.
+
+**Verification**:
+- Grepped for `D'` in main.tex: 0 remaining occurrences ✓
+- All 4 definition sites now use identical notation: $D = \mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$
+- Derived quantities consistent: $D_{ii}$, $d_i$, $\Delta = D - I$, $W(D-I)$ — all reference the same $D$ ✓
+- No collision with other uses of $D$: the only other $D$ in the paper is "(D)" panel labels in figure captions (text mode, not math) ✓
+
+**Files changed**: `paper/main.tex` (lines 181, 184, 185, 596, 597)
+
+### Previous: Fixed undefined variables in Appendix A.3 crossover equation
 
 **Problem**: The bias-variance crossover condition in Appendix A.3 (line 621) contained two undefined symbols:
 1. $\Delta$ — used in $\|W\|_F \|\Delta\|_2$ but never defined
@@ -304,6 +318,7 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] Repetitions range: "17--30" matches actual data (17 for E1-E3/E5-E7, 30 for E4); was incorrectly "15--30"
 - [x] Fig3 caption: "Error generally decreases with T and N" — accurate hedge, with discretization explanation for T=100 non-monotonicity (N=12 gets 7/12=58% measured, worse than N=8 at 5/8=62.5%)
 - [x] Appendix A.3 crossover equation: all variables now defined ($\Delta = D-I$, $E_{\text{samp}}$); oracle uses finite-sample hats; \underbrace labels added; condition number bound included
+- [x] Notation consistency: Stein-Price diagonal matrix is $D$ everywhere (was $D'$ in Methods/A.1 vs $D$ in Discussion/A.3); unified to $D$ in iter 14
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
