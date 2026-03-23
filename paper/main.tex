@@ -455,6 +455,14 @@ In practice, the ``sessions'' in our framework correspond to separate recording 
 The key requirement is that sessions share the same underlying connectivity $W$---a reasonable assumption for short-term experiments in small circuits where the connectome is conserved.
 Tools for consistent neuron identification across sessions, such as NeuroPAL \citep{yemini2021neuropal}, make this framework directly applicable to real experimental data.
 
+\paragraph{Sensor coverage: a practical experimental knob.}
+Our experiments reveal two complementary axes of stimulation design: \emph{intensity} (E3) and \emph{coverage} (E7).
+Stimulation gain controls the \emph{magnitude} of the input covariance, while sensor fraction controls its \emph{rank}---the number of independent input directions exciting the network.
+The E7 results show that stimulating a single neuron ($8\%$) yields poor, high-variance recovery because one noise direction cannot excite all $N$ network modes.
+Adding just one more sensor halves the error, and performance plateaus beyond $\sim 33\%$ sensor coverage.
+This has a direct practical implication: in optogenetic experiments (e.g., using SPARC transgenic lines \citep{ahrens2013whole}), an experimenter need not achieve pan-neuronal actuator expression---targeting $3$--$4$ neurons in a 12-neuron circuit suffices, provided stimulation intensity is moderate ($\sigma \approx 0.5$--$1.0$).
+Combined with the E3 finding that excessive stimulation degrades recovery, this defines a practical operating regime: moderate gain applied to a modest subset of neurons.
+
 \paragraph{Identifiability conditions.}
 $W$ is uniquely recoverable if and only if every neuron pair $(i,j)$ is co-observed in at least one session ($n_{ij} \geq 1$ for all $i,j$) and $\Sigma_{x,x}$ is invertible.
 Necessity follows because unobserved pairs leave covariance entries unconstrained; sufficiency follows from $W = \Sigma_1 \Sigma_0^{-1}$.
