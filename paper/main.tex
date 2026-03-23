@@ -264,7 +264,7 @@ These roles are assigned randomly per session, modeling the experimental reality
 Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=12$, $T=900$, 8 measured neurons, 4 sensors, 4 CPG nodes, $\sigma=1.0$, $\phi=\tanh$).
 Since $N=12$, converting fractions to integer neuron counts introduces discretization: the baseline uses $8/12 \approx 66\%$ measured, $4/12 \approx 33\%$ sensors and CPGs.
 In sweep experiments (E2, E3), we report the target fraction (e.g., ``$33\%$'') while noting that the actual count $\lfloor p \cdot N \rfloor$ may differ slightly (e.g., $\lfloor 0.33 \times 12 \rfloor = 3$ neurons $= 25\%$).
-Each experiment uses 15--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib.
+Each experiment uses 17--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib.
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
 
 \begin{table}[h]
@@ -319,7 +319,7 @@ $N$ & $T$ & Chance & Estimate & Granger & Gr.\ Improv. \\
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig3_scaling.pdf}
-\caption{\textbf{Scaling properties of the covariance estimator.} \textbf{(Left)} Median recovery error (Frobenius distance / $N$) vs.\ recording duration $T$ for three network sizes ($N \in \{8, 12, 30\}$) with $66\%$ measurement. Shaded regions show 95\% bootstrap confidence intervals over 17 random topologies (50 instances each). Error decreases with both $T$ and $N$, with the best result at $N=30$, $T=1000$: Granger-refined error of $0.053$. \textbf{(Right)} Error vs.\ network size $N$ at fixed recording durations $T \in \{100, 500, 1000\}$.}
+\caption{\textbf{Scaling properties of the covariance estimator.} \textbf{(Left)} Median recovery error (Frobenius distance / $N$) vs.\ recording duration $T$ for three network sizes ($N \in \{8, 12, 30\}$) with $66\%$ measurement. Shaded regions show 95\% bootstrap confidence intervals over 17 random topologies (50 instances each). Error generally decreases with $T$ and $N$, though discretization of measurement counts (e.g., $\lfloor 0.66 \times 12 \rfloor = 7$ vs.\ $\lfloor 0.66 \times 8 \rfloor = 5$) causes minor non-monotonicity at short durations. The best result is at $N=30$, $T=1000$: Granger-refined error of $0.053$. \textbf{(Right)} Error vs.\ network size $N$ at fixed recording durations $T \in \{100, 500, 1000\}$.}
 \label{fig:scaling}
 \end{figure}
 

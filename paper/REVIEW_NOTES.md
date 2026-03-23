@@ -1,10 +1,28 @@
-# Paper Review Notes — Iteration 42 (RALPH iter 15)
+# Paper Review Notes — Iteration 43 (RALPH iter 12)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Clarified Table 2 "Improvement" column (was ambiguous)
+### Fixed two factual inaccuracies in experimental setup and fig3 caption
+
+**Problem 1**: Line 267 claimed "15--30 repetitions" but no experiment uses 15 topologies. Actual range: E1-E3, E5-E7 use 17; E4 uses 30.
+
+**Problem 2**: Fig3 caption (line 322) claimed "Error decreases with both T and N" — but this is not strictly true. At T=100, N=12 error (0.163) is *higher* than N=8 error (0.156), because discretizing the 66% measurement fraction gives N=12 only 7/12=58.3% measured vs. N=8 getting 5/8=62.5% measured. The lower effective measurement fraction at N=12 makes recovery harder at short durations.
+
+**Fixes**:
+1. Line 267: "15--30 repetitions" → "17--30 repetitions"
+2. Line 322: "Error decreases with both T and N" → "Error generally decreases with T and N, though discretization of measurement counts (e.g., ⌊0.66 × 12⌋ = 7 vs. ⌊0.66 × 8⌋ = 5) causes minor non-monotonicity at short durations."
+
+**Verification**:
+- E1 JSON configs confirm: all E1 conditions use num_repetitions=17, E4 uses 30. No experiment uses 15.
+- E1 Granger medians at T=100: N=8 → 0.156, N=12 → 0.163 (NOT decreasing); N=30 → 0.098
+- E1 measurement fractions: N=8 → 5/8=62.5%, N=12 → 7/12=58.3%, N=30 → 19/30=63.3%
+- Floor computations: ⌊0.66×12⌋=7 ✓, ⌊0.66×8⌋=5 ✓
+
+**Files changed**: `paper/main.tex` (lines 267, 322)
+
+### Previous: Clarified Table 2 "Improvement" column (was ambiguous)
 
 **Problem**: Table 2's column header said "Improvement" without defining what it measured. The column shows the relative reduction from Estimate to Granger-refined (3–42%), but the surrounding text repeatedly uses "improvement over chance" (82% on line 333, 91% on line 296), which gives much larger numbers. A reviewer seeing "91% improvement over chance" in the text but only "10%" in the table's Improvement column for the same row (N=30, T=1000) would be immediately confused.
 
@@ -259,6 +277,8 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] All \label and \ref cross-references verified: 30 labels, all referenced targets exist, no orphan refs
 - [x] Table 2 "Improvement" column: renamed to "Gr. Improv." with explicit formula in caption; no longer ambiguous vs. text's "improvement over chance"
 - [x] E3 numbers match JSON data: σ=0 at 100% meas → 0.4506 (paper: 0.45), σ=0.5 → 0.0926 (paper: ~0.09), 4.87× ratio (paper: ~5×)
+- [x] Repetitions range: "17--30" matches actual data (17 for E1-E3/E5-E7, 30 for E4); was incorrectly "15--30"
+- [x] Fig3 caption: "Error generally decreases with T and N" — accurate hedge, with discretization explanation for T=100 non-monotonicity (N=12 gets 7/12=58% measured, worse than N=8 at 5/8=62.5%)
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
