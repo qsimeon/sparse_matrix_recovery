@@ -1,10 +1,30 @@
-# Paper Review Notes — Iteration 47 (RALPH iter 16)
+# Paper Review Notes — Iteration 48 (RALPH iter 17)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Fixed covariance subscript inconsistency in E4 Granger criterion (line 334)
+### Made K=50 sessions explicit in experimental setup (line 267)
+
+**Problem**: The paper's framework formally defines K sessions ($\mathcal{M}_k$, $\mathcal{S}_k$) in Section 2.2 (line 117), uses K in Algorithm 1 (line 216), and provides a theoretical bound on K needed (Appendix A.2, line 611: $K \geq \log(N^2/\delta)/p^2$). But Section 4.1 never stated what K actually equals — it said "50 network instances per topology sharing the same W" without connecting "instances" to the formally defined "sessions" or specifying that each instance draws independent random measurement masks. A reviewer would immediately ask: "How many sessions does this method require?"
+
+**Fix**: Changed line 267 from:
+- "50 network instances per topology sharing the same $W$, parallelized via joblib"
+to:
+- "$K=50$ recording sessions per topology, each sharing the same $W$ but drawing independent random measurement masks $\mathcal{M}_k$ and sensor subsets $\mathcal{S}_k$ (parallelized via joblib)"
+
+This connects the experimental value to the formal notation, makes the session structure explicit, and confirms that K=50 satisfies the identifiability bound (for N=30, p=0.66: K ≥ 23, well below 50).
+
+**Verification**:
+- $\mathcal{M}_k$ defined on line 117 (observation model) ✓
+- $\mathcal{S}_k$ defined on line 117 (observation model) ✓
+- K used in Algorithm 1 line 216 and estimation problem line 127 — now connected to K=50 ✓
+- Code confirms: `num_networks=50` in run_experiments.py, each drawing independent `np.random.choice` measurement masks ✓
+- Identifiability: K=50 > log(900/0.05)/0.66² ≈ 23 for N=30 (largest network), so all-pairs coverage is guaranteed with high probability ✓
+
+**Files changed**: `paper/main.tex` (line 267)
+
+### Previous: Fixed covariance subscript inconsistency in E4 Granger criterion (line 334)
 
 **Problem**: Line 334 wrote the Granger non-causality condition as $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}(i,j)$ — using a single subscript $\Sigma_{x_t}$ for the contemporaneous covariance. But the formal definition on line 196 uses the double-subscript form $\Sigma_{x_t, x_t}(i,j)$, and every other occurrence in the paper (lines 65, 139, 147, 202, 206, 394, 467) consistently uses $\Sigma_{x_t,x_t}$. A reviewer following the math from the Methods definition (line 196) to the Experiments reference (line 334) would flag this as a different, undefined quantity.
 
@@ -352,6 +372,7 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] Appendix A.3 crossover equation: all variables now defined ($\Delta = D-I$, $E_{\text{samp}}$); oracle uses finite-sample hats; \underbrace labels added; condition number bound included
 - [x] Notation consistency: Stein-Price diagonal matrix is $D$ everywhere (was $D'$ in Methods/A.1 vs $D$ in Discussion/A.3); unified to $D$ in iter 14
 - [x] Hat notation in Granger optimization: Eq. (7) and line 206 now consistently use $\hat{\Sigma}$ (estimated), matching Algorithm 1; other unhatted uses are correctly in derivation/definitional contexts
+- [x] K=50 sessions now explicitly stated in §4.1 (was "50 network instances" — ambiguous, never connected to formal K); notation $\mathcal{M}_k$, $\mathcal{S}_k$ links to Section 2.2 definitions; K=50 satisfies identifiability bound for all tested N
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?

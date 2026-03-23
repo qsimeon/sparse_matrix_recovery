@@ -264,7 +264,7 @@ These roles are assigned randomly per session, modeling the experimental reality
 Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=12$, $T=900$, 8 measured neurons, 4 sensors, 4 CPG nodes, $\sigma=1.0$, $\phi=\tanh$).
 Since $N=12$, converting fractions to integer neuron counts introduces discretization: the baseline uses $8/12 \approx 66\%$ measured, $4/12 \approx 33\%$ sensors and CPGs.
 In sweep experiments (E2, E3), we report the target fraction (e.g., ``$33\%$'') while noting that the actual count $\lfloor p \cdot N \rfloor$ may differ slightly (e.g., $\lfloor 0.33 \times 12 \rfloor = 3$ neurons $= 25\%$).
-Each experiment uses 17--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib.
+Each experiment uses 17--30 repetitions (distinct random network topologies) with $K=50$ recording sessions per topology, each sharing the same $W$ but drawing independent random measurement masks $\mathcal{M}_k$ and sensor subsets $\mathcal{S}_k$ (parallelized via joblib).
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
 
 \begin{table}[h]
