@@ -6,7 +6,7 @@ Ensure all code, experiments, notebooks, and data are complete, correct, and rep
 ## Success Criteria
 - [ ] All 7 experiments (E1-E7) re-run with seed=42, results match paper claims
 - [x] All 10 figures regenerated from fresh data via scripts/generate_all_figures.py
-- [ ] All 3 notebooks in notebooks/ execute end-to-end without errors
+- [x] All 3 notebooks in notebooks/ execute end-to-end without errors
 - [ ] experiments/core.py has no bugs (spectral radius, diagonal zeroing, CPG, etc.)
 - [ ] experiments/run_experiments.py E1-E7 configs match paper's Table 2
 - [x] experiments/analysis.py generates all 10 figures correctly
