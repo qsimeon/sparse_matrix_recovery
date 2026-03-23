@@ -199,11 +199,11 @@ We refine it using projected gradient descent that enforces:
 
 The optimization solves:
 \begin{equation}
-    \min_A \|A - \hat{\Sigma}_{x_{t+1}, x_t}\|_F^2 \quad \text{s.t.} \quad A \Sigma_{x_t, x_t}^{-1} \in \mathcal{C}
+    \min_A \|A - \hat{\Sigma}_{x_{t+1}, x_t}\|_F^2 \quad \text{s.t.} \quad A \hat{\Sigma}_{x_t, x_t}^{-1} \in \mathcal{C}
     \label{eq:optimization}
 \end{equation}
 where $\mathcal{C}$ is the constraint set.
-We alternate between gradient steps on $A$ and projection of $W = A \Sigma_{x_t, x_t}^{-1}$ onto $\mathcal{C}$.
+We alternate between gradient steps on $A$ and projection of $W = A \hat{\Sigma}_{x_t, x_t}^{-1}$ onto $\mathcal{C}$.
 
 \subsection{Full Pipeline}
 

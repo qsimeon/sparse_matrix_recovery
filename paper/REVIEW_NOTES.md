@@ -1,10 +1,26 @@
-# Paper Review Notes — Iteration 45 (RALPH iter 14)
+# Paper Review Notes — Iteration 46 (RALPH iter 15)
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
 ## Changes This Iteration
 
-### Unified $D'$ → $D$ notation for Stein-Price diagonal matrix
+### Fixed hat notation inconsistency in Granger refinement optimization (Eq. 7)
+
+**Problem**: Eq. (7) (line 202) mixed estimated and population quantities: the objective used $\hat{\Sigma}_{x_{t+1}, x_t}$ (with hat = empirical estimate) but the constraint used $\Sigma_{x_t, x_t}^{-1}$ (without hat = population covariance). Line 206 had the same issue: $W = A \Sigma_{x_t, x_t}^{-1}$ (no hat). Meanwhile, Algorithm 1 (line 228) correctly passes estimated covariances $\hat{\Sigma}_{y_t,y_t}$ to GrangerRefine. A reviewer would flag this: the optimization cannot use the unknown true covariance in the constraint while using the estimated covariance in the objective.
+
+**Fix**: Added hats to both locations:
+1. Eq. (7), constraint: $\Sigma_{x_t, x_t}^{-1}$ → $\hat{\Sigma}_{x_t, x_t}^{-1}$
+2. Line 206: $W = A \Sigma_{x_t, x_t}^{-1}$ → $W = A \hat{\Sigma}_{x_t, x_t}^{-1}$
+
+**Verification**:
+- Eq. (7) now consistently uses estimated quantities (hat on both $\Sigma$ terms) ✓
+- Algorithm 1 already used hats everywhere — now consistent with the equation ✓
+- Other uses of unhatted $\Sigma_{x_t,x_t}$ are in derivation/definitional contexts (lines 65, 139, 147, 394, 467) where population quantities are appropriate ✓
+- No spurious hats introduced elsewhere ✓
+
+**Files changed**: `paper/main.tex` (lines 202, 206)
+
+### Previous: Unified $D'$ → $D$ notation for Stein-Price diagonal matrix
 
 **Problem**: The Stein-Price diagonal matrix $\mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$ was called $D'$ in the Methods section (Eq. 8, lines 181-185) and Appendix A.1 (lines 596-597), but $D$ in the Discussion (line 473) and Appendix A.3 (lines 618-620). A reviewer following the derivation from Methods → Discussion → Appendix would see the same quantity with two different names — an immediate credibility flag. This inconsistency was explicitly noted in the iter 13 review ("existing inconsistency not introduced by this fix") but never addressed.
 
@@ -319,6 +335,7 @@ Table 1 listed E6 (Oracle vs. Approximation) but there was no corresponding subs
 - [x] Fig3 caption: "Error generally decreases with T and N" — accurate hedge, with discretization explanation for T=100 non-monotonicity (N=12 gets 7/12=58% measured, worse than N=8 at 5/8=62.5%)
 - [x] Appendix A.3 crossover equation: all variables now defined ($\Delta = D-I$, $E_{\text{samp}}$); oracle uses finite-sample hats; \underbrace labels added; condition number bound included
 - [x] Notation consistency: Stein-Price diagonal matrix is $D$ everywhere (was $D'$ in Methods/A.1 vs $D$ in Discussion/A.3); unified to $D$ in iter 14
+- [x] Hat notation in Granger optimization: Eq. (7) and line 206 now consistently use $\hat{\Sigma}$ (estimated), matching Algorithm 1; other unhatted uses are correctly in derivation/definitional contexts
 
 ## Remaining Items to Check
 - [ ] Notebooks: do they include E7 sensor fraction demo?
