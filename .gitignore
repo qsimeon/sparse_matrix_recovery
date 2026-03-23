@@ -7,4 +7,24 @@ STATUS.md
 # Large data files (track results in git for reproducibility)
 # experiments/results/  # Uncomment to exclude large JSON results
 paper/sparse_matrix_recovery.pdf
+paper/main.pdf
 .ipynb_checkpoints/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.nav
+paper/*.snm
+paper/*.toc
+paper/figures/test.pdf
+
+# Ralph loop logs (not source, just execution traces)
+ralph_output.log
+ralph_code_output.log
+ralph_paper_output.log
+ralph_log.jsonl
+ralph_code_log.jsonl
+ralph_paper_log.jsonl
