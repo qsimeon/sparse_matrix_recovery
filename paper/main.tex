@@ -261,7 +261,9 @@ We generate synthetic networks modeling small brain circuits:
 Each node in the network is characterized by three (non-exclusive) Boolean roles: whether it is a \emph{CPG node} (receives autonomous intrinsic drive), a \emph{sensor node} (receives extrinsic stimulation), and a \emph{measured node} (its activity is recorded).
 These roles are assigned randomly per session, modeling the experimental reality that different recording sessions observe and stimulate different neuron subsets.
 
-Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=12$, $T=900$, $66\%$ measured, $33\%$ sensors, $33\%$ CPGs, stim$=1.0$, $\phi=\tanh$).
+Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=12$, $T=900$, 8 measured neurons, 4 sensors, 4 CPG nodes, stim$=1.0$, $\phi=\tanh$).
+Since $N=12$, converting fractions to integer neuron counts introduces discretization: the baseline uses $8/12 \approx 67\%$ measured, $4/12 \approx 33\%$ sensors and CPGs.
+In sweep experiments (E2, E3), we report the target fraction (e.g., ``$33\%$'') while noting that the actual count $\lfloor p \cdot N \rfloor$ may differ slightly (e.g., $\lfloor 0.33 \times 12 \rfloor = 3$ neurons $= 25\%$).
 Each experiment uses 15--30 repetitions (distinct random network topologies) with 50 network instances per topology sharing the same $W$, parallelized via joblib.
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
 
@@ -340,18 +342,18 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t}(i,j) > \Sigma_{x_{t+1},x_t}
 We examine the interaction between stimulation gain $\sigma$ and measurement fraction for $N=12$, $T=900$.
 The results reveal a fundamental \emph{interaction effect}: the optimal stimulation level depends critically on measurement density.
 
-At low measurement ($33\%$), recovery is moderately successful regardless of stimulation because partial observation implicitly regularizes $\Sigma_{x,x}$.
-At high measurement ($66$--$100\%$), a striking pattern emerges: \emph{zero stimulation fails catastrophically} (error $>4.0$), while moderate stimulation ($\sigma \approx 0.5$) yields excellent recovery (error $\sim 0.03$).
-This occurs because CPG-driven dynamics alone do not excite all network modes---at high measurement, $\Sigma_{x,x}$ becomes rank-deficient without stimulation.
+At low measurement ($33\%$), recovery error is relatively insensitive to stimulation level because partial observation implicitly regularizes $\Sigma_{x,x}$.
+At full measurement ($100\%$), a striking pattern emerges: \emph{zero stimulation} yields error near the chance baseline ($0.45$ vs.\ $0.54$ for chance), while moderate stimulation ($\sigma \approx 0.5$) yields $\sim 5\times$ better recovery (error $\sim 0.09$).
+This occurs because CPG-driven dynamics alone do not excite all network modes---without stimulation, $\Sigma_{x,x}$ becomes ill-conditioned.
 A small amount of stochastic input breaks the CPG autocorrelation structure and ensures persistent excitation.
-However, excessive stimulation ($\sigma > 2$) begins to degrade recovery as noise dominates the signal (Figure~\ref{fig:tradeoff}).
+However, beyond $\sigma \approx 1$, recovery begins to degrade as noise dominates the signal (Figure~\ref{fig:tradeoff}).
 
 This confirms the control-estimation tradeoff: experimentalists must balance stimulation strength against signal quality, with the optimal level depending on how many neurons are simultaneously observed.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig5_stimulation.pdf}
-\caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=12$, $T=900$, 17 topologies $\times$ 50 instances). \textbf{(Left)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to sensor nodes. \textbf{(Right)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 66\%, 100\%). At low measurement, the effect is mild. At high measurement, zero stimulation \emph{fails} (error $>4.0$) because CPG dynamics alone leave $\Sigma_{x,x}$ rank-deficient, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery ($\sim 0.03$). This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
+\caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=12$, $T=900$, 17 topologies $\times$ 50 instances). \textbf{(A)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to sensor nodes. \textbf{(B)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 66\%, 100\%). At low measurement, the effect is mild. At full measurement, zero stimulation yields error near chance ($0.45$) because CPG dynamics alone leave $\Sigma_{x,x}$ ill-conditioned, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery ($\sim 0.09$). This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
 \label{fig:tradeoff}
 \end{figure}
 
@@ -374,13 +376,13 @@ The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:
 We test four nonlinearities at $N=12$ with $66\%$ measurement and $\text{stim}=1.0$.
 Surprisingly, $\tanh$ yields the \emph{best} recovery (Granger error $0.095$), while identity and ReLU---for which the linear approximation is exact---perform worse (error $\sim 0.19$).
 This occurs because $\tanh$ \emph{bounds} the state values (std $\sim 0.8$, $\kappa(\Sigma) \approx 19$), while unbounded nonlinearities allow state drift (identity: std $\sim 40$, $\kappa(\Sigma) \approx 700$), severely degrading the conditioning of $\Sigma_{x,x}$.
-Sigmoid performs worst (error $0.14$) due to its non-zero mean.
+Sigmoid achieves intermediate error ($0.14$): its boundedness helps conditioning relative to identity and ReLU, but its non-zero mean ($\phi(0) = 0.5$) biases the covariance estimate.
 The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:nonlinearity}).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{figures/fig7_nonlinearity.pdf}
-\caption{\textbf{Robustness to nonlinearity mismatch} for $N=12$, $T=900$, $66\%$ measured. \textbf{(Left)} The four activation functions tested. \textbf{(Right)} Median recovery error (log scale) for the raw estimator (blue) and Granger-refined (green) with bootstrap error bars. Counterintuitively, $\tanh$ yields the \emph{best} recovery ($0.094$) because it bounds state values, improving $\kappa(\Sigma_{x,x})$. Unbounded nonlinearities (identity, ReLU) allow state drift that worsens conditioning. Dots show individual topologies ($n=17$).}
+\caption{\textbf{Robustness to nonlinearity mismatch} for $N=12$, $T=900$, $66\%$ measured. \textbf{(Left)} The four activation functions tested. \textbf{(Right)} Median recovery error (log scale) for the raw estimator (blue) and Granger-refined (green) with bootstrap error bars. Counterintuitively, $\tanh$ yields the \emph{best} recovery ($0.095$) because it bounds state values, improving $\kappa(\Sigma_{x,x})$. Unbounded nonlinearities (identity, ReLU) allow state drift that worsens conditioning. Dots show individual topologies ($n=17$).}
 \label{fig:nonlinearity}
 \end{figure}
 
@@ -441,6 +443,12 @@ Our Granger-inspired refinement uses a simpler criterion---comparing contemporan
 Compressed sensing methods have been applied to reconstruct synaptic connections from subsampled neural recordings \citep{candes2006robust}.
 \citet{brunton2016discovering} applied sparse identification to discover governing equations of dynamical systems.
 Our approach differs in that we recover a full matrix rather than a sparse vector, and leverage temporal covariance structure rather than random projections.
+
+\paragraph{Matrix completion.}
+Matrix completion---recovering a matrix from a subset of its entries---has been studied extensively under low-rank assumptions \citep{candes2009exact}.
+Nuclear norm minimization can recover a rank-$r$ matrix of size $N \times N$ from $O(rN \log^2 N)$ uniformly sampled entries.
+Our problem shares the high-level structure (recover a matrix from partial information) but differs in two key respects: the connectivity matrix $W$ is sparse rather than low-rank, and the ``observations'' are not direct entries of $W$ but temporal covariance statistics accumulated across recording sessions.
+Nevertheless, the coupon-collector argument for session coverage (Section~\ref{sec:discussion}) mirrors the sampling requirements in matrix completion theory, and both frameworks share the insight that structured matrices can be recovered from far fewer measurements than their ambient dimension would suggest.
 
 \paragraph{Systems identification.}
 Classical system identification \citep{ljung1998system} addresses parameter estimation in dynamical systems, including vector autoregressive (VAR) models for multivariate time series.
