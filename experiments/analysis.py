@@ -923,7 +923,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate paper figures")
     parser.add_argument("--results-dir", type=str, default="experiments/results")
     parser.add_argument("--output-dir", type=str, default="paper/figures")
-    parser.add_argument("--figure", type=str, help="Generate specific figure (F1-F7)")
+    parser.add_argument("--figure", type=str, help="Generate specific figure (F1-F9)")
     parser.add_argument("--all", action="store_true", help="Generate all figures")
     args = parser.parse_args()
 
@@ -932,7 +932,7 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if args.all or args.figure is None:
-        figures = ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]
+        figures = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"]
     else:
         figures = [args.figure]
 
@@ -958,6 +958,12 @@ def main():
                 plot_nonlinearity_robustness(data, output_dir / "fig7_nonlinearity.pdf")
             elif fig_name == "F7":
                 generate_pipeline_schematic(output_dir / "fig2_pipeline.pdf")
+            elif fig_name == "F8":
+                data = load_results(results_dir / "E7_sensor_fraction.json")
+                plot_sensor_fraction(data, output_dir / "fig9_sensor_fraction.pdf")
+            elif fig_name == "F9":
+                data = load_results(results_dir / "E6_oracle_crossover.json")
+                plot_oracle_crossover(data, output_dir / "fig10_oracle_comparison.pdf")
         except FileNotFoundError as e:
             print(f"  Skipping {fig_name}: {e}")
             print(f"  Run the corresponding experiment first.")

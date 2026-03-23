@@ -18,7 +18,12 @@ Deep line-by-line review of ALL code. Verify correctness, completeness, clarity.
   - E6: stim sweep {0,0.1,...,5.0} for oracle crossover ✓
   - E7: sensors∈{1,2,4,8,12} ✓
   - Fixed: docstring "E1-E6"→"E1-E7", section header "E1-E5"→"E1-E7", removed unused `import os`
-- [ ] Read experiments/analysis.py — verify each figure function produces what the paper caption describes
+- [x] Read experiments/analysis.py — verify each figure function produces what the paper caption describes
+  - All 9 figure functions reviewed line-by-line: schematics (F1, F7), data plots (F2–F6, F8–F9)
+  - Fixed: main() was missing F8 (sensor fraction) and F9 (oracle crossover) handlers — these figures couldn't be generated via `--figure F8` or `--all`
+  - Fixed: help text "F1-F7" → "F1-F9", figure list now includes all 9 internal figures
+  - Internal F-numbering (F1–F9) maps correctly to paper fig numbers (fig1–fig10) via generate_all_figures.py
+  - Each plot function correctly: loads data, extracts medians + CIs, plots with correct labels/axes/colors
 - [ ] Re-run E1-E7 fresh, compare results to paper claims (flag ANY discrepancy)
 - [ ] Regenerate all figures, visually inspect each one (read the PDFs!)
 - [ ] Execute all 3 notebooks end-to-end, verify they produce sensible output
