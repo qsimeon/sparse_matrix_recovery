@@ -34,7 +34,18 @@ Deep line-by-line review of ALL code. Verify correctness, completeness, clarity.
   - E6: oracle always worse than estimator at all stim levels ✓
   - E7: 1sensor=0.387, 2=0.120, 4+=≈0.10 ✓ (Note: 1-sensor value 0.387 differs from old non-deterministic 0.30 — this is the correct reproducible value)
   - All qualitative paper conclusions hold; minor quantitative shifts due to deterministic seeding
-- [ ] Regenerate all figures, visually inspect each one (read the PDFs!)
+- [x] Regenerate all figures, visually inspect each one (read the PDFs!)
+  - All 10 figures regenerated via generate_all_figures.py, every PDF visually inspected
+  - Fig 1 (schematic): network diagram correct — CPG/sensor/measured/unmeasured nodes, covariance accumulation panel
+  - Fig 2 (pipeline): clean flow diagram with correct math notation (Σ_{x',x} Σ_{x,x}^{-1})
+  - Fig 3 (scaling, E1): error decreases with T; larger N recovers better at long T — matches paper
+  - Fig 4 (Granger, E4): 8-panel figure — heatmaps, violin plots, ablation bar chart all correct; recall=1.0 after Granger
+  - Fig 5 (stimulation, E3): log-scale, 33% high variance, 66%/100% converge — correct tradeoff
+  - Fig 6 (sparsity, E2): sharp drop 33%→50%, then plateau; Granger below covariance estimate; chance baseline correct
+  - Fig 7 (nonlinearity, E5): tanh best (~0.1), relu/identity worst, sigmoid middle — matches E5 data
+  - Fig 8 (dynamics): 9-panel — time traces, phase portraits, PSD, variance, error decomposition, scatter (r=0.902)
+  - Fig 9 (sensor fraction, E7): sharp improvement 8%→17% then plateau — matches E7 data
+  - Fig 10 (oracle, E6): oracle always worse (penalty 1.3x-4.2x), all bars above parity — key finding confirmed
 - [x] Execute all 3 notebooks end-to-end, verify they produce sensible output
   - explore_dynamics.ipynb: 9 code cells, 8 figures, 0 errors — demonstrates topology generation, CPG dynamics, chaotic reservoir, stimulation tradeoff
   - complete_analysis.ipynb: 8 code cells, 7 figures, 0 errors — Price's theorem, covariance accumulation, ablation chart, noise robustness (σ_ε=0.00: Granger error=0.0992)
