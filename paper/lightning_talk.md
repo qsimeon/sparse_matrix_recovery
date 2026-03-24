@@ -3,49 +3,45 @@
 
 ---
 
-## [Slide 1 — Problem] (0:00–0:40)
+## [Slide 1 — The Problem] (0:00–0:45)
 
-You want to map how neurons are wired — the connectivity matrix **W** — but you can never record every neuron at once. Different sessions give you different subsets. How do you stitch partial snapshots into a complete picture?
+Imagine you're studying a small brain circuit — 12 neurons in *C. elegans*. You want to know how they're wired: the connectivity matrix **W**. But your microscope can only see about 8 of those 12 neurons at a time. Each day, you image a different subset.
 
-This is a real constraint in small-circuit neuroscience — *C. elegans*, larval zebrafish, organoids — where neuron counts are tractable but simultaneous full-circuit recording is not.
+How do you stitch these partial snapshots into a complete wiring diagram?
 
-**Key tension:** You can stimulate neurons to help identify connections, but stimulation disrupts the intrinsic dynamics you care about. We call this the **control-estimation tradeoff**.
-
----
-
-## [Slide 2 — Method] (0:40–1:20)
-
-Our approach: **covariance accumulation across sessions**.
-
-Whenever two neurons are co-observed in a session, their covariance contributes to estimating the corresponding entry of **W**. Across *K* = 50 sessions with overlapping subsets, we reconstruct the full covariance matrix, then estimate connectivity as:
-
-> **Ŵ = Σ(x_{t+1}, x_t) · Σ(x_t, x_t)⁻¹**
-
-A Granger-causality refinement step then enforces biological constraints — no self-connections, sparsity, non-negativity — via projected gradient descent.
-
-Simple, closed-form, no deep learning required.
+This is a real constraint in small-circuit neuroscience. And there's a deeper tension: you can *stimulate* neurons to help identify connections, but stimulation disrupts the intrinsic dynamics you actually care about. We call this the **control-estimation tradeoff**.
 
 ---
 
-## [Slide 3 — Key Results] (1:20–2:20)
+## [Slide 2 — The Method] (0:45–1:20)
 
-Three findings that matter for experimentalists:
+Our insight: **covariance accumulation**. Whenever two neurons are co-observed in a session, their covariance tells you something about the connection between them. Across 50 sessions with overlapping subsets, you piece together the full covariance matrix entry by entry.
 
-**1. It works.** On synthetic networks (N = 8–30 neurons), we achieve **r = 0.91** correlation with true weights and **82% improvement over chance** using only 66% neuron coverage per session.
+The estimator is one equation:
 
-**2. The "wrong" model wins.** The linear approximation — which ignores the known tanh nonlinearity — **outperforms the oracle estimator** that uses the true nonlinearity at *every* stimulation level tested. Why? The linear covariance is better-conditioned. Using the exact nonlinearity amplifies noise during matrix inversion. This is a concrete James–Stein phenomenon: a biased estimator with lower variance beats an unbiased one. Practical implication: you don't need to characterize the neuronal transfer function.
+> **W-hat = Sigma(x_{t+1}, x_t) times Sigma(x_t, x_t) inverse**
 
-**3. CPG correlation is the bottleneck.** Error decomposition shows that correlation from intrinsic central pattern generators is **3.4× larger** than model mismatch error. The path to better recovery runs through modeling autonomous dynamics — not through better nonlinear approximations.
+Zero the diagonal — we know neurons don't connect to themselves — then refine with biological constraints via projected gradient descent. Simple, closed-form, no deep learning.
 
 ---
 
-## [Slide 4 — Practical Takeaway] (2:20–2:50)
+## [Slide 3 — Three Surprising Findings] (1:20–2:20)
 
-For experimentalists designing recording protocols:
+**First: it works.** On synthetic networks up to 30 neurons, we achieve **r = 0.90** correlation with true weights and **82% improvement** over chance using only 66% neuron coverage per session.
 
-- **Stimulation:** Moderate intensity (σ ≈ 0.5–1.0) on ~33% of neurons. Zero stimulation fails; too much overwhelms the signal.
-- **Measurement:** 50%+ neuron coverage per session hits diminishing returns. You don't need to see everything.
-- **Model:** Use the linear estimator. It's simpler *and* better.
+**Second — and this is the surprising one — the "wrong" model wins.** We deliberately use a linear approximation, ignoring the known tanh nonlinearity. You'd think the oracle estimator that knows the true nonlinearity would be better. It's not. It's *worse* — up to **4.4 times worse**. Why? The tanh compresses the covariance matrix heterogeneously across neurons, making the oracle's matrix inversion amplify noise. The linear version is biased but better-conditioned. This is a concrete James-Stein phenomenon: you don't need to characterize the neuronal transfer function — the simpler model is provably better.
+
+**Third: we identified the real bottleneck.** Error decomposition shows that correlation from intrinsic central pattern generators is **3.3 times larger** than model mismatch. The path to better recovery runs through modeling autonomous dynamics, not through better nonlinear approximations.
+
+---
+
+## [Slide 4 — What This Means] (2:20–2:50)
+
+For experimentalists designing recording protocols, three guidelines:
+
+- **Stimulation**: Moderate intensity on about a third of neurons. Zero stimulation fails; too much overwhelms the signal.
+- **Coverage**: 50%+ neurons per session hits diminishing returns.
+- **Model**: Use the linear estimator. It's simpler *and* better.
 
 This defines a practical operating regime for connectome recovery from calcium imaging with partial observability.
 
@@ -53,6 +49,6 @@ This defines a practical operating regime for connectome recovery from calcium i
 
 ## [Closing] (2:50–3:00)
 
-Covariance accumulation turns the partial-observation problem from a limitation into a feature — each session is a new view of the same circuit. The code and all experiments are publicly available.
+Covariance accumulation turns partial observation from a limitation into a feature — each session is a new view of the same circuit.
 
-Thank you.
+Thank you. Paper, code, and experiments at github.com/qsimeon/sparse\_matrix\_recovery.

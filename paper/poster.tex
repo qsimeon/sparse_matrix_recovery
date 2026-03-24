@@ -70,21 +70,19 @@ A Covariance-Based Approach with Granger-Causality Refinement}\\[12pt]
 % ── Problem ──
 \begin{tcolorbox}[posterbox,title=Problem]
 \large
-\textbf{Goal}: Recover full $N{\times}N$ connectivity matrix $W$ from \textbf{partial measurements} across multiple recording sessions.
+You want to map how neurons are wired --- the connectivity matrix $W$ --- but you can \textbf{never record every neuron at once}.
 
 \vspace{6mm}
-\textbf{Challenge}: In small brain circuits (\textit{C.\ elegans}, zebrafish), we can only observe a \emph{subset} of neurons per session.
+In small brain circuits (\textit{C.\ elegans}, zebrafish, organoids), each recording session observes a different \emph{subset} of neurons. Different days, different views of the same circuit.
 
 \vspace{6mm}
 \textbf{Dynamical model}:
 \[
-  x_{t+1} = W\phi(x_t) + b_t
+  x_{t+1} = W\phi(x_t) + \underbrace{b_t^{\text{stim}}}_{\text{you control}} + \underbrace{b_t^{\text{CPG}}}_{\text{intrinsic}}
 \]
 
-Each session $k$ observes $\mathcal{M}_k \subset \{1,\ldots,N\}$ and stimulates $\mathcal{S}_k$.
-
-\vspace{6mm}
-\textbf{Key insight}: Pairwise covariance statistics can be \textbf{accumulated across sessions} whenever neurons $i,j$ are co-observed.
+\vspace{4mm}
+\textbf{Key insight}: Whenever neurons $i$ and $j$ are co-observed, their covariance contributes to estimating $W_{ij}$. Over many sessions, you piece together the full picture.
 \end{tcolorbox}
 
 \vspace{1cm}
@@ -137,8 +135,8 @@ with diagonal zeroed ($W_{ii}{=}0$, no autapses).
 \begin{center}
 \renewcommand{\arraystretch}{1.6}
 \begin{tabular}{>{\bfseries\color{neuripsaccent}}l l}
-  Weight correlation & $r = 0.91$ (Granger-refined) \\
-  Improvement over chance & $82\%$ ($0.095$ vs.\ $0.533$) \\
+  Weight correlation & $r = 0.90$ (Granger-refined) \\
+  Improvement over chance & $82\%$ ($0.097$ vs.\ $0.538$) \\
   Best recovery & $N{=}30,\, T{=}1000$: error $0.053$ \\
   Sessions needed & $K{=}50$ at $66\%$ coverage \\
 \end{tabular}
@@ -177,21 +175,22 @@ with diagonal zeroed ($W_{ii}{=}0$, no autapses).
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig10_oracle_comparison.pdf}
 \\[4mm]
-\large The ``incorrect'' linear approximation \textbf{outperforms the oracle} with known nonlinearity at \emph{all} tested regimes --- a James--Stein phenomenon.
+\large The ``wrong'' linear approximation \textbf{outperforms the oracle} that knows the true nonlinearity --- at \emph{every} stimulation level tested (up to $4.4\times$ worse for the oracle).
 
 \vspace{4mm}
-\textbf{Why?}\; $\Sigma_{\phi(x),x} = D\Sigma_{x,x}$ where $\tanh$ compression makes $D$ ill-conditioned, amplifying noise in the oracle inversion.
+\textbf{Why?}\; Stein--Price identity: $\Sigma_{\phi(x),x} = D\Sigma_{x,x}$ where $D{=}\mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$.
+$\tanh$ compresses high-variance neurons more, making $D$ heterogeneous and the oracle's inversion ill-conditioned. The linear estimator is biased but better-conditioned --- a classic \textbf{bias-variance tradeoff}.
 
 \vspace{4mm}
-{\color{neuripsred}\textbf{Practical implication:}} No need to characterize neuronal nonlinearity --- the simpler model is \emph{better}.
+{\color{neuripsred}\textbf{For experimentalists:}} Don't bother characterizing the neuronal transfer function --- the simpler model is \emph{provably better}.
 \end{tcolorbox}
 
 \vspace{1cm}
 
 % ── Error Decomposition ──
-\begin{tcolorbox}[posterbox,title=Error Decomposition]
+\begin{tcolorbox}[posterbox,title=Where Does the Error Come From?]
 \large
-\textbf{Dominant bottleneck}: CPG--state correlation, \textbf{not} model mismatch.
+\textbf{Surprise}: The linear approximation is \emph{not} the bottleneck. Intrinsic CPG dynamics are.
 
 \vspace{4mm}
 \begin{center}
@@ -200,8 +199,8 @@ with diagonal zeroed ($W_{ii}{=}0$, no autapses).
   \toprule
   \textbf{Error source} & $\|E\|_F / N$ & \textbf{Fraction} \\
   \midrule
-  Model mismatch ($E_1$) & $0.081$ & $1\times$ \\
-  \rowcolor{neuripsred!15} CPG correlation ($E_2$) & $0.276$ & $3.4\times$ \\
+  Model mismatch ($E_1$) & $0.083$ & $1\times$ \\
+  \rowcolor{neuripsred!15} CPG correlation ($E_2$) & $0.271$ & $3.3\times$ \\
   Total estimation & $0.097$ & --- \\
   \bottomrule
 \end{tabular}
@@ -216,13 +215,13 @@ $\Rightarrow$ Future gains from modeling \textbf{intrinsic dynamics}, not refini
 % ── Practical Guidelines ──
 \begin{tcolorbox}[posterbox,title=Practical Guidelines for Experimentalists,colframe=neuripsgreen,colbacktitle=neuripsgreen]
 \large
-\begin{enumerate}
-  \item[\color{neuripsgreen}\textbf{1.}] \textbf{Measurement}: $\geq 50\%$ neuron coverage per session (error plateaus above this)
-  \item[\color{neuripsgreen}\textbf{2.}] \textbf{Stimulation}: Moderate gain ($\sigma \approx 0.5$--$1.0$) on $\sim 33\%$ of neurons
-  \item[\color{neuripsgreen}\textbf{3.}] \textbf{Sessions}: $K \geq 50$ with random masks ensures all-pairs coverage
-  \item[\color{neuripsgreen}\textbf{4.}] \textbf{Model}: Use the linear approximation --- it's simpler \emph{and} better
-  \item[\color{neuripsgreen}\textbf{5.}] \textbf{Next frontier}: Model CPG dynamics to address the $3.4\times$ dominant error
-\end{enumerate}
+\begin{itemize}\setlength{\itemsep}{2pt}
+  \item[\color{neuripsgreen}\textbf{1.}] \textbf{Measurement}: $\geq 50\%$ coverage per session (plateaus above this)
+  \item[\color{neuripsgreen}\textbf{2.}] \textbf{Stimulation}: Moderate ($\sigma \approx 0.5$--$1.0$) on $\sim 33\%$ of neurons
+  \item[\color{neuripsgreen}\textbf{3.}] \textbf{Sessions}: $K \geq 50$ with random masks for all-pairs coverage
+  \item[\color{neuripsgreen}\textbf{4.}] \textbf{Model}: Use the linear approximation --- simpler \emph{and} better
+  \item[\color{neuripsgreen}\textbf{5.}] \textbf{Next}: Model CPG dynamics to tackle the $3.3\times$ dominant error
+\end{itemize}
 \end{tcolorbox}
 
 \end{column}
