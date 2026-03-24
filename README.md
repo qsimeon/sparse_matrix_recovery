@@ -7,17 +7,17 @@ A covariance-based method for estimating the weight matrix of a recurrent neural
 ## Quick Start
 
 ```bash
-# Install dependencies
-pip install numpy scipy torch networkx matplotlib seaborn pandas scikit-learn joblib wandb
+# Install dependencies (requires uv: https://docs.astral.sh/uv/)
+uv sync
 
 # Run all 7 experiments
-python experiments/run_experiments.py --experiment all --seed 42
+uv run python experiments/run_experiments.py --experiment all --seed 42
 
 # Generate all 10 paper figures
-python scripts/generate_all_figures.py
+uv run python scripts/generate_all_figures.py
 
 # Run the primary walkthrough notebook
-jupyter notebook notebooks/qsimeon_SparseMatrixRecovery.ipynb
+uv run jupyter notebook notebooks/qsimeon_SparseMatrixRecovery.ipynb
 ```
 
 ## Method
@@ -35,7 +35,7 @@ Then: zero diagonal (no autapses) → Granger-causality refinement → recovered
 
 | Exp | Question | Key Finding |
 |-----|----------|-------------|
-| E1 | How does recovery scale with N and T? | N=30, T=1000 → 0.052 error (91% vs chance) |
+| E1 | How does recovery scale with N and T? | N=30, T=1000 → 0.053 error (91% vs chance) |
 | E2 | How much measurement coverage is needed? | Plateaus above ~50% |
 | E3 | What stimulation protocol is optimal? | Depends on measurement density |
 | E4 | What does each pipeline step add? | Diagonal zeroing is most impactful |

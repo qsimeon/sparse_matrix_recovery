@@ -24,7 +24,7 @@ def identity(x):
 
 
 def sigmoid(x):
-    """Sigmoid activation function centered at x=0.5. Equivalent to tanh(x/2)."""
+    """Logistic sigmoid: output in (0,1) with phi(0)=0.5. Related to tanh via sigmoid(x) = (1+tanh(x/2))/2."""
     return 1 / (1 + np.exp(-x))
 
 

@@ -14,8 +14,8 @@
     {"id": "H3", "statement": "Stimulation-measurement interaction determines optimal protocol", "experiment": "E3", "status": "CONFIRMED (CORRECTED)", "result": "Zero stim fails at high measurement; moderate stim (σ≈0.5) optimal"},
     {"id": "H4", "statement": "Granger refinement improves precision/recall", "experiment": "E4", "status": "CONFIRMED", "result": "34% error reduction, perfect recall (1.0)"},
     {"id": "H5", "statement": "Linear approximation degrades gracefully with nonlinearity mismatch", "experiment": "E5", "status": "NUANCED", "result": "tanh BEST (bounded states → good κ), identity worse (unbounded drift)"},
-    {"id": "H6", "statement": "Approximate estimator beats oracle at all operating regimes", "experiment": "E6", "status": "CONFIRMED", "result": "Oracle 2.9-10.4x worse across all stim levels"},
-    {"id": "H7", "statement": "Recovery improves with sensor coverage (number of stimulated neurons)", "experiment": "E7", "status": "CONFIRMED", "result": "1 sensor: 0.244 error; plateaus at 33%+ (~0.10). Sensor fraction controls rank of stimulation covariance."}
+    {"id": "H6", "statement": "Approximate estimator beats oracle at all operating regimes", "experiment": "E6", "status": "CONFIRMED", "result": "Oracle 1.4-4.4x worse across all stim levels, largest gap at sigma=0.1"},
+    {"id": "H7", "statement": "Recovery improves with sensor coverage (number of stimulated neurons)", "experiment": "E7", "status": "CONFIRMED", "result": "1 sensor: 0.218 Granger error; plateaus at 33%+ (~0.10). Sensor fraction controls rank of stimulation covariance."}
   ],
   "experiments": [
     {"id": "E1", "name": "Baseline scaling", "variables": {"N": [8, 12, 30], "T": [100, 500, 1000]}, "fixed": {"measurement": "66%", "stim": 1.0, "reps": 17}},
@@ -41,6 +41,8 @@
     {"id": "F5", "description": "Stimulation × measurement interaction", "in_paper": true},
     {"id": "F6", "description": "Measurement sparsity effect", "in_paper": true},
     {"id": "F7", "description": "Nonlinearity robustness (log scale)", "in_paper": true},
-    {"id": "F8", "description": "Dynamics, CPG detection, error decomposition (9-panel)", "in_paper": true}
+    {"id": "F8", "description": "Dynamics, CPG detection, error decomposition (9-panel)", "in_paper": true},
+    {"id": "F9", "description": "Sensor fraction effect on recovery (E7)", "in_paper": true},
+    {"id": "F10", "description": "Oracle vs approximation comparison (E6)", "in_paper": true}
   ]
 }
