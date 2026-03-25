@@ -229,6 +229,8 @@ def main():
     parser.add_argument("--nonlinearity", type=str)
     parser.add_argument("--measurement-frac", type=float,
                         help="Shorthand: sets num_measured = int(frac * num_nodes)")
+    # Labeling
+    parser.add_argument("--task-id", type=int, help="SLURM task ID (used in output filename for sweeps)")
     # WandB
     parser.add_argument("--wandb", action="store_true", help="Log to WandB")
     args = parser.parse_args()
@@ -264,10 +266,11 @@ def main():
         config["stim_gain"], config["nonlinearity"],
     )
 
-    # Save
+    # Save — use task_id in filename for sweeps to avoid collisions
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{label}_cfg{args.config_idx:03d}_rep{args.rep:03d}.json"
+    cfg_id = args.task_id if args.task_id is not None else args.config_idx
+    filename = f"{label}_cfg{cfg_id:03d}_rep{args.rep:03d}.json"
     result = {"config": config, "rep": args.rep, "seed": args.seed, "distances": distances}
     with open(output_dir / filename, "w") as f:
         json.dump(result, f, indent=2)

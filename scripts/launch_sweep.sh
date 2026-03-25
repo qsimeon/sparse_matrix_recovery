@@ -119,6 +119,7 @@ for REP in $(seq 0 $((NUM_REPS - 1))); do
         --nonlinearity tanh \
         --rep "${REP}" \
         --seed 42 \
+        --task-id "${TASK_ID}" \
         --output-dir experiments/results/sweep
 done
 
