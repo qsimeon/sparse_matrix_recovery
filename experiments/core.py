@@ -243,7 +243,7 @@ def random_network_topology(num_nodes, non_negative_weights, force_stable, stron
 
 def create_network_data(
     network_idx, max_timesteps, num_nodes, num_cpgs, num_measured,
-    num_sensors, fixed_sensors, stim_gain, nonlinearity, connection_weights,
+    num_stimulated, fixed_stim, stim_gain, nonlinearity, connection_weights,
     obs_noise_std=0.0, worker_seed=None,
 ):
     """
@@ -255,8 +255,8 @@ def create_network_data(
         num_nodes: total nodes in network
         num_cpgs: number of CPG nodes
         num_measured: number of measured/observed nodes
-        num_sensors: number of stimulated nodes
-        fixed_sensors: if True, same sensor nodes for all instances
+        num_stimulated: number of nodes receiving extrinsic stimulation
+        fixed_stim: if True, same stimulated nodes for all instances
         stim_gain: std of Gaussian stimulation noise
         nonlinearity: activation function
         connection_weights: (num_nodes, num_nodes) weight matrix
@@ -300,14 +300,14 @@ def create_network_data(
         A=connection_weights.T, create_using=nx.DiGraph, edge_attr="weight"
     )
 
-    if fixed_sensors:
-        sensor_inds = np.arange(num_nodes)[-num_sensors:].tolist()
+    if fixed_stim:
+        stim_inds = np.arange(num_nodes)[-num_stimulated:].tolist()
     else:
-        sensor_inds = sorted(
-            np.random.choice(np.arange(num_nodes), size=num_sensors, replace=False)
+        stim_inds = sorted(
+            np.random.choice(np.arange(num_nodes), size=num_stimulated, replace=False)
         )
-    sensor_nodes_mask = np.zeros(num_nodes, dtype=bool)
-    sensor_nodes_mask[sensor_inds] = True
+    stim_nodes_mask = np.zeros(num_nodes, dtype=bool)
+    stim_nodes_mask[stim_inds] = True
 
     for t in range(simulation_steps):
         stimulation = np.random.normal(loc=0.0, scale=stim_gain, size=num_nodes)
@@ -320,7 +320,7 @@ def create_network_data(
             state = np.random.uniform(low=-5.0, high=5.0, size=num_nodes)
         else:
             central_pattern = state_to_cpg(state, cpg_net)
-            extrinsic_drive = sensor_nodes_mask * stimulation
+            extrinsic_drive = stim_nodes_mask * stimulation
             intrinsic_drive = cpg_nodes_mask * central_pattern
             total_input = extrinsic_drive + intrinsic_drive
             state = connection_weights @ nonlinearity(state) + total_input
@@ -344,7 +344,7 @@ def create_network_data(
     network_data["max_timesteps"] = max_timesteps
     network_data["num_nodes"] = num_nodes
     network_data["measured_nodes_mask"] = measured_nodes_mask
-    network_data["sensor_nodes_mask"] = sensor_nodes_mask
+    network_data["stim_nodes_mask"] = stim_nodes_mask
     network_data["cpg_nodes_mask"] = cpg_nodes_mask
     network_data["connection_weights"] = connection_weights
     network_data["spectral_radius"] = spectral_radius
@@ -363,12 +363,12 @@ def create_network_data(
 
 def create_multinetwork_dataset(
     num_networks, max_timesteps, num_nodes, num_cpgs, num_measured,
-    num_sensors, fixed_sensors, stim_gain, nonlinearity,
+    num_stimulated, fixed_stim, stim_gain, nonlinearity,
     non_negative_weights, force_stable, obs_noise_std=0.0,
 ):
     """
     Creates a dataset of multiple network instances with shared connectivity.
-    Each instance has different initial conditions and measured/sensor nodes.
+    Each instance has different initial conditions and measured/stimulated nodes.
 
     Args:
         obs_noise_std: Standard deviation of i.i.d. Gaussian observation noise
@@ -376,7 +376,7 @@ def create_multinetwork_dataset(
     """
     assert max_timesteps >= 100
     assert num_nodes >= 2
-    assert num_sensors <= num_nodes
+    assert num_stimulated <= num_nodes
     assert num_cpgs <= num_nodes
     assert num_measured <= num_nodes
     assert num_measured >= 2
@@ -393,7 +393,7 @@ def create_multinetwork_dataset(
     results = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(create_network_data)(
             network_idx, max_timesteps, num_nodes, num_cpgs,
-            num_measured, num_sensors, fixed_sensors, stim_gain,
+            num_measured, num_stimulated, fixed_stim, stim_gain,
             nonlinearity, connection_weights, obs_noise_std,
             worker_seed=worker_seeds[network_idx],
         )
@@ -570,7 +570,7 @@ def projected_gradient_causal(
 # Parameter Resolution
 # ============================================================================
 
-def resolve_params(num_nodes, num_cpgs, num_measured, num_sensors):
+def resolve_params(num_nodes, num_cpgs, num_measured, num_stimulated):
     """Resolve sentinel values (-999, 0, 999) for experiment parameters."""
     if num_cpgs is None or num_cpgs < 0:
         num_cpgs = 1
@@ -586,11 +586,9 @@ def resolve_params(num_nodes, num_cpgs, num_measured, num_sensors):
     elif num_measured > num_nodes:
         num_measured = num_nodes
 
-    if num_sensors is None or num_sensors < 0:
-        num_sensors = 1
-    elif num_sensors == 0:
-        num_sensors = max(1, int(np.ceil(1 / 6 * num_nodes)))
-    elif num_sensors > num_nodes:
-        num_sensors = int(np.ceil(1 / 3 * num_nodes))
+    if num_stimulated is None or num_stimulated < 0:
+        num_stimulated = 1
+    elif num_stimulated > num_nodes:
+        num_stimulated = int(np.ceil(1 / 3 * num_nodes))
 
-    return num_cpgs, num_measured, num_sensors
+    return num_cpgs, num_measured, num_stimulated

@@ -45,7 +45,7 @@ except ImportError:
 
 def one_repetition(
     repetition_idx, random_seed, num_networks, max_timesteps, num_nodes,
-    num_cpgs, num_measured, num_sensors, fixed_sensors, stim_gain,
+    num_cpgs, num_measured, num_stimulated, fixed_stim, stim_gain,
     nonlinearity_func, non_negative_weights, force_stable, obs_noise_std=0.0,
 ):
     """Run one repetition of an experiment (one random network topology)."""
@@ -54,7 +54,7 @@ def one_repetition(
 
     dataset = create_multinetwork_dataset(
         num_networks, max_timesteps, num_nodes, num_cpgs,
-        num_measured, num_sensors, fixed_sensors, stim_gain,
+        num_measured, num_stimulated, fixed_stim, stim_gain,
         nonlinearity_func, non_negative_weights, force_stable,
         obs_noise_std=obs_noise_std,
     )
@@ -149,17 +149,17 @@ def one_repetition(
 # ============================================================================
 
 def run_experiment(
-    random_seed=42, num_repetitions=17, num_networks=50,
-    max_timesteps=900, num_nodes=12, num_cpgs=None, num_measured=None,
-    num_sensors=None, fixed_sensors=False, stim_gain=1.0,
+    random_seed=42, num_repetitions=50, num_networks=50,
+    max_timesteps=1000, num_nodes=15, num_cpgs=None, num_measured=None,
+    num_stimulated=None, fixed_stim=False, stim_gain=1.0,
     nonlinearity="tanh", non_negative_weights=True, force_stable=True,
     save_matrices=False, obs_noise_std=0.0,
 ):
     """Run a full experiment with multiple repetitions."""
     assert num_repetitions > 1
 
-    num_cpgs, num_measured, num_sensors = resolve_params(
-        num_nodes, num_cpgs, num_measured, num_sensors
+    num_cpgs, num_measured, num_stimulated = resolve_params(
+        num_nodes, num_cpgs, num_measured, num_stimulated
     )
     nonlinearity_func = get_nonlinearity(nonlinearity)
 
@@ -167,7 +167,7 @@ def run_experiment(
         random_seed=random_seed, num_repetitions=num_repetitions,
         num_networks=num_networks, max_timesteps=max_timesteps,
         num_nodes=num_nodes, num_cpgs=num_cpgs, num_measured=num_measured,
-        num_sensors=num_sensors, fixed_sensors=fixed_sensors,
+        num_stimulated=num_stimulated, fixed_stim=fixed_stim,
         stim_gain=stim_gain, nonlinearity=nonlinearity,
         non_negative_weights=non_negative_weights, force_stable=force_stable,
     )
@@ -179,7 +179,7 @@ def run_experiment(
         print(f"  Repetition {rep+1}/{num_repetitions}...", end=" ", flush=True)
         distances, matrices = one_repetition(
             rep, random_seed, num_networks, max_timesteps, num_nodes,
-            num_cpgs, num_measured, num_sensors, fixed_sensors, stim_gain,
+            num_cpgs, num_measured, num_stimulated, fixed_stim, stim_gain,
             nonlinearity_func, non_negative_weights, force_stable,
             obs_noise_std=obs_noise_std,
         )
@@ -216,26 +216,26 @@ def run_experiment(
 def run_E1_baseline(seed=42, output_dir=None):
     """E1: Baseline recovery across network sizes and recording durations.
 
-    Uses 66% measurement, 33% CPG, 33% sensors, stim=1.0 (favorable conditions).
+    Uses 66% measurement, 33% CPG, 33% stimulated, stim=1.0 (favorable conditions).
     """
     print("=" * 60)
     print("E1: Baseline Recovery")
     print("=" * 60)
 
     results = []
-    for num_nodes in [8, 12, 30]:
+    for num_nodes in [8, 15, 30]:
         num_cpgs = max(1, int(0.33 * num_nodes))
         num_measured = max(2, int(0.66 * num_nodes))
-        num_sensors = max(1, int(0.33 * num_nodes))
+        num_stimulated = max(1, int(0.33 * num_nodes))
         for T in [100, 500, 1000]:
             print(f"\n  N={num_nodes}, T={T}, measured={num_measured}")
             r = run_experiment(
-                random_seed=seed, num_repetitions=17, num_networks=50,
+                random_seed=seed, num_repetitions=50, num_networks=50,
                 max_timesteps=T, num_nodes=num_nodes,
                 num_cpgs=num_cpgs, num_measured=num_measured,
-                num_sensors=num_sensors,
+                num_stimulated=num_stimulated,
                 stim_gain=1.0, nonlinearity="tanh",
-                save_matrices=(num_nodes <= 12),
+                save_matrices=(num_nodes <= 15),
             )
             r["config"]["experiment"] = "E1"
             results.append(r)
@@ -246,28 +246,28 @@ def run_E1_baseline(seed=42, output_dir=None):
 
 
 def run_E2_sparsity(seed=42, output_dir=None):
-    """E2: Effect of measurement sparsity at N=12."""
+    """E2: Effect of measurement sparsity at N=15."""
     print("=" * 60)
     print("E2: Measurement Sparsity Effect")
     print("=" * 60)
 
     results = []
-    num_nodes = 12
+    num_nodes = 15
     for meas_frac in [0.33, 0.5, 0.66, 0.8, 1.0]:
         num_measured = max(2, int(meas_frac * num_nodes))
         print(f"\n  meas_frac={meas_frac} (num_measured={num_measured})")
         r = run_experiment(
-            random_seed=seed, num_repetitions=17, num_networks=50,
-            max_timesteps=900, num_nodes=num_nodes,
-            num_cpgs=4, num_measured=num_measured, num_sensors=4,
+            random_seed=seed, num_repetitions=50, num_networks=50,
+            max_timesteps=1000, num_nodes=num_nodes,
+            num_cpgs=5, num_measured=num_measured, num_stimulated=5,
             stim_gain=1.0, nonlinearity="tanh",
         )
-        r["config"]["experiment"] = "E2"
+        r["config"]["experiment"] = "E4"
         r["config"]["measurement_fraction"] = meas_frac
         results.append(r)
 
     if output_dir:
-        save_results(results, output_dir / "E2_sparsity.json")
+        save_results(results, output_dir / "E4_sparsity.json")
     return results
 
 
@@ -282,15 +282,15 @@ def run_E3_stimulation(seed=42, output_dir=None):
     print("=" * 60)
 
     results = []
-    num_nodes = 12
+    num_nodes = 15
     for meas_frac in [0.33, 0.66, 1.0]:
         num_measured = max(2, int(meas_frac * num_nodes))
         for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0]:
             print(f"\n  meas={meas_frac:.0%}, stim_gain={stim_gain}")
             r = run_experiment(
-                random_seed=seed, num_repetitions=17, num_networks=50,
-                max_timesteps=900, num_nodes=num_nodes,
-                num_cpgs=4, num_measured=num_measured, num_sensors=4,
+                random_seed=seed, num_repetitions=50, num_networks=50,
+                max_timesteps=1000, num_nodes=num_nodes,
+                num_cpgs=5, num_measured=num_measured, num_stimulated=5,
                 stim_gain=stim_gain, nonlinearity="tanh",
             )
             r["config"]["experiment"] = "E3"
@@ -306,42 +306,42 @@ def run_E4_granger(seed=42, output_dir=None):
     """E4: Ablation study — each step adds knowledge.
 
     Compares: Chance > Adjacency > Spectral > Estimate > Granger-refined.
-    Uses N=12, 66% measurement, stim=1.0 (favorable conditions).
+    Uses N=15, 66% measurement, stim=1.0 (favorable conditions).
     """
     print("=" * 60)
     print("E4: Granger Refinement / Ablation Study")
     print("=" * 60)
 
     results = []
-    num_nodes = 12
+    num_nodes = 15
     r = run_experiment(
-        random_seed=seed, num_repetitions=30, num_networks=50,
-        max_timesteps=900, num_nodes=num_nodes,
-        num_cpgs=4, num_measured=8, num_sensors=4,
+        random_seed=seed, num_repetitions=50, num_networks=50,
+        max_timesteps=1000, num_nodes=num_nodes,
+        num_cpgs=5, num_measured=10, num_stimulated=5,
         stim_gain=1.0, nonlinearity="tanh", save_matrices=True,
     )
-    r["config"]["experiment"] = "E4"
+    r["config"]["experiment"] = "E2"
     results.append(r)
 
     if output_dir:
-        save_results(results, output_dir / "E4_granger.json")
+        save_results(results, output_dir / "E2_granger.json")
     return results
 
 
 def run_E5_nonlinearity(seed=42, output_dir=None):
-    """E5: Robustness to nonlinearity mismatch at N=12."""
+    """E5: Robustness to nonlinearity mismatch at N=15."""
     print("=" * 60)
     print("E5: Nonlinearity Robustness")
     print("=" * 60)
 
     results = []
-    num_nodes = 12
+    num_nodes = 15
     for nl in ["tanh", "relu", "identity", "sigmoid"]:
         print(f"\n  nonlinearity={nl}")
         r = run_experiment(
-            random_seed=seed, num_repetitions=17, num_networks=50,
-            max_timesteps=900, num_nodes=num_nodes,
-            num_cpgs=4, num_measured=8, num_sensors=4,
+            random_seed=seed, num_repetitions=50, num_networks=50,
+            max_timesteps=1000, num_nodes=num_nodes,
+            num_cpgs=5, num_measured=10, num_stimulated=5,
             stim_gain=1.0, nonlinearity=nl,
         )
         r["config"]["experiment"] = "E5"
@@ -365,13 +365,13 @@ def run_E6_oracle_crossover(seed=42, output_dir=None):
     print("=" * 60)
 
     results = []
-    num_nodes = 12
+    num_nodes = 15
     for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]:
         print(f"\n  stim_gain={stim_gain}")
         r = run_experiment(
-            random_seed=seed, num_repetitions=17, num_networks=50,
-            max_timesteps=900, num_nodes=num_nodes,
-            num_cpgs=4, num_measured=8, num_sensors=4,
+            random_seed=seed, num_repetitions=50, num_networks=50,
+            max_timesteps=1000, num_nodes=num_nodes,
+            num_cpgs=5, num_measured=10, num_stimulated=5,
             stim_gain=stim_gain, nonlinearity="tanh",
         )
         r["config"]["experiment"] = "E6"
@@ -382,38 +382,39 @@ def run_E6_oracle_crossover(seed=42, output_dir=None):
     return results
 
 
-def run_E7_sensor_fraction(seed=42, output_dir=None):
-    """E7: How many neurons to stimulate (sensor coverage).
+def run_E7_stim_fraction(seed=42, output_dir=None):
+    """E7: How many neurons to stimulate (stimulation coverage).
 
     Varies the fraction of neurons receiving extrinsic stimulation,
     independently of stimulation gain. This answers: 'Does it matter
     how many neurons you poke, or just how hard?'
 
-    Sensor fraction controls the rank of the stimulation covariance:
-    with 1 sensor, only 1 direction in state space is directly excited;
-    with N sensors, all directions receive independent noise.
+    Stimulation fraction controls the rank of the stimulation covariance:
+    with 1 stimulated neuron, only 1 direction in state space is directly excited;
+    with N stimulated, all directions receive independent noise.
     """
     print("=" * 60)
-    print("E7: Sensor Fraction Sweep")
+    print("E7: Stimulation Fraction Sweep")
     print("=" * 60)
 
     results = []
-    num_nodes = 12
-    for num_sensors in [1, 2, 4, 8, 12]:
-        sensor_frac = num_sensors / num_nodes
-        print(f"\n  num_sensors={num_sensors} ({sensor_frac:.0%} of N={num_nodes})")
+    num_nodes = 15
+    # Sweep: 0%, 33%, 50%, 66%, 100% of N=15
+    for num_stimulated in [0, 5, 7, 10, 15]:
+        stim_frac = num_stimulated / num_nodes
+        print(f"\n  num_stimulated={num_stimulated} ({stim_frac:.0%} of N={num_nodes})")
         r = run_experiment(
-            random_seed=seed, num_repetitions=17, num_networks=50,
-            max_timesteps=900, num_nodes=num_nodes,
-            num_cpgs=4, num_measured=8, num_sensors=num_sensors,
+            random_seed=seed, num_repetitions=50, num_networks=50,
+            max_timesteps=1000, num_nodes=num_nodes,
+            num_cpgs=5, num_measured=10, num_stimulated=num_stimulated,
             stim_gain=1.0, nonlinearity="tanh",
         )
         r["config"]["experiment"] = "E7"
-        r["config"]["sensor_fraction"] = sensor_frac
+        r["config"]["stim_fraction"] = stim_frac
         results.append(r)
 
     if output_dir:
-        save_results(results, output_dir / "E7_sensor_fraction.json")
+        save_results(results, output_dir / "E7_stim_fraction.json")
     return results
 
 
@@ -474,12 +475,12 @@ def log_to_wandb(results, project="sparse_matrix_recovery"):
 
 EXPERIMENTS = {
     "E1": run_E1_baseline,
-    "E2": run_E2_sparsity,
+    "E2": run_E4_granger,       # Was E4: Granger refinement (presented 2nd in paper)
     "E3": run_E3_stimulation,
-    "E4": run_E4_granger,
+    "E4": run_E2_sparsity,      # Was E2: Measurement sparsity (presented 4th in paper)
     "E5": run_E5_nonlinearity,
     "E6": run_E6_oracle_crossover,
-    "E7": run_E7_sensor_fraction,
+    "E7": run_E7_stim_fraction,
 }
 
 

@@ -206,7 +206,7 @@ def plot_stimulation_tradeoff(results, output_path):
                                arrows=True, arrowsize=5, edge_color="#888888")
         nx.draw_networkx_nodes(G, pos, ax=inset, node_color=PALETTE["cyan"],
                                node_size=100, edgecolors="#333333", linewidths=0.6)
-        # Draw stim arrows on sensor nodes (2, 5)
+        # Draw stim arrows on stimulated nodes (2, 5)
         for sn in [2, 5]:
             x, y = pos[sn]
             dx = x / max(np.hypot(x, y), 0.01) * 0.35
@@ -268,7 +268,7 @@ def plot_granger_comparison(results, output_path):
     """Composite: W heatmaps (top) + violin plots (bottom).
 
     Top row: True W, Covariance estimate, Granger-refined, Absolute error.
-    Uses good simulation config (N=12, 50 instances, stim=1.0, 66% measured).
+    Uses good simulation config (N=15, 50 instances, stim=1.0, 66% measured).
     Bottom row: violin plots for distance, precision, recall from experiment data.
     """
     r = results[0]
@@ -287,10 +287,10 @@ def plot_granger_comparison(results, output_path):
         phi = get_nonlinearity("tanh")
         # Use the GOOD config: 50 instances, stim=1.0, 66% measured
         dataset = create_multinetwork_dataset(
-            num_networks=50, max_timesteps=900, num_nodes=12, num_cpgs=4,
-            num_measured=8, num_sensors=4, fixed_sensors=False, stim_gain=1.0,
+            num_networks=50, max_timesteps=1000, num_nodes=15, num_cpgs=5,
+            num_measured=10, num_stimulated=5, fixed_stim=False, stim_gain=1.0,
             nonlinearity=phi, non_negative_weights=True, force_stable=True)
-        est = estimate_connectivity_weights(12, dataset)
+        est = estimate_connectivity_weights(15, dataset)
         _, W_granger = projected_gradient_causal(est["cov_x"], est["cov_dtx"])
         true_W = est["true_W"]
         approx_W = est["approx_W"]
@@ -321,8 +321,8 @@ def plot_granger_comparison(results, output_path):
             plt.colorbar(im, ax=ax, shrink=0.7, pad=0.02)
             _add_panel_label(ax, chr(65 + col))
 
-        err_a = np.linalg.norm(true_W - approx_W, "fro") / 12
-        err_g = np.linalg.norm(true_W - W_granger, "fro") / 12
+        err_a = np.linalg.norm(true_W - approx_W, "fro") / 15
+        err_g = np.linalg.norm(true_W - W_granger, "fro") / 15
         fig.text(0.5, 0.48, f"Frobenius/N: Covariance={err_a:.3f}, Granger={err_g:.3f} "
                  f"({(1-err_g/err_a)*100:.0f}% improvement)",
                  ha="center", fontsize=10, fontstyle="italic")
@@ -385,7 +385,7 @@ def plot_granger_comparison(results, output_path):
     ax.set_ylabel("Error")
     ax.set_title("Ablation", fontsize=10)
 
-    plt.suptitle("Effect of Granger-Causality Refinement (N=12, 66% measured, stim=1.0)",
+    plt.suptitle("Effect of Granger-Causality Refinement (N=15, 66% measured, stim=1.0)",
                  fontsize=13, fontweight="bold", y=1.0)
     plt.savefig(output_path)
     plt.close()
@@ -558,12 +558,12 @@ def plot_nonlinearity_robustness(results, output_path):
 # Figure F8: Sensor Fraction — E7
 # ============================================================================
 
-def plot_sensor_fraction(results, output_path):
-    """Composite: sensor coverage schematic + recovery error vs sensor fraction."""
+def plot_stim_fraction(results, output_path):
+    """Composite: stimulation coverage schematic + recovery error vs stimulation fraction."""
     fig, (ax_left, ax_right) = plt.subplots(
         1, 2, figsize=(11, 4.5), gridspec_kw={"width_ratios": [1, 2.2]})
 
-    # --- Left panel: schematic mini networks showing sensor coverage ---
+    # --- Left panel: schematic mini networks showing stimulation coverage ---
     _add_panel_label(ax_left, "A")
     ax_left.axis("off")
     ax_left.set_title("Sensor coverage patterns", fontsize=11, fontweight="bold", pad=10)
@@ -574,7 +574,7 @@ def plot_sensor_fraction(results, output_path):
         inset = ax_left.inset_axes([0.05, 0.68 - i * 0.35, 0.9, 0.30])
         _draw_mini_network(inset, n_nodes=8, frac_measured=frac, title=f"Sensors: {lab}")
 
-    # --- Right panel: error vs sensor fraction ---
+    # --- Right panel: error vs stimulation fraction ---
     _add_panel_label(ax_right, "B")
 
     fracs, est_med, est_lo, est_hi = [], [], [], []
@@ -582,8 +582,8 @@ def plot_sensor_fraction(results, output_path):
     chance_val = None
 
     for r in results:
-        frac = r["config"].get("sensor_fraction",
-                               r["config"]["num_sensors"] / r["config"]["num_nodes"])
+        frac = r["config"].get("stim_fraction",
+                               r["config"]["num_stimulated"] / r["config"]["num_nodes"])
         fracs.append(frac)
         est_med.append(r["distances"]["estimate_distance"].median())
         est_lo.append(r["confidence_intervals"]["estimate_distance"]["low"])
@@ -610,7 +610,7 @@ def plot_sensor_fraction(results, output_path):
 
     ax_right.set_xlabel("Sensor Fraction (stimulated neurons / N)")
     ax_right.set_ylabel("Recovery Error (Frobenius / N)")
-    ax_right.set_title("Effect of sensor coverage on recovery", fontsize=11, fontweight="bold")
+    ax_right.set_title("Effect of stimulation coverage on recovery", fontsize=11, fontweight="bold")
     ax_right.legend(loc="upper right", framealpha=0.9)
 
     plt.tight_layout()
@@ -767,7 +767,7 @@ def plot_summary_bar(results, output_path):
 
 def generate_problem_schematic(output_path):
     """Generate Figure F1 — network diagram illustrating the problem setup."""
-    N = 12
+    N = 15
     np.random.seed(42)
     G = nx.DiGraph()
     G.add_nodes_from(range(N))
@@ -781,7 +781,7 @@ def generate_problem_schematic(output_path):
     for u, v, w in edges:
         G.add_edge(u, v, weight=w)
     cpg_nodes = {0, 3, 6, 9}
-    sensor_nodes = {2, 5, 8, 11}
+    stim_nodes = {2, 5, 8, 11}
     session1_measured = {0, 2, 4, 6, 8, 10}
     pos = nx.circular_layout(G, scale=1.8)
     fig = plt.figure(figsize=(10, 7))
@@ -800,12 +800,12 @@ def generate_problem_schematic(output_path):
         facecolor = "#4CAF50" if node in session1_measured else "#9E9E9E"
         edgecolor = "#D32F2F" if node in cpg_nodes else "#333333"
         edgewidth = 2.5 if node in cpg_nodes else 1.0
-        marker = "^" if node in sensor_nodes else "o"
+        marker = "^" if node in stim_nodes else "o"
         ax_main.scatter(x, y, s=node_size, c=facecolor, edgecolors=edgecolor,
                         linewidths=edgewidth, marker=marker, zorder=5)
         ax_main.text(x, y, str(node), ha="center", va="center",
                      fontsize=8, fontweight="bold", color="white", zorder=6)
-    for node in sensor_nodes:
+    for node in stim_nodes:
         x, y = pos[node]
         dx = x / np.hypot(x, y) * 0.6; dy = y / np.hypot(x, y) * 0.6
         ox, oy = x + dx, y + dy
@@ -942,13 +942,13 @@ def main():
             if fig_name == "F1":
                 generate_problem_schematic(output_dir / "fig1_problem_schematic.pdf")
             elif fig_name == "F2":
-                data = load_results(results_dir / "E2_sparsity.json")
+                data = load_results(results_dir / "E4_sparsity.json")
                 plot_sparsity_effect(data, output_dir / "fig6_sparsity.pdf")
             elif fig_name == "F3":
                 data = load_results(results_dir / "E3_stimulation.json")
                 plot_stimulation_tradeoff(data, output_dir / "fig5_stimulation.pdf")
             elif fig_name == "F4":
-                data = load_results(results_dir / "E4_granger.json")
+                data = load_results(results_dir / "E2_granger.json")
                 plot_granger_comparison(data, output_dir / "fig4_granger_refinement.pdf")
             elif fig_name == "F5":
                 data = load_results(results_dir / "E1_baseline.json")
@@ -959,8 +959,8 @@ def main():
             elif fig_name == "F7":
                 generate_pipeline_schematic(output_dir / "fig2_pipeline.pdf")
             elif fig_name == "F8":
-                data = load_results(results_dir / "E7_sensor_fraction.json")
-                plot_sensor_fraction(data, output_dir / "fig9_sensor_fraction.pdf")
+                data = load_results(results_dir / "E7_stim_fraction.json")
+                plot_stim_fraction(data, output_dir / "fig9_stim_fraction.pdf")
             elif fig_name == "F9":
                 data = load_results(results_dir / "E6_oracle_crossover.json")
                 plot_oracle_crossover(data, output_dir / "fig10_oracle_comparison.pdf")

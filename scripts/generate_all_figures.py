@@ -30,7 +30,7 @@ from experiments.analysis import (
     plot_stimulation_tradeoff,
     plot_sparsity_effect,
     plot_nonlinearity_robustness,
-    plot_sensor_fraction,
+    plot_stim_fraction,
     plot_oracle_crossover,
 )
 from experiments.core import (
@@ -59,14 +59,14 @@ def generate_fig8_dynamics(output_path):
            "yellow": "#CCBB44", "red": "#EE6677", "purple": "#AA3377"}
 
     np.random.seed(42); torch.manual_seed(42)
-    phi = get_nonlinearity("tanh"); N = 12
+    phi = get_nonlinearity("tanh"); N = 15
     W, _ = random_network_topology(N, non_negative_weights=True, force_stable=True)
 
     # Autonomous dynamics (no stim, all measured)
-    data_auto = create_network_data(0, 1000, N, 4, N, 0, True, 0.0, phi, W)
+    data_auto = create_network_data(0, 1000, N, 5, N, 0, True, 0.0, phi, W)
     # Stimulated dynamics
     np.random.seed(42); torch.manual_seed(42)
-    data_stim = create_network_data(0, 1000, N, 4, N, 4, False, 1.0, phi, W)
+    data_stim = create_network_data(0, 1000, N, 5, N, 5, False, 1.0, phi, W)
 
     X_auto = data_auto["activity_data"]
     X_stim = data_stim["activity_data"]
@@ -139,7 +139,7 @@ def generate_fig8_dynamics(output_path):
 
     # (H) Error decomposition
     np.random.seed(42); torch.manual_seed(42)
-    ds = create_multinetwork_dataset(50, 900, N, 4, 8, 4, False, 1.0, phi, True, True)
+    ds = create_multinetwork_dataset(50, 1000, N, 5, 10, 5, False, 1.0, phi, True, True)
     est = estimate_connectivity_weights(N, ds)
     cov_x_inv = np.linalg.pinv(est["cov_x"])
     E1 = est["true_W"] @ (est["cov_phix"] @ cov_x_inv - np.eye(N))
@@ -188,9 +188,9 @@ def main():
     data = load_results(RESULTS_DIR / "E1_baseline.json")
     plot_scaling(data, FIGURES_DIR / "fig3_scaling.pdf")
 
-    # Fig 4: Granger refinement (E4 data)
-    print("\nFig 4: Granger refinement (E4)")
-    data = load_results(RESULTS_DIR / "E4_granger.json")
+    # Fig 4: Granger refinement (E2 data — was E4, now presented 2nd)
+    print("\nFig 4: Granger refinement (E2)")
+    data = load_results(RESULTS_DIR / "E2_granger.json")
     plot_granger_comparison(data, FIGURES_DIR / "fig4_granger_refinement.pdf")
 
     # Fig 5: Stimulation tradeoff (E3 data)
@@ -198,9 +198,9 @@ def main():
     data = load_results(RESULTS_DIR / "E3_stimulation.json")
     plot_stimulation_tradeoff(data, FIGURES_DIR / "fig5_stimulation.pdf")
 
-    # Fig 6: Measurement sparsity (E2 data)
-    print("\nFig 6: Measurement sparsity (E2)")
-    data = load_results(RESULTS_DIR / "E2_sparsity.json")
+    # Fig 6: Measurement sparsity (E4 data — was E2, now presented 4th)
+    print("\nFig 6: Measurement sparsity (E4)")
+    data = load_results(RESULTS_DIR / "E4_sparsity.json")
     plot_sparsity_effect(data, FIGURES_DIR / "fig6_sparsity.pdf")
 
     # Fig 7: Nonlinearity robustness (E5 data)
@@ -214,8 +214,8 @@ def main():
 
     # Fig 9: Sensor fraction (E7 data)
     print("\nFig 9: Sensor fraction (E7)")
-    data = load_results(RESULTS_DIR / "E7_sensor_fraction.json")
-    plot_sensor_fraction(data, FIGURES_DIR / "fig9_sensor_fraction.pdf")
+    data = load_results(RESULTS_DIR / "E7_stim_fraction.json")
+    plot_stim_fraction(data, FIGURES_DIR / "fig9_stim_fraction.pdf")
 
     # Fig 10: Oracle vs Approximation crossover (E6 data)
     print("\nFig 10: Oracle vs Approximation (E6)")
