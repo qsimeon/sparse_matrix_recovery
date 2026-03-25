@@ -282,7 +282,7 @@ These roles are assigned randomly per session, modeling the experimental reality
 
 Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=15$, $T=1000$, 10 measured neurons, 5 stimulated, 5 CPG nodes, $\sigma=1.0$, $\phi=\tanh$).
 Since $N=15$, converting fractions to integer neuron counts introduces discretization: the baseline uses $10/15 \approx 66\%$ measured, $5/15 \approx 33\%$ stimulated and CPGs.
-Each experiment uses 50 repetitions (distinct random network topologies) with $K=50$ recording sessions per topology, each sharing the same $W$ but drawing independent random measurement masks $\mathcal{M}_k$ and sensor subsets $\mathcal{S}_k$ (parallelized via joblib).
+Each experiment uses 50 repetitions (distinct random network topologies) with $K=50$ recording sessions per topology, each sharing the same $W$ but drawing independent random measurement masks $\mathcal{M}_k$ and stimulation subsets $\mathcal{S}_k$ (parallelized via joblib).
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
 
 \begin{table}[ht]
