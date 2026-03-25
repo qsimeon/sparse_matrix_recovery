@@ -88,7 +88,7 @@ We impose three structural priors on $W$, each a modeling choice motivated by pr
 
 \emph{(i) No autapses}: $W_{ii} = 0$ for all $i$.
 We hypothesize that self-connections are not a necessary feature of the circuits we model, for two reasons.
-First, autapses are rarely identified in connectomics reconstructions---most electron microscopy (EM) studies do not report self-synapses as a distinct category \citep{white1986structure, cook2019whole}.
+First, autapses are rarely identified in connectomics reconstructions---most electron microscopy (EM) studies across organisms (\textit{C.~elegans}, \textit{Drosophila}, mouse cortex) do not report self-synapses as a distinct structural feature.
 Second, any self-loop on neuron $i$ can be equivalently modeled by a reciprocating pair $i \to j \to i$ for some neighbor $j$, making explicit autapses redundant in a strongly connected graph.
 In our estimation pipeline, this prior is applied as a \emph{known structural constraint}: we zero the diagonal of $\hat{W}$ before any refinement.
 This is a qualitatively different use of prior knowledge than the ``oracle'' that knows the nonlinearity $\phi$ (Section~\ref{sec:experiments})---it is an experimenter's belief about circuit architecture, not a biophysical measurement.
