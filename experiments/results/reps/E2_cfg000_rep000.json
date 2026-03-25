@@ -1,0 +1,23 @@
+{
+  "config": {
+    "num_nodes": 15,
+    "max_timesteps": 1000,
+    "num_cpgs": 5,
+    "num_measured": 10,
+    "num_stimulated": 5,
+    "stim_gain": 1.0,
+    "nonlinearity": "tanh"
+  },
+  "rep": 0,
+  "seed": 42,
+  "distances": {
+    "chance_distance": 0.5086668679127652,
+    "adjacency_distance": 0.1523431685827359,
+    "spectral_distance": 0.11808070868131189,
+    "oracle_distance": 0.13177314086805691,
+    "estimate_distance": 0.08058783279881392,
+    "optimized_distance": 0.07331160925624092,
+    "precision": 0.2,
+    "recall": 1.0
+  }
+}
