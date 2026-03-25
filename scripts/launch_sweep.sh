@@ -13,9 +13,9 @@
 #   stim_gain    ∈ {0.0, 0.5, 1.0}    (stimulation intensity)
 #   stim_frac    ∈ {0.33, 0.66, 1.0}  (stimulation coverage)
 #
-# TOTAL: 3×3×3×3×3 = 243 configs × 50 reps = 12,150 tasks
-# RUNTIME: ~30 sec/task × 12,150 = ~100 CPU-hours
-#          With 96 parallel tasks (2 nodes × 48 cores): ~2 hours wall time
+# TOTAL: 3×3×3×3×3 = 243 configs, each running 50 reps internally = 243 SLURM tasks
+# RUNTIME: ~25 min/task (50 reps × ~30 sec) = ~100 CPU-hours total
+#          With 100 parallel tasks: ~3 batches × 25 min = ~75 min wall time
 #
 # USAGE:
 #   cd ~/sparse_matrix_recovery
@@ -28,17 +28,15 @@
 
 #SBATCH --job-name=sparse_sweep
 #SBATCH --partition=mit_normal
-#SBATCH --array=0-12149%200          # 12,150 tasks, max 200 running at once
-                                      # The %200 is a THROTTLE — it prevents
-                                      # you from hogging the entire cluster.
-                                      # 200 concurrent tasks is polite.
+#SBATCH --array=0-242                  # 243 tasks: one per grid config
+                                      # Each task runs ALL 50 reps internally
+                                      # (stays well under 500-job cluster limit)
 
-#SBATCH --cpus-per-task=2             # 2 cores per task (less than experiments
-                                      # because we have 12K tasks and want to
-                                      # be a good cluster citizen)
+#SBATCH --cpus-per-task=4             # 4 cores per task for joblib parallelism
 
-#SBATCH --mem=2G                      # 2 GB RAM per task
-#SBATCH --time=00:15:00               # 15 min max (one config+rep is fast)
+#SBATCH --mem=4G                      # 4 GB RAM per task
+#SBATCH --time=01:00:00               # 1 hour max (50 reps × ~30s = ~25 min,
+                                      # with margin for N=30 which is slower)
 
 #SBATCH --output=logs/sweep_%A_%a.out
 #SBATCH --error=logs/sweep_%A_%a.err
@@ -52,14 +50,15 @@ export JOBLIB_START_METHOD=fork
 
 # ── Decode Task ID into 5D Grid Coordinates ─────────────────────────────────
 #
-# SLURM_ARRAY_TASK_ID goes from 0 to 12149.
-# We need to convert this to (N, T, meas_frac, stim_gain, stim_frac, rep).
+# SLURM_ARRAY_TASK_ID goes from 0 to 242 (one per grid config).
+# Each task runs ALL 50 reps for its config internally.
 #
-# Think of it like a 6D array with dimensions:
-#   [3 × 3 × 3 × 3 × 3 × 50] = 12,150
+# This keeps us under the 500-job cluster limit (243 tasks << 500)
+# while still getting 50 reps per config.
 #
-# To decode: use integer division and modulo, peeling off dimensions
-# from right to left (like converting a linear index to multi-dim subscripts).
+# To decode the 5D grid index: use integer division and modulo,
+# peeling off dimensions from right to left.
+# Think: TASK_ID = N_idx * 81 + T_idx * 27 + meas_idx * 9 + stim_gain_idx * 3 + stim_frac_idx
 
 TASK_ID=${SLURM_ARRAY_TASK_ID}
 
@@ -71,10 +70,8 @@ STIM_GAIN_VALUES=(0.0 0.5 1.0)
 STIM_FRAC_VALUES=(0.33 0.66 1.0)
 NUM_REPS=50
 
-# Decode: peel off rep first (innermost), then stim_frac, stim_gain, meas, T, N
-REP=$((TASK_ID % NUM_REPS))
-REMAINDER=$((TASK_ID / NUM_REPS))
-# Now REMAINDER is 0-242 (one of the 243 grid points)
+# Decode 5D: TASK_ID is 0-242, no rep dimension
+REMAINDER=${TASK_ID}
 
 STIM_FRAC_IDX=$((REMAINDER % 3))
 REMAINDER=$((REMAINDER / 3))
@@ -101,26 +98,27 @@ NUM_STIMULATED=$(python3 -c "print(max(0, int(${STIM_FRAC} * ${N})))")
 NUM_CPGS=$(python3 -c "print(max(1, int(0.33 * ${N})))")
 
 echo "=============================================="
-echo "MEGA SWEEP — Task ${TASK_ID} / 12149"
+echo "MEGA SWEEP — Config ${TASK_ID} / 242 (${NUM_REPS} reps each)"
 echo "  N=${N}, T=${T}"
 echo "  meas_frac=${MEAS_FRAC} (${NUM_MEASURED} neurons)"
 echo "  stim_gain=${STIM_GAIN}"
 echo "  stim_frac=${STIM_FRAC} (${NUM_STIMULATED} neurons)"
-echo "  rep=${REP}, seed=42"
 echo "  Node: $(hostname), CPUs: ${SLURM_CPUS_PER_TASK}"
 echo "=============================================="
 
-# ── Run ──────────────────────────────────────────────────────────────────────
-uv run python experiments/run_single_rep.py \
-    --num-nodes "${N}" \
-    --max-timesteps "${T}" \
-    --num-measured "${NUM_MEASURED}" \
-    --num-stimulated "${NUM_STIMULATED}" \
-    --stim-gain "${STIM_GAIN}" \
-    --nonlinearity tanh \
-    --rep "${REP}" \
-    --seed 42 \
-    --output-dir experiments/results/sweep \
-    --wandb
+# ── Run all 50 reps for this config ──────────────────────────────────────────
+for REP in $(seq 0 $((NUM_REPS - 1))); do
+    echo "  Rep ${REP}/${NUM_REPS}..."
+    uv run python experiments/run_single_rep.py \
+        --num-nodes "${N}" \
+        --max-timesteps "${T}" \
+        --num-measured "${NUM_MEASURED}" \
+        --num-stimulated "${NUM_STIMULATED}" \
+        --stim-gain "${STIM_GAIN}" \
+        --nonlinearity tanh \
+        --rep "${REP}" \
+        --seed 42 \
+        --output-dir experiments/results/sweep
+done
 
-echo "Done! $(date)"
+echo "Done! All ${NUM_REPS} reps for config ${TASK_ID}. $(date)"
