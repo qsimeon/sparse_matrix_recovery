@@ -35,13 +35,13 @@ Then: zero diagonal (no autapses) → Granger-causality refinement → recovered
 
 | Exp | Question | Key Finding |
 |-----|----------|-------------|
-| E1 | How does recovery scale with N and T? | N=30, T=1000 → 0.053 error (91% vs chance) |
+| E1 | How does recovery scale with N and T? | N=30, T=1000 → 0.050 error (91% vs chance) |
 | E2 | How much measurement coverage is needed? | Plateaus above ~50% |
 | E3 | What stimulation protocol is optimal? | Depends on measurement density |
 | E4 | What does each pipeline step add? | Diagonal zeroing is most impactful |
 | E5 | How robust to nonlinearity mismatch? | tanh best (bounds state variance) |
 | E6 | Does the oracle with known φ win? | No — approximate always wins (implicit regularization) |
-| E7 | How many neurons to stimulate? | ≥33% suffices; 1 sensor fails |
+| E7 | How many neurons to stimulate? | ≥33% suffices; 0% fails |
 
 ## Project Structure
 

@@ -27,11 +27,11 @@ Zero the diagonal — we know neurons don't connect to themselves — then refin
 
 ## [Slide 3 — Three Surprising Findings] (1:20–2:20)
 
-**First: it works.** On synthetic networks up to 30 neurons, we achieve **r = 0.90** correlation with true weights and **82% improvement** over chance using only 66% neuron coverage per session.
+**First: it works.** On synthetic networks up to 30 neurons, we achieve **r = 0.96** correlation with true weights and **84% improvement** over chance using only 66% neuron coverage per session.
 
-**Second — and this is the surprising one — the "wrong" model wins.** We deliberately use a linear approximation, ignoring the known tanh nonlinearity. You'd think the oracle estimator that knows the true nonlinearity would be better. It's not. It's *worse* — up to **4.4 times worse**. Why? The tanh compresses the covariance matrix heterogeneously across neurons, making the oracle's matrix inversion amplify noise. The linear version is biased but better-conditioned. This is a concrete James-Stein phenomenon: you don't need to characterize the neuronal transfer function — the simpler model is provably better.
+**Second — and this is the surprising one — the "wrong" model wins.** We deliberately use a linear approximation, ignoring the known tanh nonlinearity. You'd think the oracle estimator that knows the true nonlinearity would be better. It's not. It's *worse* — up to **3.6 times worse**. Why? The tanh compresses the covariance matrix heterogeneously across neurons, making the oracle's matrix inversion amplify noise. The linear version is biased but better-conditioned. This is a concrete James-Stein phenomenon: you don't need to characterize the neuronal transfer function — the simpler model is provably better.
 
-**Third: we identified the real bottleneck.** Error decomposition shows that correlation from intrinsic central pattern generators is **3.3 times larger** than model mismatch. The path to better recovery runs through modeling autonomous dynamics, not through better nonlinear approximations.
+**Third: we identified the real bottleneck.** Error decomposition shows that correlation from intrinsic central pattern generators is **3.1 times larger** than model mismatch. The path to better recovery runs through modeling autonomous dynamics, not through better nonlinear approximations.
 
 ---
 
