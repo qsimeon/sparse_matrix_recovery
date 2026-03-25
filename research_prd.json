@@ -1,6 +1,8 @@
 {
   "title": "Recovering Sparse Neural Connectivity from Partial Measurements: A Covariance-Based Approach with Granger-Causality Refinement",
-  "authors": ["Quilee Simeon"],
+  "authors": [
+    "Quilee Simeon"
+  ],
   "affiliation": "Massachusetts Institute of Technology",
   "target_venue": "arXiv preprint",
   "format": "preprint",
@@ -9,22 +11,199 @@
   "core_claim": "Covariance accumulation across partial-observation sessions recovers sparse connectivity. Key findings: (1) the linear approximation provides implicit regularization via Price's theorem, (2) stimulation-measurement interaction determines optimal experimental protocol, (3) CPG-state correlation is the dominant error source and CPG nodes are detectable.",
   "framing": "General method for small brain circuits (C. elegans, zebrafish, organoids as examples, not focus)",
   "hypotheses": [
-    {"id": "H1", "statement": "Covariance estimator recovers W better than chance", "experiment": "E1", "status": "CONFIRMED", "result": "82% improvement over chance at N=12, 66% measurement"},
-    {"id": "H2", "statement": "Recovery improves with measurement fraction", "experiment": "E2", "status": "CONFIRMED", "result": "Error 0.279 at 33% → 0.094 at 100%"},
-    {"id": "H3", "statement": "Stimulation-measurement interaction determines optimal protocol", "experiment": "E3", "status": "CONFIRMED (CORRECTED)", "result": "Zero stim fails at high measurement; moderate stim (σ≈0.5) optimal"},
-    {"id": "H4", "statement": "Granger refinement improves precision/recall", "experiment": "E4", "status": "CONFIRMED", "result": "34% error reduction, perfect recall (1.0)"},
-    {"id": "H5", "statement": "Linear approximation degrades gracefully with nonlinearity mismatch", "experiment": "E5", "status": "NUANCED", "result": "tanh BEST (bounded states → good κ), identity worse (unbounded drift)"},
-    {"id": "H6", "statement": "Approximate estimator beats oracle at all operating regimes", "experiment": "E6", "status": "CONFIRMED", "result": "Oracle 1.4-4.4x worse across all stim levels, largest gap at sigma=0.1"},
-    {"id": "H7", "statement": "Recovery improves with sensor coverage (number of stimulated neurons)", "experiment": "E7", "status": "CONFIRMED", "result": "1 sensor: 0.218 Granger error; plateaus at 33%+ (~0.10). Sensor fraction controls rank of stimulation covariance."}
+    {
+      "id": "H1",
+      "statement": "Covariance estimator recovers W better than chance",
+      "experiment": "E1",
+      "status": "CONFIRMED",
+      "result": "84% improvement over chance at N=15, 66% measurement"
+    },
+    {
+      "id": "H2",
+      "statement": "Recovery improves with measurement fraction",
+      "experiment": "E4",
+      "status": "CONFIRMED",
+      "result": "Error 0.279 at 33% → 0.094 at 100%"
+    },
+    {
+      "id": "H3",
+      "statement": "Stimulation-measurement interaction determines optimal protocol",
+      "experiment": "E3",
+      "status": "CONFIRMED (CORRECTED)",
+      "result": "Zero stim fails at high measurement; moderate stim (σ≈0.5) optimal"
+    },
+    {
+      "id": "H4",
+      "statement": "Granger refinement improves precision/recall",
+      "experiment": "E2",
+      "status": "CONFIRMED",
+      "result": "34% error reduction, perfect recall (1.0)"
+    },
+    {
+      "id": "H5",
+      "statement": "Linear approximation degrades gracefully with nonlinearity mismatch",
+      "experiment": "E5",
+      "status": "NUANCED",
+      "result": "tanh BEST (bounded states → good κ), identity worse (unbounded drift)"
+    },
+    {
+      "id": "H6",
+      "statement": "Approximate estimator beats oracle at all operating regimes",
+      "experiment": "E6",
+      "status": "CONFIRMED",
+      "result": "Oracle 1.4-4.4x worse across all stim levels, largest gap at sigma=0.1"
+    },
+    {
+      "id": "H7",
+      "statement": "Recovery improves with stimulation coverage (number of stimulated neurons)",
+      "experiment": "E7",
+      "status": "CONFIRMED",
+      "result": "1 stimulated node: 0.218 Granger error; plateaus at 33%+ (~0.10). Stimulation fraction controls rank of stimulation covariance."
+    }
   ],
   "experiments": [
-    {"id": "E1", "name": "Baseline scaling", "variables": {"N": [8, 12, 30], "T": [100, 500, 1000]}, "fixed": {"measurement": "66%", "stim": 1.0, "reps": 17}},
-    {"id": "E2", "name": "Measurement density", "variables": {"measurement_fraction": [0.33, 0.5, 0.66, 0.8, 1.0]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 17}},
-    {"id": "E3", "name": "Stimulation × measurement interaction", "variables": {"stim": [0.0, 0.1, 0.25, 0.5, 1.0, 2.0], "measurement": [0.33, 0.66, 1.0]}, "fixed": {"N": 12, "T": 900, "reps": 17}},
-    {"id": "E4", "name": "Granger refinement / ablation", "variables": {"method": ["chance", "adjacency", "spectral", "estimate", "granger"]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 30}},
-    {"id": "E5", "name": "Nonlinearity robustness", "variables": {"phi": ["tanh", "relu", "identity", "sigmoid"]}, "fixed": {"N": 12, "T": 900, "stim": 1.0, "reps": 17}},
-    {"id": "E6", "name": "Oracle crossover", "variables": {"stim": [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]}, "fixed": {"N": 12, "T": 900, "measurement": "66%", "reps": 17}},
-    {"id": "E7", "name": "Sensor fraction", "variables": {"num_sensors": [1, 2, 4, 8, 12]}, "fixed": {"N": 12, "T": 900, "measurement": "66%", "stim": 1.0, "reps": 17}}
+    {
+      "id": "E1",
+      "name": "Baseline scaling",
+      "variables": {
+        "N": [
+          8,
+          15,
+          30
+        ],
+        "T": [
+          100,
+          500,
+          1000
+        ]
+      },
+      "fixed": {
+        "measurement": "66%",
+        "stim": 1.0,
+        "reps": 50
+      }
+    },
+    {
+      "id": "E2",
+      "name": "Granger refinement / ablation",
+      "variables": {
+        "method": [
+          "chance",
+          "adjacency",
+          "spectral",
+          "estimate",
+          "granger"
+        ]
+      },
+      "fixed": {
+        "N": 15,
+        "T": 1000,
+        "stim": 1.0,
+        "reps": 50
+      }
+    },
+    {
+      "id": "E3",
+      "name": "Stimulation × measurement interaction",
+      "variables": {
+        "stim": [
+          0.0,
+          0.1,
+          0.25,
+          0.5,
+          1.0,
+          2.0
+        ],
+        "measurement": [
+          0.33,
+          0.66,
+          1.0
+        ]
+      },
+      "fixed": {
+        "N": 15,
+        "T": 1000,
+        "reps": 50
+      }
+    },
+    {
+      "id": "E4",
+      "name": "Sparsity",
+      "variables": {
+        "measurement_fraction": [
+          0.33,
+          0.5,
+          0.66,
+          0.8,
+          1.0
+        ]
+      },
+      "fixed": {
+        "N": 15,
+        "T": 1000,
+        "stim": 1.0,
+        "reps": 50
+      }
+    },
+    {
+      "id": "E5",
+      "name": "Nonlinearity robustness",
+      "variables": {
+        "phi": [
+          "tanh",
+          "relu",
+          "identity",
+          "sigmoid"
+        ]
+      },
+      "fixed": {
+        "N": 15,
+        "T": 1000,
+        "stim": 1.0,
+        "reps": 50
+      }
+    },
+    {
+      "id": "E6",
+      "name": "Oracle crossover",
+      "variables": {
+        "stim": [
+          0.0,
+          0.1,
+          0.25,
+          0.5,
+          1.0,
+          2.0,
+          5.0
+        ]
+      },
+      "fixed": {
+        "N": 15,
+        "T": 1000,
+        "measurement": "66%",
+        "reps": 50
+      }
+    },
+    {
+      "id": "E7",
+      "name": "Stimulation fraction",
+      "variables": {
+        "num_stimulated": [
+          1,
+          2,
+          5,
+          10,
+          15
+        ]
+      },
+      "fixed": {
+        "N": 15,
+        "T": 1000,
+        "measurement": "66%",
+        "stim": 1.0,
+        "reps": 50
+      }
+    }
   ],
   "key_contributions": [
     "Covariance accumulation framework for partial observations with identifiability theorem",
@@ -34,15 +213,55 @@
     "Granger-causality refinement with perfect recall"
   ],
   "figures": [
-    {"id": "F1", "description": "Problem schematic (network + covariance accumulation)", "in_paper": true},
-    {"id": "F2", "description": "Method pipeline flowchart", "in_paper": true},
-    {"id": "F3", "description": "Scaling (error vs T and N)", "in_paper": true},
-    {"id": "F4", "description": "Granger refinement (heatmaps + violins + ablation)", "in_paper": true},
-    {"id": "F5", "description": "Stimulation × measurement interaction", "in_paper": true},
-    {"id": "F6", "description": "Measurement sparsity effect", "in_paper": true},
-    {"id": "F7", "description": "Nonlinearity robustness (log scale)", "in_paper": true},
-    {"id": "F8", "description": "Dynamics, CPG detection, error decomposition (9-panel)", "in_paper": true},
-    {"id": "F9", "description": "Sensor fraction effect on recovery (E7)", "in_paper": true},
-    {"id": "F10", "description": "Oracle vs approximation comparison (E6)", "in_paper": true}
+    {
+      "id": "F1",
+      "description": "Problem schematic (network + covariance accumulation)",
+      "in_paper": true
+    },
+    {
+      "id": "F2",
+      "description": "Method pipeline flowchart",
+      "in_paper": true
+    },
+    {
+      "id": "F3",
+      "description": "Scaling (error vs T and N)",
+      "in_paper": true
+    },
+    {
+      "id": "F4",
+      "description": "Granger refinement (heatmaps + violins + ablation)",
+      "in_paper": true
+    },
+    {
+      "id": "F5",
+      "description": "Stimulation × measurement interaction",
+      "in_paper": true
+    },
+    {
+      "id": "F6",
+      "description": "Measurement sparsity effect",
+      "in_paper": true
+    },
+    {
+      "id": "F7",
+      "description": "Nonlinearity robustness (log scale)",
+      "in_paper": true
+    },
+    {
+      "id": "F8",
+      "description": "Dynamics, CPG detection, error decomposition (9-panel)",
+      "in_paper": true
+    },
+    {
+      "id": "F9",
+      "description": "Stimulation fraction effect on recovery (E7)",
+      "in_paper": true
+    },
+    {
+      "id": "F10",
+      "description": "Oracle vs approximation comparison (E6)",
+      "in_paper": true
+    }
   ]
 }

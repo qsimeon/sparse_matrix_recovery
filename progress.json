@@ -15,12 +15,12 @@
     "theory": {
       "status": "completed",
       "score": 9,
-      "notes": "GPT-5.4 verified. Price theorem (Eq 7) correct. E1=W(D-I) simplification. Identifiability K>=log(N\u00b2/\u03b4)/p\u00b2."
+      "notes": "GPT-5.4 verified. Price theorem (Eq 7) correct. E1=W(D-I) simplification. Identifiability K>=log(N²/δ)/p²."
     },
     "experiment": {
       "status": "completed",
       "score": 9,
-      "notes": "All 7 experiments (E1-E7) at consistent N=12 baseline (66% meas, stim=1.0, 17-30 reps, 50 instances). Measurement noise parameter in core.py. E6 oracle: approx always wins. E7 sensor fraction added."
+      "notes": "All 7 experiments (E1-E7) at consistent N=15 baseline (66% meas, stim=1.0, 50 reps, 50 instances). Measurement noise parameter in core.py. E6 oracle: approx always wins. E7 stimulation fraction added."
     },
     "analyze": {
       "status": "completed",
@@ -30,7 +30,7 @@
     "write": {
       "status": "completed",
       "score": 9,
-      "notes": "~630 lines (10 main + 3 appendix). ALL numbers verified against fresh data 2026-03-24. 20 citations. Noise robustness paragraph. CPG detection paragraph. 5-point limitations. r=0.90."
+      "notes": "~630 lines (10 main + 3 appendix). ALL numbers verified against fresh data 2026-03-24. 20 citations. Noise robustness paragraph. CPG detection paragraph. 5-point limitations. r=0.96."
     },
     "review": {
       "status": "completed",
@@ -41,14 +41,46 @@
   "acceptance_threshold": 7,
   "exit_condition": "all_phases_above_threshold_or_max_iterations",
   "history": [
-    {"iteration": "1-4", "timestamp": "2026-03-15", "focus": "Infrastructure, experiments E1-E5, theory verification, GPT-5.4 math"},
-    {"iteration": "5-8", "timestamp": "2026-03-15", "focus": "Figure overhaul, captions, appendix, repo cleanup, E3 correction"},
-    {"iteration": "9-10", "timestamp": "2026-03-16", "focus": "Increase reps to 30, consistent N=12 baseline"},
-    {"iteration": "11-13", "timestamp": "2026-03-17", "focus": "Ablation bar chart, F4 heatmap fix, paper text updates"},
-    {"iteration": "14-15", "timestamp": "2026-03-18", "focus": "Line-by-line PDF review, sign error fix, citation cleanup, CPG detection + dynamics figure"},
-    {"iteration": "16-17", "timestamp": "2026-03-18", "focus": "Full repo audit, consistency audit, notebooks verified"},
-    {"iteration": "18-26", "timestamp": "2026-03-23", "focus": "Dual RALPH loops (code + paper), poster, lightning talk, E7 added, SPARC fixes"},
-    {"iteration": 27, "timestamp": "2026-03-23", "focus": "Final cleanup, README, push to GitHub"},
+    {
+      "iteration": "1-4",
+      "timestamp": "2026-03-15",
+      "focus": "Infrastructure, experiments E1-E5, theory verification, GPT-5.4 math"
+    },
+    {
+      "iteration": "5-8",
+      "timestamp": "2026-03-15",
+      "focus": "Figure overhaul, captions, appendix, repo cleanup, E3 correction"
+    },
+    {
+      "iteration": "9-10",
+      "timestamp": "2026-03-16",
+      "focus": "Increase reps to 50, consistent N=15 baseline"
+    },
+    {
+      "iteration": "11-13",
+      "timestamp": "2026-03-17",
+      "focus": "Ablation bar chart, F4 heatmap fix, paper text updates"
+    },
+    {
+      "iteration": "14-15",
+      "timestamp": "2026-03-18",
+      "focus": "Line-by-line PDF review, sign error fix, citation cleanup, CPG detection + dynamics figure"
+    },
+    {
+      "iteration": "16-17",
+      "timestamp": "2026-03-18",
+      "focus": "Full repo audit, consistency audit, notebooks verified"
+    },
+    {
+      "iteration": "18-26",
+      "timestamp": "2026-03-23",
+      "focus": "Dual RALPH loops (code + paper), poster, lightning talk, E7 added, SPARC fixes"
+    },
+    {
+      "iteration": 27,
+      "timestamp": "2026-03-23",
+      "focus": "Final cleanup, README, push to GitHub"
+    },
     {
       "iteration": 28,
       "timestamp": "2026-03-24",
@@ -58,7 +90,7 @@
         "Regenerated all 10 paper figures from fresh data",
         "Fixed Table 2 (9 rows), E4/E6/E7/E2/E5 in-text claims, abstract, conclusion",
         "Key fix: E6 oracle ratio was 4.0x at sigma=0 (wrong), now 4.4x at sigma=0.1 (correct)",
-        "Key fix: E7 sensor errors updated to match Granger-refined metric",
+        "Key fix: E7 stimulation errors updated to match Granger-refined metric",
         "Updated README to use uv instead of pip",
         "Updated progress.json and research_prd.json"
       ],

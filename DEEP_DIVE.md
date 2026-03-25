@@ -19,8 +19,8 @@ You have a brain circuit with N neurons wired together by synapses. You want to 
                     (K=50 recording sessions)
                               |
           Session 1           |          Session 2          ...
-     see {0,2,4,6,8,10}      |     see {1,3,5,7,9,11}
-     stim neurons {8,10}      |     stim neurons {3,7}
+     see {0,2,4,6,8,10,12,14}      |     see {1,3,5,7,9,11,13}
+     stim neurons {10,12,14}      |     stim neurons {3,7,9}
               |                |              |
               v                |              v
     +-------------------+     |    +-------------------+
@@ -57,7 +57,7 @@ You have a brain circuit with N neurons wired together by synapses. You want to 
           +------------+------------+
                        v
                   Final W_hat
-           (r = 0.90 with true W)
+           (r = 0.96 with true W)
 ```
 
 ---
@@ -89,7 +89,7 @@ uv run python experiments/run_experiments.py --experiment E4 --seed 42
 
 ### Step 1: Generate a random brain circuit
 
-`core.py:202` — `random_network_topology(num_nodes=12, non_negative_weights=True, force_stable=True)`
+`core.py:202` — `random_network_topology(num_nodes=15, non_negative_weights=True, force_stable=True)`
 
 This creates a random directed graph, like a tiny connectome:
 
@@ -108,10 +108,10 @@ Grow density until strongly connected -> draw Unif(0,1) weights -> scale so rho(
 `core.py:244` — `create_network_data(...)` called 50 times via `create_multinetwork_dataset`
 
 Each session:
-1. **Pick which neurons to observe** (random 8 of 12 = 66%)
-2. **Pick which neurons to stimulate** (random 4 of 12 = 33%)
-3. **Pick which neurons have CPG** (4 of 12 = 33%)
-4. **Run the dynamics** for T=900 timesteps (+ 300 warmup, discarded):
+1. **Pick which neurons to observe** (random 10 of 15 = 66%)
+2. **Pick which neurons to stimulate** (random 5 of 15 = 33%)
+3. **Pick which neurons have CPG** (5 of 15 = 33%)
+4. **Run the dynamics** for T=1000 timesteps (+ 300 warmup, discarded):
 
 ```python
 # core.py:326 — THE dynamics equation
@@ -124,8 +124,8 @@ where `total_input = extrinsic_drive + intrinsic_drive`:
                         +--------------------------------------+
                         |         total_input (b_t)             |
                         |                                       |
-  extrinsic_drive ------+  sensor_mask * N(0, sigma^2)          |
-  (you control this)    |  i.i.d. Gaussian per sensor node      |
+  extrinsic_drive ------+  stim_mask * N(0, sigma^2)          |
+  (you control this)    |  i.i.d. Gaussian per stimulated node      |
                         |  Cov(b_stim, x) = 0  <-- KEY!        |
                         |                                       |
   intrinsic_drive ------+  cpg_mask * cpg_net(state)            |
@@ -140,7 +140,7 @@ where `total_input = extrinsic_drive + intrinsic_drive`:
 
 ### Step 3: Accumulate covariances across sessions
 
-`core.py:410` — `estimate_connectivity_weights(num_nodes=12, multinet_dataset)`
+`core.py:410` — `estimate_connectivity_weights(num_nodes=15, multinet_dataset)`
 
 This is the core algorithm. For each session k:
 
@@ -214,13 +214,13 @@ Result: ~3% additional error reduction, **perfect recall** (all true edges prese
 
 | Exp | Question | What it varies | Key Finding |
 |-----|----------|---------------|-------------|
-| E1 | How does recovery scale? | N in {8,12,30}, T in {100,500,1000} | N=30, T=1000 -> 0.053 error (91% vs chance) |
-| E2 | How much observation? | Measurement 33-100% | Plateaus above ~50% |
+| E1 | How does recovery scale? | N in {8,15,30}, T in {100,500,1000} | N=30, T=1000 -> 0.053 error (91% vs chance) |
+| E2 | What does each step add? | Ablation: chance->estimate->Granger | 84% improvement, perfect recall |
 | E3 | Stimulation tradeoff? | sigma x measurement density | Zero stim fails; sigma~0.5 optimal |
-| E4 | What does each step add? | Ablation: chance->estimate->Granger | 82% improvement, perfect recall |
+| E4 | How much observation? | Measurement 33-100% | Plateaus above ~50% |
 | E5 | Robust to nonlinearity? | tanh, relu, identity, sigmoid | tanh best (bounds variance) |
 | E6 | Does oracle win? | Oracle vs approx across sigma | No — approx always wins (1.4-4.4x) |
-| E7 | How many sensors? | 1,2,4,8,12 stimulated neurons | 1 fails; >=33% suffices |
+| E7 | How many stimulated? | 1,2,5,10,15 stimulated neurons | 1 fails; >=33% suffices |
 
 ---
 
@@ -231,13 +231,13 @@ The full estimation error is:
 ```
 W_hat - W = W(D - I)              +  Sigma_{b,x} * Sigma_{x,x}^{-1}
              E1: model mismatch       E2: CPG correlation
-             (0.083)                   (0.271)
-             1x                        3.3x  <-- DOMINANT
+             (0.073)                   (0.229)
+             1x                        3.1x  <-- DOMINANT
 ```
 
 **E1 (model mismatch)**: The price of approximating phi(x) ~ x. The Stein-Price identity gives an exact formula: E1 = W(D-I) where D = diag(E[sech^2(x_i)]). For small state variance, 1-d_i ~ sigma_i^2.
 
-**E2 (CPG correlation)**: The price of ignoring Cov(b_CPG, x). The stimulation is truly independent, but the CPG depends on state. This is 3.3x larger than E1.
+**E2 (CPG correlation)**: The price of ignoring Cov(b_CPG, x). The stimulation is truly independent, but the CPG depends on state. This is 3.1x larger than E1.
 
 **Why the oracle loses**: It must invert D*Sigma_{x,x} instead of Sigma_{x,x}. The D matrix compresses rows heterogeneously (high-variance neurons get compressed more), worsening the condition number:
 
@@ -255,7 +255,7 @@ The linear estimator avoids this — it's biased but better-conditioned. Classic
 The oracle (which knows the true tanh) is 1.4-4.4x worse than the naive linear approximation. Don't bother characterizing the neuronal transfer function — the simpler model is provably better.
 
 ### 2. CPG correlation is the real bottleneck
-E2 is 3.3x larger than E1. Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear model.
+E2 is 3.1x larger than E1. Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear model.
 
 ### 3. The control-estimation tradeoff is quantifiable
 Zero stimulation fails (Sigma_{x,x} ill-conditioned). Too much overwhelms the signal. Sweet spot: sigma ~ 0.5-1.0, ~33% of neurons.
@@ -276,21 +276,21 @@ THE WHOLE PROJECT IN ONE DIAGRAM:
     Partial observations          Accumulate            Estimate
     +--------+ +--------+       covariances            connectivity
     |Sess 1  | |Sess 2  | ...   piece by piece    ->  W_hat = Sigma_1 * Sigma_0^{-1}
-    |see 8   | |see 8   |       across 50              (one equation)
-    |of 12   | |of 12   |       sessions
+    |see 10  | |see 10  |       across 50              (one equation)
+    |of 15   | |of 15   |       sessions
     +--------+ +--------+
                                                           |
                                                           v
     Three surprise findings:                    Zero diagonal
     1. Linear > Oracle (James-Stein)            (biggest win)
     2. CPG correlation >> model mismatch               |
-    3. Sweet spot: sigma~0.5, 33% sensors              v
+    3. Sweet spot: sigma~0.5, 33% stimulated              v
                                                  Granger refine
                                                  (non-neg, sparse)
                                                        |
                                                        v
                                                  Final W_hat
-                                              r=0.90, 82% > chance
+                                              r=0.96, 84% > chance
 ```
 
 ---

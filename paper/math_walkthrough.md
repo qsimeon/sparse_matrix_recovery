@@ -7,9 +7,9 @@
 
 ## The Big Picture
 
-You're a neuroscientist studying a small brain circuit (say, 12 neurons in *C. elegans*). You want to know the connectivity matrix W: how strongly does neuron j influence neuron i?
+You're a neuroscientist studying a small brain circuit (say, 15 neurons in *C. elegans*). You want to know the connectivity matrix W: how strongly does neuron j influence neuron i?
 
-**The catch**: Your microscope can only see ~8 of the 12 neurons at a time. Each session, you image a different subset. Some days you see neurons {0,2,4,6,8,10}, other days {1,3,5,7,9,11}.
+**The catch**: Your microscope can only see ~10 of the 15 neurons at a time. Each session, you image a different subset. Some days you see neurons {0,2,4,6,8,10,12,14}, other days {1,3,5,7,9,11,13}.
 
 **The insight**: Whenever neurons i and j are simultaneously visible, you can compute their covariance. Over many sessions, you eventually observe every *pair* at least once, accumulating a complete N x N covariance matrix piece by piece.
 
@@ -132,7 +132,7 @@ W_hat - W = W(D - I)              +  Sigma_{b,x} Sigma_{x,x}^{-1}
 
 **E2 (CPG correlation)**: The price of assuming Cov(b,x) = 0. The extrinsic stimulation IS independent. But the CPG depends on state, so Cov(cpg_t, x_t) != 0.
 
-**Key finding**: E1 = 0.083, E2 = 0.271. **E2 is 3.3x larger**. The CPG correlation is the dominant bottleneck -- not the linear approximation. Future improvements should focus on modeling CPG effects.
+**Key finding**: E1 = 0.073, E2 = 0.229. **E2 is 3.1x larger**. The CPG correlation is the dominant bottleneck -- not the linear approximation. Future improvements should focus on modeling CPG effects.
 
 ---
 
@@ -183,7 +183,7 @@ Perhaps the most practical finding for experimentalists.
 
 **The sweet spot**: sigma ~ 0.5--1.0, applied to ~33% of neurons. This provides enough independent noise directions to excite all network modes while not drowning out the connectivity signal.
 
-**Sensor coverage matters independently**: Stimulation gain controls the *magnitude* of input covariance. Sensor fraction controls its *rank* (number of independent noise directions). One sensor is insufficient; beyond 33% coverage, performance plateaus.
+**Stimulation coverage matters independently**: Stimulation gain controls the *magnitude* of input covariance. Stimulation fraction controls its *rank* (number of independent noise directions). One stimulated node is insufficient; beyond 33% coverage, performance plateaus.
 
 ---
 
@@ -206,10 +206,10 @@ Granger refinement (non-neg, sparse)             [biological constraints]
     |
     v
 Error = W(D-I)  +  Sigma_{b,x} Sigma_{x,x}^{-1}
-        ^small      ^3.3x larger                  [CPG dominates]
+        ^small      ^3.1x larger                  [CPG dominates]
 ```
 
 **Three key takeaways**:
 1. The "wrong" linear approximation is actually *better* than the oracle (implicit regularization via James-Stein shrinkage)
-2. CPG correlation, not model mismatch, is the dominant error source (3.3x larger)
+2. CPG correlation, not model mismatch, is the dominant error source (3.1x larger)
 3. Moderate stimulation (~sigma=0.5-1.0) of a modest subset (~33%) of neurons defines the practical operating regime
