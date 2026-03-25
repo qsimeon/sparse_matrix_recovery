@@ -22,15 +22,7 @@ from scipy.stats import bootstrap
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from experiments.core import (
-    get_nonlinearity,
-    resolve_params,
-    create_multinetwork_dataset,
-    estimate_connectivity_weights,
-    projected_gradient_causal,
-    calculate_spectral_radius,
-    adjust_spectral_radius,
-)
+from experiments.core import resolve_params
 
 try:
     import wandb
@@ -38,110 +30,8 @@ try:
 except ImportError:
     HAS_WANDB = False
 
-
-# ============================================================================
-# Single Repetition
-# ============================================================================
-
-def one_repetition(
-    repetition_idx, random_seed, num_networks, max_timesteps, num_nodes,
-    num_cpgs, num_measured, num_stimulated, fixed_stim, stim_gain,
-    nonlinearity_func, non_negative_weights, force_stable, obs_noise_std=0.0,
-):
-    """Run one repetition of an experiment (one random network topology)."""
-    torch.manual_seed(random_seed + repetition_idx)
-    np.random.seed(random_seed + repetition_idx)
-
-    dataset = create_multinetwork_dataset(
-        num_networks, max_timesteps, num_nodes, num_cpgs,
-        num_measured, num_stimulated, fixed_stim, stim_gain,
-        nonlinearity_func, non_negative_weights, force_stable,
-        obs_noise_std=obs_noise_std,
-    )
-
-    estim = estimate_connectivity_weights(num_nodes, dataset)
-    approx_W = estim["approx_W"]
-    true_W = estim["true_W"]
-    Adj = estim["Adj"]
-    cov_x = estim["cov_x"]
-    cov_dtx = estim["cov_dtx"]
-
-    # Granger refinement
-    _, optim_W = projected_gradient_causal(
-        cov_x, cov_dtx, non_negative_weights=non_negative_weights,
-    )
-
-    # Baselines
-    eps = np.finfo(float).eps
-    if non_negative_weights:
-        sample_W = eps + np.random.rand(*true_W.shape)
-    else:
-        sample_W = 2 * (eps + np.random.rand(*true_W.shape) - 0.5)
-    adj_sample_W = Adj * sample_W
-    spec_adj_sample_W = adjust_spectral_radius(
-        adj_sample_W, target_radius=calculate_spectral_radius(true_W)
-    )
-
-    # Additional baselines: correlation matrix and oracle estimator
-    oracle_W = estim["oracle_W"]
-
-    # Correlation baseline: raw cross-correlation (no oracle scaling)
-    # This is what you'd compute without knowing W — just normalize cov_dtx
-    diag_x = np.sqrt(np.diag(cov_x))
-    diag_x[diag_x < 1e-10] = 1e-10
-    corr_W = cov_dtx / np.outer(diag_x, diag_x)
-    # Do NOT scale to match true W's spectral radius — that would be cheating
-    # Instead, scale to unit spectral radius (a reasonable default)
-    sr_corr = calculate_spectral_radius(corr_W)
-    if sr_corr > 0:
-        corr_W = corr_W / sr_corr
-
-    # Distances (normalized by network size)
-    distances = {
-        "chance_distance": np.linalg.norm(true_W - sample_W, "fro") / num_nodes,
-        "adjacency_distance": np.linalg.norm(true_W - adj_sample_W, "fro") / num_nodes,
-        "spectral_distance": np.linalg.norm(true_W - spec_adj_sample_W, "fro") / num_nodes,
-        "correlation_distance": np.linalg.norm(true_W - corr_W, "fro") / num_nodes,
-        "oracle_distance": np.linalg.norm(true_W - oracle_W, "fro") / num_nodes,
-        "estimate_distance": np.linalg.norm(true_W - approx_W, "fro") / num_nodes,
-        "optimized_distance": np.linalg.norm(true_W - optim_W, "fro") / num_nodes,
-    }
-
-    # Edge detection metrics for Granger refinement comparison
-    true_edges = (np.abs(true_W) > 0).astype(float)
-    est_edges = (np.abs(approx_W) > np.percentile(np.abs(approx_W), 50)).astype(float)
-    opt_edges = (np.abs(optim_W) > 0).astype(float)
-
-    np.fill_diagonal(true_edges, 0)
-    np.fill_diagonal(est_edges, 0)
-    np.fill_diagonal(opt_edges, 0)
-
-    def precision_recall(pred, truth):
-        tp = np.sum((pred == 1) & (truth == 1))
-        fp = np.sum((pred == 1) & (truth == 0))
-        fn = np.sum((pred == 0) & (truth == 1))
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        return precision, recall
-
-    est_p, est_r = precision_recall(est_edges, true_edges)
-    opt_p, opt_r = precision_recall(opt_edges, true_edges)
-
-    distances["estimate_precision"] = est_p
-    distances["estimate_recall"] = est_r
-    distances["optimized_precision"] = opt_p
-    distances["optimized_recall"] = opt_r
-
-    # Store matrices for later analysis
-    matrices = {
-        "true_W": true_W,
-        "approx_W": approx_W,
-        "optim_W": optim_W,
-        "cov_x": cov_x,
-        "cov_dtx": cov_dtx,
-    }
-
-    return distances, matrices
+# Import the canonical one_repetition from run_single_rep
+from experiments.run_single_rep import one_repetition
 
 
 # ============================================================================
@@ -161,7 +51,6 @@ def run_experiment(
     num_cpgs, num_measured, num_stimulated = resolve_params(
         num_nodes, num_cpgs, num_measured, num_stimulated
     )
-    nonlinearity_func = get_nonlinearity(nonlinearity)
 
     config = dict(
         random_seed=random_seed, num_repetitions=num_repetitions,
@@ -177,15 +66,19 @@ def run_experiment(
 
     for rep in range(num_repetitions):
         print(f"  Repetition {rep+1}/{num_repetitions}...", end=" ", flush=True)
-        distances, matrices = one_repetition(
+        result = one_repetition(
             rep, random_seed, num_networks, max_timesteps, num_nodes,
-            num_cpgs, num_measured, num_stimulated, fixed_stim, stim_gain,
-            nonlinearity_func, non_negative_weights, force_stable,
-            obs_noise_std=obs_noise_std,
+            num_cpgs, num_measured, num_stimulated, stim_gain,
+            nonlinearity, non_negative_weights=non_negative_weights,
+            force_stable=force_stable, fixed_stim=fixed_stim,
+            obs_noise_std=obs_noise_std, return_matrices=save_matrices,
         )
-        all_distances.append(distances)
         if save_matrices:
+            distances, matrices = result
             all_matrices.append(matrices)
+        else:
+            distances = result
+        all_distances.append(distances)
         print(f"est_dist={distances['estimate_distance']:.4f}")
 
     distance_df = pd.DataFrame(all_distances)

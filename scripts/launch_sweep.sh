@@ -45,6 +45,7 @@
 cd ~/sparse_matrix_recovery
 mkdir -p logs experiments/results/sweep
 
+source ~/.secrets 2>/dev/null                 # Load WANDB_API_KEY etc.
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export JOBLIB_START_METHOD=fork
 

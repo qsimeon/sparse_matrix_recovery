@@ -46,13 +46,20 @@ from experiments.core import (
 
 def one_repetition(rep_idx, seed, num_networks, max_timesteps, num_nodes,
                    num_cpgs, num_measured, num_stimulated, stim_gain,
-                   nonlinearity_name, obs_noise_std=0.0):
+                   nonlinearity_name, non_negative_weights=True,
+                   force_stable=True, fixed_stim=False, obs_noise_std=0.0,
+                   return_matrices=False):
     """
     Run one repetition: generate a random topology, simulate K sessions,
     estimate connectivity, evaluate against ground truth.
 
-    The seed + rep_idx combination ensures each rep is deterministic
-    and reproducible regardless of execution order.
+    This is THE canonical implementation. Both run_experiments.py and
+    run_single_rep.py call this function.
+
+    Args:
+        return_matrices: If True, also return (distances, matrices) tuple
+                        where matrices contains true_W, approx_W, optim_W, etc.
+                        If False, return distances dict only.
     """
     torch.manual_seed(seed + rep_idx)
     np.random.seed(seed + rep_idx)
@@ -62,8 +69,8 @@ def one_repetition(rep_idx, seed, num_networks, max_timesteps, num_nodes,
     # Simulate K=num_networks sessions with shared topology
     dataset = create_multinetwork_dataset(
         num_networks, max_timesteps, num_nodes, num_cpgs,
-        num_measured, num_stimulated, False, stim_gain,
-        phi, True, True, obs_noise_std,
+        num_measured, num_stimulated, fixed_stim, stim_gain,
+        phi, non_negative_weights, force_stable, obs_noise_std,
     )
 
     # Estimate connectivity
@@ -71,40 +78,74 @@ def one_repetition(rep_idx, seed, num_networks, max_timesteps, num_nodes,
     true_W = estim["true_W"]
     approx_W = estim["approx_W"]
     Adj = estim["Adj"]
+    cov_x = estim["cov_x"]
+    cov_dtx = estim["cov_dtx"]
 
     # Granger refinement
     _, optim_W = projected_gradient_causal(
-        estim["cov_x"], estim["cov_dtx"], non_negative_weights=True,
+        cov_x, cov_dtx, non_negative_weights=non_negative_weights,
     )
 
     # Baselines
     eps = np.finfo(float).eps
-    sample_W = eps + np.random.rand(*true_W.shape)
+    if non_negative_weights:
+        sample_W = eps + np.random.rand(*true_W.shape)
+    else:
+        sample_W = 2 * (eps + np.random.rand(*true_W.shape) - 0.5)
     adj_sample_W = Adj * sample_W
     spec_adj_sample_W = adjust_spectral_radius(
         adj_sample_W, target_radius=calculate_spectral_radius(true_W)
     )
+    oracle_W = estim["oracle_W"]
 
-    # Distances (normalized by N)
+    # Correlation baseline
+    diag_x = np.sqrt(np.diag(cov_x))
+    diag_x[diag_x < 1e-10] = 1e-10
+    corr_W = cov_dtx / np.outer(diag_x, diag_x)
+    sr_corr = calculate_spectral_radius(corr_W)
+    if sr_corr > 0:
+        corr_W = corr_W / sr_corr
+
+    # Distances (normalized by N, cast to float for JSON serialization)
     distances = {
         "chance_distance": float(np.linalg.norm(true_W - sample_W, "fro") / num_nodes),
         "adjacency_distance": float(np.linalg.norm(true_W - adj_sample_W, "fro") / num_nodes),
         "spectral_distance": float(np.linalg.norm(true_W - spec_adj_sample_W, "fro") / num_nodes),
-        "oracle_distance": float(np.linalg.norm(true_W - estim["oracle_W"], "fro") / num_nodes),
+        "correlation_distance": float(np.linalg.norm(true_W - corr_W, "fro") / num_nodes),
+        "oracle_distance": float(np.linalg.norm(true_W - oracle_W, "fro") / num_nodes),
         "estimate_distance": float(np.linalg.norm(true_W - approx_W, "fro") / num_nodes),
         "optimized_distance": float(np.linalg.norm(true_W - optim_W, "fro") / num_nodes),
     }
 
-    # Edge detection metrics
+    # Edge detection metrics for both estimate and Granger-refined
     true_edges = (np.abs(true_W) > 0).astype(float)
+    est_edges = (np.abs(approx_W) > np.percentile(np.abs(approx_W), 50)).astype(float)
     opt_edges = (np.abs(optim_W) > 0).astype(float)
     np.fill_diagonal(true_edges, 0)
+    np.fill_diagonal(est_edges, 0)
     np.fill_diagonal(opt_edges, 0)
-    tp = float(np.sum((opt_edges == 1) & (true_edges == 1)))
-    fp = float(np.sum((opt_edges == 1) & (true_edges == 0)))
-    fn = float(np.sum((opt_edges == 0) & (true_edges == 1)))
-    distances["precision"] = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    distances["recall"] = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+
+    def _precision_recall(pred, truth):
+        tp = float(np.sum((pred == 1) & (truth == 1)))
+        fp = float(np.sum((pred == 1) & (truth == 0)))
+        fn = float(np.sum((pred == 0) & (truth == 1)))
+        prec = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        rec = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        return prec, rec
+
+    est_p, est_r = _precision_recall(est_edges, true_edges)
+    opt_p, opt_r = _precision_recall(opt_edges, true_edges)
+    distances["estimate_precision"] = est_p
+    distances["estimate_recall"] = est_r
+    distances["optimized_precision"] = opt_p
+    distances["optimized_recall"] = opt_r
+
+    if return_matrices:
+        matrices = {
+            "true_W": true_W, "approx_W": approx_W, "optim_W": optim_W,
+            "cov_x": cov_x, "cov_dtx": cov_dtx,
+        }
+        return distances, matrices
 
     return distances
 

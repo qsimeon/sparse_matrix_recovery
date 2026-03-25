@@ -65,6 +65,7 @@ mkdir -p experiments/results/reps # Create output directory
 
 # Load Python environment
 # uv run handles the virtual environment automatically
+source ~/.secrets 2>/dev/null                 # Load WANDB_API_KEY etc.
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK  # Tell NumPy/BLAS to use our allocated cores
 export JOBLIB_START_METHOD=fork               # Faster than spawn for joblib
 
