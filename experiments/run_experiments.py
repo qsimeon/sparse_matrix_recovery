@@ -94,10 +94,29 @@ def run_experiment(
         for i in range(len(dist_cols))
     }
 
+    # Statistical tests: pairwise comparisons between key methods
+    from scipy.stats import mannwhitneyu
+    stat_tests = {}
+    pairs = [
+        ("estimate_distance", "chance_distance", "estimate_vs_chance"),
+        ("optimized_distance", "estimate_distance", "granger_vs_estimate"),
+        ("estimate_distance", "oracle_distance", "estimate_vs_oracle"),
+    ]
+    for col_a, col_b, label in pairs:
+        if col_a in distance_df.columns and col_b in distance_df.columns:
+            a = distance_df[col_a].values
+            b = distance_df[col_b].values
+            try:
+                stat, p = mannwhitneyu(a, b, alternative="less")
+                stat_tests[label] = {"U": float(stat), "p": float(p), "n": len(a)}
+            except Exception:
+                pass
+
     return {
         "config": config,
         "distances": distance_df,
         "confidence_intervals": CIs,
+        "statistical_tests": stat_tests,
         "matrices": all_matrices if save_matrices else None,
     }
 
