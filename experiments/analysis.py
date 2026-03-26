@@ -833,30 +833,78 @@ def generate_problem_schematic(output_path):
     ]
     ax_main.legend(handles=legend_elements, loc="upper left", frameon=True,
                    fancybox=True, framealpha=0.9, fontsize=8)
-    ax_inset = fig.add_axes([0.65, 0.18, 0.33, 0.68])
-    ax_inset.set_xlim(0, 10); ax_inset.set_ylim(0, 10); ax_inset.axis("off")
-    ax_inset.set_title("Covariance Accumulation\nAcross Sessions", fontsize=9,
+    # Right panel: accumulation → estimation pipeline (unified flow)
+    ax_inset = fig.add_axes([0.65, 0.05, 0.33, 0.88])
+    ax_inset.set_xlim(0, 10); ax_inset.set_ylim(-4, 10); ax_inset.axis("off")
+    ax_inset.set_title("Method Pipeline", fontsize=10,
                        fontweight="bold", pad=8)
+
+    # === TOP: Covariance accumulation ===
     box_colors = ["#A5D6A7", "#90CAF9", "#CE93D8"]
-    labels = [r"$\hat{\Sigma}_1$  (Session 1)", r"$\hat{\Sigma}_2$  (Session 2)",
-              r"$\hat{\Sigma}_K$  (Session K)"]
-    y_positions = [7.0, 4.5, 1.5]
+    labels = [r"$\hat{\Sigma}_1$", r"$\hat{\Sigma}_2$", r"$\hat{\Sigma}_K$"]
+    y_positions = [8.2, 6.5, 4.2]
     for i, (yp, color, lab) in enumerate(zip(y_positions, box_colors, labels)):
-        box = FancyBboxPatch((1.0, yp), 4.5, 1.6, boxstyle="round,pad=0.15",
-                             facecolor=color, edgecolor="#333333", linewidth=1.2)
+        box = FancyBboxPatch((0.3, yp), 3.2, 1.2, boxstyle="round,pad=0.12",
+                             facecolor=color, edgecolor="#333333", linewidth=1.0)
         ax_inset.add_patch(box)
-        ax_inset.text(3.25, yp + 0.8, lab, ha="center", va="center", fontsize=8)
-        ax_inset.annotate("", xy=(7.5, 5.2), xytext=(5.7, yp + 0.8),
-            arrowprops=dict(arrowstyle="-|>", color="#555555", lw=1.2))
-    ax_inset.text(3.25, 3.4, r"$\vdots$", ha="center", va="center", fontsize=14)
-    acc_box = FancyBboxPatch((6.5, 4.0), 3.0, 2.4, boxstyle="round,pad=0.2",
-                             facecolor="#FFF9C4", edgecolor="#F57F17", linewidth=2.0)
+        ax_inset.text(1.9, yp + 0.6, lab, ha="center", va="center", fontsize=9)
+        ax_inset.annotate("", xy=(5.8, 5.6), xytext=(3.7, yp + 0.6),
+            arrowprops=dict(arrowstyle="-|>", color="#555555", lw=1.0))
+    ax_inset.text(1.9, 5.5, r"$\vdots$", ha="center", va="center", fontsize=12)
+
+    # Accumulated covariance
+    acc_box = FancyBboxPatch((5.2, 4.8), 3.0, 1.8, boxstyle="round,pad=0.15",
+                             facecolor="#FFF9C4", edgecolor="#F57F17", linewidth=1.8)
     ax_inset.add_patch(acc_box)
-    ax_inset.text(8.0, 5.5, r"$\hat{\Sigma}$", ha="center", va="center",
-                  fontsize=14, fontweight="bold")
-    ax_inset.text(8.0, 4.7, "(accumulated)", ha="center", va="center", fontsize=7)
-    fig.suptitle("Problem Setup: Partial Measurement Across Sessions",
-                 fontsize=13, fontweight="bold", y=0.97)
+    ax_inset.text(6.7, 5.9, r"$\hat{\Sigma}$", ha="center", va="center",
+                  fontsize=13, fontweight="bold")
+    ax_inset.text(6.7, 5.2, "accumulated", ha="center", va="center", fontsize=7)
+
+    # === MIDDLE: Estimation ===
+    ax_inset.annotate("", xy=(5.0, 3.4), xytext=(6.7, 4.7),
+        arrowprops=dict(arrowstyle="-|>", color="#0077B6", lw=2.0))
+
+    est_box = FancyBboxPatch((2.5, 2.4), 5.0, 1.2, boxstyle="round,pad=0.12",
+                             facecolor="#BBDEFB", edgecolor="#0077B6", linewidth=1.5)
+    ax_inset.add_patch(est_box)
+    ax_inset.text(5.0, 3.2, r"$\hat{W} = \hat{\Sigma}_{x',x}\hat{\Sigma}_{x,x}^{-1}$",
+                  ha="center", va="center", fontsize=9, fontweight="bold")
+    ax_inset.text(5.0, 2.7, "linear estimator", ha="center", va="center",
+                  fontsize=7, color="#555555")
+
+    # === Diagonal zeroing ===
+    ax_inset.annotate("", xy=(5.0, 1.4), xytext=(5.0, 2.3),
+        arrowprops=dict(arrowstyle="-|>", color="#E76F51", lw=2.0))
+
+    diag_box = FancyBboxPatch((2.5, 0.5), 5.0, 1.0, boxstyle="round,pad=0.12",
+                              facecolor="#FFE0B2", edgecolor="#E76F51", linewidth=1.5)
+    ax_inset.add_patch(diag_box)
+    ax_inset.text(5.0, 1.15, r"$\mathrm{diag}(\hat{W}) \leftarrow 0$",
+                  ha="center", va="center", fontsize=9, fontweight="bold")
+    ax_inset.text(5.0, 0.7, "no-autapse prior", ha="center", va="center",
+                  fontsize=7, color="#555555")
+
+    # === Granger refinement ===
+    ax_inset.annotate("", xy=(5.0, -0.4), xytext=(5.0, 0.4),
+        arrowprops=dict(arrowstyle="-|>", color="#2A9D8F", lw=2.0))
+
+    grn_box = FancyBboxPatch((2.5, -1.6), 5.0, 1.3, boxstyle="round,pad=0.12",
+                             facecolor="#C8E6C9", edgecolor="#2A9D8F", linewidth=1.5)
+    ax_inset.add_patch(grn_box)
+    ax_inset.text(5.0, -0.65, "Granger refinement", ha="center", va="center",
+                  fontsize=9, fontweight="bold")
+    ax_inset.text(5.0, -1.15, r"$W_{ij} \geq 0$,  sparse,  $W_{ii}=0$",
+                  ha="center", va="center", fontsize=7, color="#555555")
+
+    # === Final output ===
+    ax_inset.annotate("", xy=(5.0, -2.6), xytext=(5.0, -1.7),
+        arrowprops=dict(arrowstyle="-|>", color="#333333", lw=2.0))
+    ax_inset.text(5.0, -3.0, r"$\hat{W}$  (recovered)", ha="center", va="center",
+                  fontsize=11, fontweight="bold", color="#2E4057")
+    ax_inset.text(5.0, -3.5, r"$r = 0.96$", ha="center", va="center",
+                  fontsize=9, color="#2A9D8F", fontweight="bold")
+
+    fig.suptitle("", fontsize=1)  # no suptitle — the combined figure speaks for itself
     plt.savefig(output_path, dpi=300); plt.close()
     print(f"  Saved: {output_path}")
 

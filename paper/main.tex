@@ -226,7 +226,7 @@ We alternate between gradient steps on $A$ and projection of $W = A \hat{\Sigma}
 
 \subsection{Full Pipeline}
 
-The complete method is summarized in Algorithm~\ref{alg:pipeline}. Figure~\ref{fig:schematic} illustrates the partial observation model, and Figure~\ref{fig:pipeline} shows the full estimation pipeline.
+The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrated in Figure~\ref{fig:schematic}.
 
 \begin{algorithm}[ht]
 \caption{Covariance Accumulation + Granger Refinement}
@@ -252,15 +252,8 @@ The complete method is summarized in Algorithm~\ref{alg:pipeline}. Figure~\ref{f
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig1_problem_schematic.pdf}
-\caption{\textbf{Problem setup: partial measurement across recording sessions.} \textbf{(Left)} A network of $N=15$ neurons with directed weighted connectivity $W$. In Session~1, a subset of neurons (green circles) is measured while the rest (gray) are unobserved. Nodes with red borders are central pattern generator (CPG) drivers; triangle-shaped nodes are stimulated neurons receiving extrinsic stimulation (orange arrows labeled ``S''). \textbf{(Right)} Covariance accumulation across $K$ sessions: each session yields a partial covariance matrix $\hat{\Sigma}_k$ covering only co-observed neuron pairs. These are averaged element-wise to reconstruct the full accumulated covariance $\hat{\Sigma}$, from which $W$ is estimated via Eq.~\eqref{eq:estimator}.}
+\caption{\textbf{Problem setup and estimation pipeline.} \textbf{(Left)} A network of $N=15$ neurons with directed weighted connectivity $W$. In a given session, a subset of neurons (green) is measured while the rest (gray) are unobserved. Red-bordered nodes are CPG drivers (intrinsic oscillatory input); triangle nodes receive extrinsic stimulation (orange arrows ``S''). \textbf{(Right)} The method pipeline: each of $K$ sessions yields a partial covariance matrix $\hat{\Sigma}_k$ covering only co-observed neuron pairs. These are accumulated element-wise into $\hat{\Sigma}$, from which $W$ is estimated via least-squares inversion, the diagonal is zeroed (no-autapse prior), and the result is refined by projected gradient descent enforcing biological constraints ($r = 0.96$).}
 \label{fig:schematic}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\linewidth]{figures/fig2_pipeline.pdf}
-\caption{\textbf{Method pipeline.} Data from $K$ recording sessions yield partial covariance matrices, which are accumulated element-wise into a full covariance estimate $\hat{\Sigma}$. The connectivity matrix is estimated via least-squares inversion, then refined by projected gradient descent enforcing biological constraints (Algorithm~\ref{alg:pipeline}).}
-\label{fig:pipeline}
 \end{figure}
 
 % ============================================================================

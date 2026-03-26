@@ -179,9 +179,7 @@ def main():
     print("\nFig 1: Problem schematic")
     generate_problem_schematic(FIGURES_DIR / "fig1_problem_schematic.pdf")
 
-    # Fig 2: Pipeline schematic (no data needed)
-    print("\nFig 2: Pipeline schematic")
-    generate_pipeline_schematic(FIGURES_DIR / "fig2_pipeline.pdf")
+    # Fig 2: (merged into Fig 1 — pipeline is now part of the problem schematic)
 
     # Fig 3: Scaling (E1 data)
     print("\nFig 3: Scaling (E1)")
