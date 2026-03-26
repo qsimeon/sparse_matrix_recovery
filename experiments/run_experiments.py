@@ -39,7 +39,7 @@ from experiments.run_single_rep import one_repetition
 # ============================================================================
 
 def run_experiment(
-    random_seed=42, num_repetitions=50, num_networks=50,
+    random_seed=42, num_repetitions=20, num_networks=50,
     max_timesteps=1000, num_nodes=15, num_cpgs=None, num_measured=None,
     num_stimulated=None, fixed_stim=False, stim_gain=1.0,
     nonlinearity="tanh", non_negative_weights=True, force_stable=True,
@@ -142,7 +142,7 @@ def run_E1_baseline(seed=42, output_dir=None):
         for T in [100, 500, 1000]:
             print(f"\n  N={num_nodes}, T={T}, measured={num_measured}")
             r = run_experiment(
-                random_seed=seed, num_repetitions=50, num_networks=50,
+                random_seed=seed, num_repetitions=20, num_networks=50,
                 max_timesteps=T, num_nodes=num_nodes,
                 num_cpgs=num_cpgs, num_measured=num_measured,
                 num_stimulated=num_stimulated,
@@ -169,7 +169,7 @@ def run_E2_sparsity(seed=42, output_dir=None):
         num_measured = max(2, int(meas_frac * num_nodes))
         print(f"\n  meas_frac={meas_frac} (num_measured={num_measured})")
         r = run_experiment(
-            random_seed=seed, num_repetitions=50, num_networks=50,
+            random_seed=seed, num_repetitions=20, num_networks=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_cpgs=5, num_measured=num_measured, num_stimulated=5,
             stim_gain=1.0, nonlinearity="tanh",
@@ -200,7 +200,7 @@ def run_E3_stimulation(seed=42, output_dir=None):
         for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0]:
             print(f"\n  meas={meas_frac:.0%}, stim_gain={stim_gain}")
             r = run_experiment(
-                random_seed=seed, num_repetitions=50, num_networks=50,
+                random_seed=seed, num_repetitions=20, num_networks=50,
                 max_timesteps=1000, num_nodes=num_nodes,
                 num_cpgs=5, num_measured=num_measured, num_stimulated=5,
                 stim_gain=stim_gain, nonlinearity="tanh",
@@ -227,7 +227,7 @@ def run_E4_granger(seed=42, output_dir=None):
     results = []
     num_nodes = 15
     r = run_experiment(
-        random_seed=seed, num_repetitions=50, num_networks=50,
+        random_seed=seed, num_repetitions=20, num_networks=50,
         max_timesteps=1000, num_nodes=num_nodes,
         num_cpgs=5, num_measured=10, num_stimulated=5,
         stim_gain=1.0, nonlinearity="tanh", save_matrices=True,
@@ -251,7 +251,7 @@ def run_E5_nonlinearity(seed=42, output_dir=None):
     for nl in ["tanh", "relu", "identity", "sigmoid"]:
         print(f"\n  nonlinearity={nl}")
         r = run_experiment(
-            random_seed=seed, num_repetitions=50, num_networks=50,
+            random_seed=seed, num_repetitions=20, num_networks=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_cpgs=5, num_measured=10, num_stimulated=5,
             stim_gain=1.0, nonlinearity=nl,
@@ -281,7 +281,7 @@ def run_E6_oracle_crossover(seed=42, output_dir=None):
     for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]:
         print(f"\n  stim_gain={stim_gain}")
         r = run_experiment(
-            random_seed=seed, num_repetitions=50, num_networks=50,
+            random_seed=seed, num_repetitions=20, num_networks=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_cpgs=5, num_measured=10, num_stimulated=5,
             stim_gain=stim_gain, nonlinearity="tanh",
@@ -316,7 +316,7 @@ def run_E7_stim_fraction(seed=42, output_dir=None):
         stim_frac = num_stimulated / num_nodes
         print(f"\n  num_stimulated={num_stimulated} ({stim_frac:.0%} of N={num_nodes})")
         r = run_experiment(
-            random_seed=seed, num_repetitions=50, num_networks=50,
+            random_seed=seed, num_repetitions=20, num_networks=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_cpgs=5, num_measured=10, num_stimulated=num_stimulated,
             stim_gain=1.0, nonlinearity="tanh",
