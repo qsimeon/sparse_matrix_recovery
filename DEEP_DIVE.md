@@ -313,3 +313,86 @@ cd paper && tectonic main.tex
 # Compile poster
 cd paper && tectonic poster.tex
 ```
+
+---
+
+## Experiment Design: From Vision to Numbers
+
+### The Three Levels of the Experiment
+
+Think of it like a clinical trial:
+
+```
+LEVEL 1: TOPOLOGIES (num_repetitions = 20)
++-- Like: "20 different patients" (each with a different brain)
++-- Purpose: Statistical power -- does the method work across different circuits?
++-- Each gets: a fresh random W matrix
++-- Output: 20 independent error measurements -> median, CI
+
+LEVEL 2: SESSIONS (num_networks = 50, called K in the paper)
++-- Like: "50 different MRI scans of the SAME patient"
++-- Purpose: Covariance accumulation -- piece together partial views
++-- Each shares: the same W, but sees different neuron subsets
++-- This is the CORE of the method
++-- Output: one accumulated Sigma_hat -> one W_hat estimate
+
+LEVEL 3: TIMESTEPS (max_timesteps = 1000, called T in the paper)
++-- Like: "1000 data points per scan"
++-- Purpose: Good empirical covariance estimates within each session
++-- Each shares: the same session setup (same measured/stim nodes)
++-- Output: one session covariance matrix Sigma_hat_k
+```
+
+### How This Maps to Code
+
+```python
+# LEVEL 1: run_experiments.py line 67
+for rep in range(num_repetitions):    # 20 different random topologies
+    result = one_repetition(rep, ...)  # each generates a fresh W
+
+# LEVEL 2: core.py line 385-401 (inside one_repetition)
+W, _ = random_network_topology(...)   # ONE topology for this rep
+for session in range(num_networks):   # 50 sessions with this W
+    create_network_data(session, ...)  # each sees different subset
+
+# LEVEL 3: core.py line 312
+for t in range(simulation_steps):     # 1000 timesteps per session
+    state = W @ phi(state) + b_t      # one step of the dynamics
+```
+
+### The Paper's Exact Configuration
+
+| Parameter | Value | Variable | Where set | What it means |
+|-----------|-------|----------|-----------|---------------|
+| N | 15 | `num_nodes` | run_experiments.py:43 | Neurons in the circuit |
+| T | 1000 | `max_timesteps` | run_experiments.py:43 | Timesteps per session |
+| K | 50 | `num_networks` | run_experiments.py:42 | Sessions per topology |
+| Reps | 20 | `num_repetitions` | run_experiments.py:42 | Random topologies tested |
+| Measured | 10 (66%) | `num_measured` | Computed from N | Neurons observed per session |
+| Stimulated | 5 (33%) | `num_stimulated` | Computed from N | Neurons receiving noise |
+| CPGs | 5 (33%) | `num_cpgs` | Computed from N | Neurons with intrinsic drive |
+| sigma | 1.0 | `stim_gain` | run_experiments.py:44 | Stimulation intensity |
+| phi | tanh | `nonlinearity` | run_experiments.py:45 | Transfer function |
+| seed | 42 | `random_seed` | CLI arg | Reproducibility |
+
+### The Mega Sweep (Cluster)
+
+The sweep on the engaging cluster tested a 5D grid to find the optimal experimental design:
+
+```
+LEVEL 0: PARAMETER GRID (243 = 3^5 configs)
++-- N in {8, 15, 30}
++-- T in {100, 500, 1000}
++-- measurement in {33%, 66%, 100%}
++-- stim_gain in {0.0, 0.5, 1.0}
++-- stim_fraction in {33%, 66%, 100%}
+
+For EACH of those 243 configs:
+    50 reps x 50 sessions x T timesteps
+```
+
+**Best config found**: N=30, stim_gain=0.5, measurement=63%, stim_frac=100%
+-> **error 0.033 (94% over chance)**
+
+**Key finding**: Zero stimulation catastrophically fails at large N (errors in the billions).
+Moderate stimulation (sigma=0.5) is optimal across all top configs.
