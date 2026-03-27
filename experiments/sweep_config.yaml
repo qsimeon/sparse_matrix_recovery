@@ -1,0 +1,41 @@
+# WandB Sweep Configuration
+#
+# This defines a hyperparameter sweep to find the optimal experimental
+# design for connectivity recovery. The "metric" is the Granger-refined
+# recovery error — lower is better.
+#
+# Usage:
+#   wandb sweep experiments/sweep_config.yaml
+#   wandb agent <SWEEP_ID>
+#
+# Or on the cluster:
+#   sbatch scripts/launch_wandb_sweep.sh
+
+program: experiments/run_single_rep.py
+method: grid
+metric:
+  name: optimized_distance
+  goal: minimize
+
+parameters:
+  num-nodes:
+    values: [8, 15, 30]
+  max-timesteps:
+    values: [100, 500, 1000]
+  measurement-frac:
+    values: [0.33, 0.66, 1.0]
+  stim-gain:
+    values: [0.0, 0.5, 1.0]
+  nonlinearity:
+    values: ["tanh", "relu", "identity", "sigmoid"]
+
+# Fixed parameters (not swept)
+command:
+  - ${env}
+  - python
+  - ${program}
+  - --rep=0
+  - --seed=42
+  - "--num-sessions=50"
+  - --wandb
+  - ${args}

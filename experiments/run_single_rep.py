@@ -218,7 +218,7 @@ def main():
     # Always required
     parser.add_argument("--rep", type=int, required=True, help="Repetition index (0-49)")
     parser.add_argument("--seed", type=int, default=42, help="Base random seed")
-    parser.add_argument("--num-networks", type=int, default=50, help="Sessions per topology")
+    parser.add_argument("--num-sessions", type=int, default=50, help="Recording sessions per topology (K in paper)")
     parser.add_argument("--output-dir", type=str, default="experiments/results/reps")
     # Override params (for WandB sweep or custom configs)
     parser.add_argument("--num-nodes", type=int)
@@ -259,12 +259,17 @@ def main():
     # Run
     label = args.experiment or "custom"
     print(f"[{label} cfg={args.config_idx} rep={args.rep}] {config}")
-    distances = one_repetition(
+    result_data = one_repetition(
         args.rep, args.seed, args.num_sessions,
         config["max_timesteps"], config["num_nodes"], config.get("num_cpgs", 5),
         config["num_measured"], config["num_stimulated"],
         config["stim_gain"], config["nonlinearity"],
+        return_matrices=args.wandb,  # return matrices for WandB figure logging
     )
+    if args.wandb:
+        distances, _ = result_data
+    else:
+        distances = result_data
 
     # Save — use task_id in filename for sweeps to avoid collisions
     output_dir = Path(args.output_dir)
@@ -276,14 +281,34 @@ def main():
         json.dump(result, f, indent=2)
     print(f"  -> {output_dir / filename}")
 
-    # Optional WandB logging
+    # Optional WandB logging with rich figures
     if args.wandb:
         try:
             import wandb
+            import matplotlib.pyplot as plt
+
             wandb.init(project="sparse_matrix_recovery", entity="qsimeon",
                        config={**config, "rep": args.rep, "experiment": label},
-                       name=f"{label}_c{args.config_idx:03d}_r{args.rep:03d}")
+                       name=f"{label}_c{cfg_id:03d}_r{args.rep:03d}")
+
+            # Log scalar metrics
             wandb.log(distances)
+
+            # Log weight matrix comparison figure if we have matrices
+            if isinstance(result_data, tuple):
+                _, matrices = result_data
+                fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+                vmax = matrices["true_W"].max()
+                axes[0].imshow(matrices["true_W"], cmap="Reds", vmin=0, vmax=vmax)
+                axes[0].set_title("True W")
+                axes[1].imshow(matrices["approx_W"], cmap="RdBu_r", vmin=-vmax, vmax=vmax)
+                axes[1].set_title("Estimate")
+                axes[2].imshow(matrices["optim_W"], cmap="Reds", vmin=0, vmax=vmax)
+                axes[2].set_title("Granger-refined")
+                plt.tight_layout()
+                wandb.log({"weight_matrices": wandb.Image(fig)})
+                plt.close()
+
             wandb.finish()
         except Exception as e:
             print(f"  WandB error: {e}")
