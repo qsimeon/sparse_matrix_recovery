@@ -157,10 +157,10 @@ def run_E1_baseline(seed=42, output_dir=None):
     return results
 
 
-def run_E2_sparsity(seed=42, output_dir=None):
-    """E2: Effect of measurement sparsity at N=15."""
+def run_E4_sparsity(seed=42, output_dir=None):
+    """E4: Effect of measurement sparsity at N=15."""
     print("=" * 60)
-    print("E2: Measurement Sparsity Effect")
+    print("E4: Measurement Sparsity Effect")
     print("=" * 60)
 
     results = []
@@ -214,14 +214,14 @@ def run_E3_stimulation(seed=42, output_dir=None):
     return results
 
 
-def run_E4_granger(seed=42, output_dir=None):
-    """E4: Ablation study — each step adds knowledge.
+def run_E2_granger(seed=42, output_dir=None):
+    """E2: Ablation study — each step adds knowledge.
 
     Compares: Chance > Adjacency > Spectral > Estimate > Granger-refined.
     Uses N=15, 66% measurement, stim=1.0 (favorable conditions).
     """
     print("=" * 60)
-    print("E4: Granger Refinement / Ablation Study")
+    print("E2: Granger Refinement / Ablation Study")
     print("=" * 60)
 
     results = []
@@ -387,9 +387,9 @@ def log_to_wandb(results, project="sparse_matrix_recovery"):
 
 EXPERIMENTS = {
     "E1": run_E1_baseline,
-    "E2": run_E4_granger,       # Was E4: Granger refinement (presented 2nd in paper)
+    "E2": run_E2_granger,
     "E3": run_E3_stimulation,
-    "E4": run_E2_sparsity,      # Was E2: Measurement sparsity (presented 4th in paper)
+    "E4": run_E4_sparsity,
     "E5": run_E5_nonlinearity,
     "E6": run_E6_oracle_crossover,
     "E7": run_E7_stim_fraction,
