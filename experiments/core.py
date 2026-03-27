@@ -242,7 +242,7 @@ def random_network_topology(num_nodes, non_negative_weights, force_stable, stron
 # ============================================================================
 
 def create_network_data(
-    network_idx, max_timesteps, num_nodes, num_cpgs, num_measured,
+    session_idx, max_timesteps, num_nodes, num_cpgs, num_measured,
     num_stimulated, fixed_stim, stim_gain, nonlinearity, connection_weights,
     obs_noise_std=0.0, worker_seed=None,
 ):
@@ -250,7 +250,7 @@ def create_network_data(
     Simulate dynamics on a network and return recorded data.
 
     Args:
-        network_idx: index of this network instance
+        session_idx: index of this network instance
         max_timesteps: number of timesteps to record (after warmup)
         num_nodes: total nodes in network
         num_cpgs: number of CPG nodes
@@ -276,7 +276,7 @@ def create_network_data(
     warmup_timesteps = max_timesteps // 3
     simulation_steps = max_timesteps + warmup_timesteps
 
-    network = f"network{network_idx}"
+    session = f"session{session_idx}"
     network_data = {}
     activity_data = np.zeros((simulation_steps, num_nodes))
     extrinsic_input_matrix = np.zeros_like(activity_data)
@@ -339,7 +339,7 @@ def create_network_data(
     intrinsic_input_matrix = intrinsic_input_matrix[warmup_timesteps:]
     total_input_matrix = total_input_matrix[warmup_timesteps:]
 
-    network_data["network"] = network
+    network_data["session"] = session
     network_data["activity_data"] = activity_data
     network_data["max_timesteps"] = max_timesteps
     network_data["num_nodes"] = num_nodes
@@ -362,7 +362,7 @@ def create_network_data(
 
 
 def create_multinetwork_dataset(
-    num_networks, max_timesteps, num_nodes, num_cpgs, num_measured,
+    num_sessions, max_timesteps, num_nodes, num_cpgs, num_measured,
     num_stimulated, fixed_stim, stim_gain, nonlinearity,
     non_negative_weights, force_stable, obs_noise_std=0.0,
 ):
@@ -388,18 +388,18 @@ def create_multinetwork_dataset(
 
     # Pre-generate per-worker seeds from parent RNG so results are
     # deterministic regardless of joblib scheduling order.
-    worker_seeds = np.random.randint(0, 2**31, size=num_networks).tolist()
+    worker_seeds = np.random.randint(0, 2**31, size=num_sessions).tolist()
 
     results = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(create_network_data)(
-            network_idx, max_timesteps, num_nodes, num_cpgs,
+            session_idx, max_timesteps, num_nodes, num_cpgs,
             num_measured, num_stimulated, fixed_stim, stim_gain,
             nonlinearity, connection_weights, obs_noise_std,
-            worker_seed=worker_seeds[network_idx],
+            worker_seed=worker_seeds[session_idx],
         )
-        for network_idx in range(num_networks)
+        for session_idx in range(num_sessions)
     )
-    dataset = {res["network"]: res for res in results}
+    dataset = {res["session"]: res for res in results}
     return dataset
 
 
@@ -422,7 +422,7 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset):
     Returns:
         dict with approx_W, true_W, oracle_W, covariance matrices, etc.
     """
-    assert multinet_dataset['network0']['connection_weights'].shape == (num_nodes, num_nodes)
+    assert multinet_dataset['session0']['connection_weights'].shape == (num_nodes, num_nodes)
 
     total_mask = np.zeros((num_nodes, num_nodes))
     cov_x = np.zeros((num_nodes, num_nodes))
@@ -434,10 +434,10 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset):
     Adj = None
     phi = None
 
-    num_networks = len(multinet_dataset)
-    for network_idx in range(num_networks):
-        network = f"network{network_idx}"
-        network_data = multinet_dataset[network]
+    num_sessions = len(multinet_dataset)
+    for session_idx in range(num_sessions):
+        session = f"session{session_idx}"
+        network_data = multinet_dataset[session]
 
         true_W = network_data["connection_weights"]
         Adj = network_data["adjacency_matrix"]

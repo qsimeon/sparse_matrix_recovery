@@ -44,7 +44,7 @@ from experiments.core import (
 # The core computation: one repetition
 # ============================================================================
 
-def one_repetition(rep_idx, seed, num_networks, max_timesteps, num_nodes,
+def one_repetition(rep_idx, seed, num_sessions, max_timesteps, num_nodes,
                    num_cpgs, num_measured, num_stimulated, stim_gain,
                    nonlinearity_name, non_negative_weights=True,
                    force_stable=True, fixed_stim=False, obs_noise_std=0.0,
@@ -66,9 +66,9 @@ def one_repetition(rep_idx, seed, num_networks, max_timesteps, num_nodes,
 
     phi = get_nonlinearity(nonlinearity_name)
 
-    # Simulate K=num_networks sessions with shared topology
+    # Simulate K=num_sessions sessions with shared topology
     dataset = create_multinetwork_dataset(
-        num_networks, max_timesteps, num_nodes, num_cpgs,
+        num_sessions, max_timesteps, num_nodes, num_cpgs,
         num_measured, num_stimulated, fixed_stim, stim_gain,
         phi, non_negative_weights, force_stable, obs_noise_std,
     )
@@ -260,7 +260,7 @@ def main():
     label = args.experiment or "custom"
     print(f"[{label} cfg={args.config_idx} rep={args.rep}] {config}")
     distances = one_repetition(
-        args.rep, args.seed, args.num_networks,
+        args.rep, args.seed, args.num_sessions,
         config["max_timesteps"], config["num_nodes"], config.get("num_cpgs", 5),
         config["num_measured"], config["num_stimulated"],
         config["stim_gain"], config["nonlinearity"],

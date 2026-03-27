@@ -2,8 +2,8 @@
   {
     "config": {
       "random_seed": 42,
-      "num_repetitions": 20,
-      "num_networks": 50,
+      "num_networks": 20,
+      "num_sessions": 50,
       "max_timesteps": 1000,
       "num_nodes": 15,
       "num_cpgs": 5,
@@ -294,8 +294,8 @@
   {
     "config": {
       "random_seed": 42,
-      "num_repetitions": 20,
-      "num_networks": 50,
+      "num_networks": 20,
+      "num_sessions": 50,
       "max_timesteps": 1000,
       "num_nodes": 15,
       "num_cpgs": 5,
@@ -586,8 +586,8 @@
   {
     "config": {
       "random_seed": 42,
-      "num_repetitions": 20,
-      "num_networks": 50,
+      "num_networks": 20,
+      "num_sessions": 50,
       "max_timesteps": 1000,
       "num_nodes": 15,
       "num_cpgs": 5,
@@ -878,8 +878,8 @@
   {
     "config": {
       "random_seed": 42,
-      "num_repetitions": 20,
-      "num_networks": 50,
+      "num_networks": 20,
+      "num_sessions": 50,
       "max_timesteps": 1000,
       "num_nodes": 15,
       "num_cpgs": 5,

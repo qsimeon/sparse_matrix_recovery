@@ -345,7 +345,7 @@ code(
     "# Generate multi-session dataset\n"
     "np.random.seed(SEED); torch.manual_seed(SEED)\n"
     "dataset = create_multinetwork_dataset(\n"
-    "    num_networks=K, max_timesteps=T, num_nodes=N,\n"
+    "    num_sessions=K, max_timesteps=T, num_nodes=N,\n"
     "    num_cpgs=NUM_CPGS, num_measured=NUM_MEAS, num_stimulated=NUM_STIM,\n"
     "    fixed_stim=False, stim_gain=STIM, nonlinearity=PHI,\n"
     "    non_negative_weights=True, force_stable=True,\n"

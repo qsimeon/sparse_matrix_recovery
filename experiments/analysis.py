@@ -287,7 +287,7 @@ def plot_granger_comparison(results, output_path):
         phi = get_nonlinearity("tanh")
         # Use the GOOD config: 50 instances, stim=1.0, 66% measured
         dataset = create_multinetwork_dataset(
-            num_networks=50, max_timesteps=1000, num_nodes=15, num_cpgs=5,
+            num_sessions=50, max_timesteps=1000, num_nodes=15, num_cpgs=5,
             num_measured=10, num_stimulated=5, fixed_stim=False, stim_gain=1.0,
             nonlinearity=phi, non_negative_weights=True, force_stable=True)
         est = estimate_connectivity_weights(15, dataset)
@@ -777,12 +777,15 @@ def generate_problem_schematic(output_path):
         (7, 8, 0.6), (8, 9, 0.5), (9, 10, 0.7), (10, 11, 0.9),
         (11, 6, 0.3), (2, 9, 0.4), (4, 7, 0.6), (1, 10, 0.3),
         (3, 6, 0.5), (5, 11, 0.4),
+        # Nodes 12-14: connected into the network
+        (11, 12, 0.6), (12, 13, 0.7), (13, 14, 0.5),
+        (14, 0, 0.4), (12, 7, 0.3), (9, 14, 0.6), (13, 3, 0.5),
     ]
     for u, v, w in edges:
         G.add_edge(u, v, weight=w)
-    cpg_nodes = {0, 3, 6, 9}
-    stim_nodes = {2, 5, 8, 11}
-    session1_measured = {0, 2, 4, 6, 8, 10}
+    cpg_nodes = {0, 3, 6, 9, 12}          # 5 CPG nodes (33%)
+    stim_nodes = {2, 5, 8, 11, 14}         # 5 stimulated nodes (33%)
+    session1_measured = {0, 2, 4, 6, 8, 10, 12, 14}  # 8 of 15 ~53% (visual clarity)
     pos = nx.circular_layout(G, scale=1.8)
     fig = plt.figure(figsize=(10, 7))
     ax_main = fig.add_axes([0.02, 0.12, 0.62, 0.80])
@@ -814,9 +817,9 @@ def generate_problem_schematic(output_path):
                             connectionstyle="arc3,rad=0.15", shrinkB=12))
         ax_main.text(ox + dx * 0.15, oy + dy * 0.15, "S", fontsize=9,
                      fontweight="bold", ha="center", va="center", color="#FF9800", zorder=7)
-    ax_main.text(0, -2.7, "Session 1: observe $\\{0, 2, 4, 6, 8, 10\\}$",
+    ax_main.text(0, -2.7, "Session 1: observe $\\{0, 2, 4, 6, 8, 10, 12, 14\\}$",
                  ha="center", fontsize=9, color="#2E7D32", fontstyle="italic")
-    ax_main.text(0, -2.95, "Session 2: observe $\\{1, 3, 5, 7, 9, 11\\}$",
+    ax_main.text(0, -2.95, "Session 2: observe $\\{1, 3, 5, 7, 9, 11, 13\\}$",
                  ha="center", fontsize=9, color="#616161", fontstyle="italic")
     legend_elements = [
         plt.Line2D([0], [0], marker="o", color="w", markerfacecolor="#4CAF50",
@@ -827,7 +830,7 @@ def generate_problem_schematic(output_path):
                     markeredgecolor="#D32F2F", markeredgewidth=2.5, markersize=10,
                     label="CPG node (red border)"),
         plt.Line2D([0], [0], marker="^", color="w", markerfacecolor="#BBBBBB",
-                    markeredgecolor="#333333", markersize=10, label="Sensor node (triangle)"),
+                    markeredgecolor="#333333", markersize=10, label="Stimulated node (triangle)"),
         plt.Line2D([0], [0], marker=">", color="#FF9800", lw=0, markersize=8,
                     label="Stimulation input"),
     ]

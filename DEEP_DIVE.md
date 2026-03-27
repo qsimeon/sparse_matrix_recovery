@@ -323,13 +323,13 @@ cd paper && tectonic poster.tex
 Think of it like a clinical trial:
 
 ```
-LEVEL 1: TOPOLOGIES (num_repetitions = 20)
+LEVEL 1: TOPOLOGIES (num_networks = 20)
 +-- Like: "20 different patients" (each with a different brain)
 +-- Purpose: Statistical power -- does the method work across different circuits?
 +-- Each gets: a fresh random W matrix
 +-- Output: 20 independent error measurements -> median, CI
 
-LEVEL 2: SESSIONS (num_networks = 50, called K in the paper)
+LEVEL 2: SESSIONS (num_sessions = 50, called K in the paper)
 +-- Like: "50 different MRI scans of the SAME patient"
 +-- Purpose: Covariance accumulation -- piece together partial views
 +-- Each shares: the same W, but sees different neuron subsets
@@ -347,12 +347,12 @@ LEVEL 3: TIMESTEPS (max_timesteps = 1000, called T in the paper)
 
 ```python
 # LEVEL 1: run_experiments.py line 67
-for rep in range(num_repetitions):    # 20 different random topologies
+for rep in range(num_networks):    # 20 different random topologies
     result = one_repetition(rep, ...)  # each generates a fresh W
 
 # LEVEL 2: core.py line 385-401 (inside one_repetition)
 W, _ = random_network_topology(...)   # ONE topology for this rep
-for session in range(num_networks):   # 50 sessions with this W
+for session in range(num_sessions):   # 50 sessions with this W
     create_network_data(session, ...)  # each sees different subset
 
 # LEVEL 3: core.py line 312
@@ -366,8 +366,8 @@ for t in range(simulation_steps):     # 1000 timesteps per session
 |-----------|-------|----------|-----------|---------------|
 | N | 15 | `num_nodes` | run_experiments.py:43 | Neurons in the circuit |
 | T | 1000 | `max_timesteps` | run_experiments.py:43 | Timesteps per session |
-| K | 50 | `num_networks` | run_experiments.py:42 | Sessions per topology |
-| Reps | 20 | `num_repetitions` | run_experiments.py:42 | Random topologies tested |
+| K | 50 | `num_sessions` | run_experiments.py:42 | Sessions per topology |
+| Reps | 20 | `num_networks` | run_experiments.py:42 | Random topologies tested |
 | Measured | 10 (66%) | `num_measured` | Computed from N | Neurons observed per session |
 | Stimulated | 5 (33%) | `num_stimulated` | Computed from N | Neurons receiving noise |
 | CPGs | 5 (33%) | `num_cpgs` | Computed from N | Neurons with intrinsic drive |
