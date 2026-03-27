@@ -306,7 +306,7 @@ The subsections below present experiments in order (E1--E7): baseline scaling, G
 
 \subsection{Baseline Recovery (E1)}
 
-Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{8, 12, 30\}$ and recording durations $T \in \{100, 500, 1000\}$ with $66\%$ measurement.
+Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{8, 15, 30\}$ and recording durations $T \in \{100, 500, 1000\}$ with $66\%$ measurement.
 The covariance estimator (with diagonal zeroed) consistently outperforms the chance baseline, achieving median errors of $0.05$--$0.19$ vs.\ $\sim 0.54$ for chance.
 Note that the estimate already enforces the no-autapse prior ($W_{ii} = 0$), which removes the autocorrelation-dominated diagonal.
 For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.050$ (Granger-refined), a $91\%$ improvement over chance (Figure~\ref{fig:scaling}).
@@ -342,7 +342,7 @@ $N$ & $T$ & Chance & Estimate & Granger & Gr.\ Improv. \\
 \subsection{Granger Refinement (E2)}
 
 We evaluate the Granger-causality refinement step on $N=15$ networks with $T=1000$, $66\%$ measurement, and 20 network topologies.
-After enforcing the no-autapse prior ($W_{ii} = 0$, a known structural constraint applied to the raw estimate), the Granger refinement further reduces error by an additional $\sim 8\%$.
+After enforcing the no-autapse prior ($W_{ii} = 0$, a known structural constraint applied to the raw estimate), the Granger refinement further reduces error by an additional $\sim 5\%$.
 
 Importantly, the refinement achieves \emph{perfect recall} (median $= 1.0$): all true edges in $W$ are preserved.
 Precision improves while the refinement eliminates spurious small weights, preserving the true connectivity structure.
@@ -352,7 +352,7 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} ($N=15$, $66\%$ measured, $\sigma=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 50 random topologies: (E)~Frobenius error (estimate already has diagonal zeroed) reduced from $0.089$ to $0.084$ with Granger, (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Recovery error with increasing prior knowledge of the ground truth: Chance (no knowledge), Adj (know sparsity pattern), Spec (know sparsity + spectral radius), Est (covariance-based, no oracle knowledge), Grn (Granger-refined with biological constraints). From chance ($0.543$) to Granger-refined ($0.084$): $84\%$ total improvement.}
+\caption{\textbf{Effect of Granger-causality refinement} ($N=15$, $66\%$ measured, $\sigma=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing sparsity and non-negativity. \textbf{(E--G)} Quantitative evaluation over 20 random topologies (50 sessions each): (E)~Frobenius error (estimate already has diagonal zeroed) reduced from $0.089$ to $0.084$ with Granger, (F)~edge detection precision, (G)~recall achieves perfect median $1.0$. Violin plots with individual topologies overlaid. \textbf{(H)} Recovery error with increasing prior knowledge of the ground truth: Chance (no knowledge), Adj (know sparsity pattern), Spec (know sparsity + spectral radius), Est (covariance-based, no oracle knowledge), Grn (Granger-refined with biological constraints). From chance ($0.543$) to Granger-refined ($0.084$): $84\%$ total improvement.}
 \label{fig:granger}
 \end{figure}
 
@@ -372,7 +372,7 @@ This confirms the control-estimation tradeoff: experimentalists must balance sti
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig5_stimulation.pdf}
-\caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=15$, $T=1000$, 20 topologies $\times$ 50 instances). \textbf{(A)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to stimulated nodes. \textbf{(B)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 66\%, 100\%). At low measurement, the effect is mild. At full measurement, zero stimulation yields error near chance ($0.45$) because CPG dynamics alone leave $\Sigma_{x,x}$ ill-conditioned, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery ($\sim 0.09$). This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
+\caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=15$, $T=1000$, 20 topologies $\times$ 50 instances). \textbf{(A)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to stimulated nodes. \textbf{(B)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 66\%, 100\%). At low measurement, the effect is mild. At full measurement, zero stimulation yields error near chance because CPG dynamics alone leave $\Sigma_{x,x}$ ill-conditioned, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery. This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
 \label{fig:tradeoff}
 \end{figure}
 
@@ -393,7 +393,7 @@ The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:
 \subsection{Nonlinearity Robustness (E5)}
 
 We test four nonlinearities at $N=15$ with $66\%$ measurement and $\sigma=1.0$.
-Surprisingly, $\tanh$ yields the \emph{best} recovery (Granger error $0.085$), while identity and ReLU---for which the linear approximation is exact---perform worse (error $\sim 0.17$).
+Surprisingly, $\tanh$ yields the \emph{best} recovery (Granger error $0.084$), while identity and ReLU---for which the linear approximation is exact---perform worse (error $\sim 0.17$).
 This occurs because $\tanh$ \emph{bounds} the state values, improving $\kappa(\Sigma_{x,x})$, while unbounded nonlinearities allow state drift, severely degrading the conditioning of $\Sigma_{x,x}$.
 Sigmoid achieves intermediate error ($0.133$): its boundedness helps conditioning relative to identity and ReLU, but its non-zero mean ($\phi(0) = 0.5$) biases the covariance estimate.
 The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:nonlinearity}).
@@ -401,7 +401,7 @@ The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig7_nonlinearity.pdf}
-\caption{\textbf{Robustness to nonlinearity mismatch} for $N=15$, $T=1000$, $66\%$ measured. \textbf{(Left)} The four activation functions tested. \textbf{(Right)} Median recovery error (log scale) for the raw estimator (blue) and Granger-refined (green) with bootstrap error bars. Counterintuitively, $\tanh$ yields the \emph{best} recovery ($0.085$) because it bounds state values, improving $\kappa(\Sigma_{x,x})$. Unbounded nonlinearities (identity, ReLU) allow state drift that worsens conditioning. Dots show individual topologies ($n=20$).}
+\caption{\textbf{Robustness to nonlinearity mismatch} for $N=15$, $T=1000$, $66\%$ measured. \textbf{(Left)} The four activation functions tested. \textbf{(Right)} Median recovery error (log scale) for the raw estimator (blue) and Granger-refined (green) with bootstrap error bars. Counterintuitively, $\tanh$ yields the \emph{best} recovery ($0.084$) because it bounds state values, improving $\kappa(\Sigma_{x,x})$. Unbounded nonlinearities (identity, ReLU) allow state drift that worsens conditioning. Dots show individual topologies ($n=20$).}
 \label{fig:nonlinearity}
 \end{figure}
 
@@ -411,14 +411,14 @@ A central theoretical prediction of our framework (Section~\ref{sec:app_oracle})
 We test this by comparing both estimators across stimulation intensities $\sigma \in \{0, 0.1, 0.25, 0.5, 1, 2, 5\}$ for $N=15$, $T=1000$ with $\tanh$ nonlinearity, $66\%$ measurement, and 20 topologies.
 
 The approximation outperforms or matches the oracle at every tested stimulation level (Figure~\ref{fig:oracle}).
-The oracle penalty is largest at moderate stimulation ($3.6\times$ at $\sigma = 0.5$) and narrows to $1.4$--$1.7\times$ for $\sigma \geq 1$.
+The oracle penalty is largest at moderate stimulation ($4.5\times$ at $\sigma = 0.5$) and narrows to $1.4$--$1.7\times$ for $\sigma \geq 1$.
 No crossover point exists---the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ consistently exceeds the bias reduction from using the correct nonlinearity.
 This confirms that the linear approximation provides implicit regularization analogous to ridge regression (see Discussion, Section~\ref{sec:discussion}, and Appendix~\ref{sec:app_oracle} for the bias-variance analysis).
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig10_oracle_comparison.pdf}
-\caption{\textbf{Oracle vs.\ approximation comparison} across stimulation intensities ($N=15$, $T=1000$, $66\%$ measured, $\tanh$, 20 topologies $\times$ 50 instances). \textbf{(A)} Median recovery error (log scale) for the oracle estimator using the true nonlinearity (red), the linear approximation (blue), and the Granger-refined approximation (green). Shaded: 95\% bootstrap CI. Dots: individual topologies. The approximation matches or outperforms the oracle at every $\sigma$, with the largest gap at $\sigma=0.5$ ($3.6\times$). \textbf{(B)} Oracle penalty factor (ratio of oracle to approximation error). The oracle never achieves lower error than the approximation, confirming the implicit regularization effect predicted by the bias-variance analysis (Appendix~\ref{sec:app_oracle}).}
+\caption{\textbf{Oracle vs.\ approximation comparison} across stimulation intensities ($N=15$, $T=1000$, $66\%$ measured, $\tanh$, 20 topologies $\times$ 50 instances). \textbf{(A)} Median recovery error (log scale) for the oracle estimator using the true nonlinearity (red), the linear approximation (blue), and the Granger-refined approximation (green). Shaded: 95\% bootstrap CI. Dots: individual topologies. The approximation matches or outperforms the oracle at every $\sigma$, with the largest gap at $\sigma=0.5$ ($4.5\times$). \textbf{(B)} Oracle penalty factor (ratio of oracle to approximation error). The oracle never achieves lower error than the approximation, confirming the implicit regularization effect predicted by the bias-variance analysis (Appendix~\ref{sec:app_oracle}).}
 \label{fig:oracle}
 \end{figure}
 
@@ -429,14 +429,14 @@ But how many neurons receive stimulation is a distinct experimental knob from ho
 In practice, stimulation fraction is determined by the choice of optogenetic tool (e.g., the number of neurons expressing a light-sensitive opsin).
 
 We vary the number of stimulated neurons at fractions $\{0\%, 33\%, 47\%, 67\%, 100\%\}$ of $N=15$ (i.e., $n_s \in \{0, 5, 7, 10, 15\}$) at fixed $\sigma=1.0$ and $66\%$ measurement.
-With zero stimulation ($0\%$), the network relies entirely on CPG-driven dynamics, yielding poor recovery (Granger-refined error $0.314$)---the covariance matrix $\Sigma_{x,x}$ is ill-conditioned without independent noise input.
-At $33\%$ stimulation ($5$ neurons), error drops dramatically to $0.085$, matching the baseline performance.
-Beyond $33\%$, performance plateaus near $0.084$, indicating that moderate stimulation coverage suffices when stimulation gain is adequate (Figure~\ref{fig:sensors}).
+With zero stimulation ($0\%$), the network relies entirely on CPG-driven dynamics, yielding poor recovery (Granger-refined error $\sim 0.50$, near chance)---the covariance matrix $\Sigma_{x,x}$ is ill-conditioned without independent noise input.
+At $33\%$ stimulation ($5$ neurons), error drops dramatically to $0.084$, matching the baseline performance.
+Beyond $33\%$, performance plateaus near $0.083$, indicating that moderate stimulation coverage suffices when stimulation gain is adequate (Figure~\ref{fig:sensors}).
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\linewidth]{figures/fig9_stim_fraction.pdf}
-\caption{\textbf{Effect of stimulation coverage} on connectivity recovery for $N=15$, $T=1000$, $66\%$ measured, $\sigma=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation (stimulation fraction). Stimulating just $1$ neuron ($8\%$) yields high error with large variance; $2$ sensors ($17\%$) halves the error; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=20$). Sensor coverage controls the \emph{rank} of the stimulation covariance, distinct from stimulation intensity (E3).}
+\caption{\textbf{Effect of stimulation coverage} on connectivity recovery for $N=15$, $T=1000$, $66\%$ measured, $\sigma=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation. Zero stimulation ($0\%$, pure CPG dynamics) fails catastrophically (error $0.314$); $33\%$ stimulation drops error to $0.085$; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=20$). Stimulation coverage controls the \emph{rank} of the input covariance, distinct from stimulation intensity (E3).}
 \label{fig:sensors}
 \end{figure}
 
@@ -492,7 +492,7 @@ The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditione
 
 \paragraph{Granger refinement is consistently beneficial.}
 The no-autapse constraint ($W_{ii} = 0$), applied as a known structural prior before any refinement, accounts for the majority of the improvement over the raw estimate (the diagonal is dominated by autocorrelation, $3$--$4\times$ larger than off-diagonal entries).
-The projected gradient refinement provides an additional $\sim 5\%$ improvement and achieves perfect recall of true edges.
+The projected gradient refinement provides an additional $\sim 8\%$ improvement and achieves perfect recall of true edges.
 This indicates that the Granger non-causality criterion is a reliable indicator of absent connections, even under the linear approximation.
 
 \paragraph{Connection to neuroscience experiments.}
@@ -503,9 +503,9 @@ Tools for consistent neuron identification across sessions, such as NeuroPAL \ci
 \paragraph{Sensor coverage: a practical experimental knob.}
 Our experiments reveal two complementary axes of stimulation design: \emph{intensity} (E3) and \emph{coverage} (E7).
 Stimulation gain controls the \emph{magnitude} of the input covariance, while stimulation fraction controls its \emph{rank}---the number of independent input directions exciting the network.
-The E7 results show that zero stimulation yields poor recovery (error $0.314$) because CPG-driven dynamics alone leave $\Sigma_{x,x}$ ill-conditioned.
-At $33\%$ stimulation ($5$ of $N=15$ neurons), error drops to $0.085$, and performance plateaus beyond $\sim 33\%$ stimulation coverage.
-This has a direct practical implication: in optogenetic experiments on small circuits, an experimenter need not achieve pan-neuronal actuator expression---targeting $3$--$4$ neurons in a 12-neuron circuit suffices, provided stimulation intensity is moderate ($\sigma \approx 0.5$--$1.0$).
+The E7 results show that zero stimulation yields poor recovery (error $\sim 0.50$, near chance) because CPG-driven dynamics alone leave $\Sigma_{x,x}$ ill-conditioned.
+At $33\%$ stimulation ($5$ of $N=15$ neurons), error drops to $0.084$, and performance plateaus beyond $\sim 33\%$ stimulation coverage.
+This has a direct practical implication: in optogenetic experiments on small circuits, an experimenter need not achieve pan-neuronal actuator expression---targeting $3$--$5$ neurons in a 15-neuron circuit suffices, provided stimulation intensity is moderate ($\sigma \approx 0.5$--$1.0$).
 Combined with the E3 finding that excessive stimulation degrades recovery, this defines a practical operating regime: moderate gain applied to a modest subset of neurons.
 
 \paragraph{Identifiability conditions.}
@@ -521,7 +521,7 @@ Our experiments (Section~\ref{sec:experiments}) show that measurement density di
 
 \paragraph{Oracle crossover analysis.}
 The E6 results (Section~\ref{sec:experiments}) confirm the bias-variance prediction of Appendix~\ref{sec:app_oracle}: across all seven stimulation intensities tested, the approximate estimator matches or outperforms the oracle that uses the true nonlinearity.
-The gap is largest at moderate stimulation ($3.6\times$ at $\sigma=0.5$) and narrows at high stimulation ($1.4$--$1.7\times$ for $\sigma \geq 1$) as both estimators degrade.
+The gap is largest at moderate stimulation ($4.5\times$ at $\sigma=0.5$) and narrows at high stimulation ($1.4$--$1.7\times$ for $\sigma \geq 1$) as both estimators degrade.
 This is a concrete instance of the James--Stein phenomenon: the ``incorrect'' linear covariance is better-conditioned because $\tanh$ compression makes $\Sigma_{\phi(x),x}$ a row-scaled version of $\Sigma_{x,x}$ with heterogeneous scaling, amplifying noise during inversion.
 The practical implication is that experimentalists need not characterize the precise neuronal nonlinearity---the linear approximation is not just simpler but \emph{better}.
 
@@ -535,10 +535,10 @@ This suggests a natural extension: downweighting detected CPG nodes during covar
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig8_dynamics.pdf}
-\caption{\textbf{Network dynamics, CPG detection, and error decomposition} ($N{=}12$, $\phi{=}\tanh$, $\rho(W){=}1.0$).
+\caption{\textbf{Network dynamics, CPG detection, and error decomposition} ($N{=}15$, $\phi{=}\tanh$, $\rho(W){=}1.0$).
 \textbf{(A)} Activity time series under \emph{autonomous} dynamics ($\sigma=0$): each trace is one neuron's activity $x_i(t)$ over 200 timesteps. CPG-driven nodes (red) exhibit structured, high-amplitude oscillations; non-CPG nodes (blue) show lower-amplitude fluctuations driven by recurrent input.
 \textbf{(B)} Same network under \emph{stimulated} dynamics ($\sigma=1.0$, i.i.d.\ Gaussian per stimulated node per timestep): extrinsic noise elevates overall variance across all nodes while preserving CPG structure.
-\textbf{(C)} Intrinsic CPG drive signals $b_{\mathrm{CPG},i}(t)$ for 4 CPG nodes, generated by a chaotic reservoir network. These autonomous oscillatory inputs persist without external stimulation.
+\textbf{(C)} Intrinsic CPG drive signals $b_{\mathrm{CPG},i}(t)$ for 5 CPG nodes, generated by a chaotic reservoir network. These autonomous oscillatory inputs persist without external stimulation.
 \textbf{(D)} PCA phase portrait of autonomous dynamics: scatter of the first 3 principal components of $X \in \mathbb{R}^{T \times N}$, colored by time (dark$\to$light). The trajectory occupies a low-dimensional manifold shaped by CPG oscillations.
 \textbf{(E)} PCA phase portrait under stimulation: the trajectory fills a larger volume in PC space, indicating that stochastic input excites network modes beyond those driven by CPGs---this expanded coverage is what enables covariance-based estimation.
 \textbf{(F)} Power spectral density (Welch's method) of neural activity, averaged across neurons. Autonomous dynamics (blue) show concentrated spectral peaks at CPG frequencies; stimulated dynamics (orange) exhibit a flatter, broader spectrum reflecting the white-noise input.
