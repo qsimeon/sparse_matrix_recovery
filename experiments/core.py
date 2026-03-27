@@ -4,6 +4,34 @@ Core functions for sparse matrix recovery experiments.
 Extracted from qsimeon_SparseMatrixRecovery.ipynb.
 Contains: activation functions, network generation, dynamics simulation,
 weight estimation, and optimization.
+
+WHAT IS "AN EXPERIMENT" IN THIS PROJECT?
+=========================================
+An experiment is a specific fixed combination of parameters that defines
+the problem setting. These parameters are the axes of variation we study:
+
+  - N (num_nodes): size of the network (number of neurons)
+  - T (max_timesteps): recording duration per session
+  - measurement fraction: fraction of neurons observed per session
+  - stim_gain: strength of extrinsic stimulation noise
+  - stim_fraction: fraction of neurons receiving stimulation (num_stimulated / N)
+  - nonlinearity (phi): transfer function applied to neuron states
+  - K (num_sessions): number of recording sessions
+
+One REPETITION of an experiment (num_networks, e.g. 20) means:
+  - Draw a fresh random connectivity matrix W (a new random circuit topology)
+  - Run K=50 recording sessions, each observing a different random subset
+  - Estimate W from those sessions and measure recovery error
+
+The 20 repetitions give error bars over random topologies.
+The 50 sessions per topology are necessary for covariance accumulation.
+
+Experiments E1-E7 each vary ONE OR TWO of these parameters while fixing
+the rest at the baseline (N=15, T=1000, meas=66%, sigma=1.0, phi=tanh,
+33% stimulation, K=50).
+
+The mega sweep (experiments/sweep_config.yaml) varies all axes jointly to
+find the optimal experimental design.
 """
 
 import numpy as np

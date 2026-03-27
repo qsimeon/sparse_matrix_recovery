@@ -570,7 +570,7 @@ code(
     "%%time\n"
     "from experiments.run_single_rep import one_repetition\n"
     "\n"
-    "# Run 10 repetitions (10 random topologies, 50 instances each)\n"
+    "# Run 10 repetitions (10 random topologies, 50 sessions each)\n"
     "n_reps = 10\n"
     "all_distances = []\n"
     "for rep in range(n_reps):\n"

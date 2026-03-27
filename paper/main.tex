@@ -275,7 +275,11 @@ These roles are assigned randomly per session, modeling the experimental reality
 
 Our experiments systematically vary the parameters in Table~\ref{tab:design} while holding others at baseline values ($N=15$, $T=1000$, 10 measured neurons, 5 stimulated, 5 CPG nodes, $\sigma=1.0$, $\phi=\tanh$).
 Since $N=15$, converting fractions to integer neuron counts introduces discretization: the baseline uses $10/15 \approx 66\%$ measured, $5/15 \approx 33\%$ stimulated and CPGs.
-Each experiment uses 20 repetitions (distinct random network topologies) with $K=50$ recording sessions per topology, each sharing the same $W$ but drawing independent random measurement masks $\mathcal{M}_k$ and stimulation subsets $\mathcal{S}_k$ (parallelized via joblib).
+\paragraph{What constitutes an experiment.}
+An \emph{experiment} is a specific fixed combination of the parameters listed above (e.g., $N=15$, $T=1000$, $66\%$ measurement, $\sigma=1.0$, $\phi=\tanh$).
+One \emph{repetition} draws a single random connectivity matrix $W$, simulates $K=50$ recording sessions sharing that $W$ (each with an independent random measurement mask $\mathcal{M}_k$ and stimulation subset $\mathcal{S}_k$), and evaluates recovery.
+We run 20 repetitions per parameter setting (20 distinct random topologies) to measure variability across circuits.
+The two levels serve distinct purposes: the 50 sessions per topology are necessary for covariance accumulation; the 20 topologies give error bars over the space of possible circuits.
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
 
 \begin{table}[ht]
@@ -331,13 +335,13 @@ $N$ & $T$ & Chance & Estimate & Granger & Gr.\ Improv. \\
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig3_scaling.pdf}
-\caption{\textbf{Scaling properties of the covariance estimator.} \textbf{(Left)} Median recovery error (Frobenius distance / $N$) vs.\ recording duration $T$ for three network sizes ($N \in \{8, 12, 30\}$) with $66\%$ measurement. Shaded regions show 95\% bootstrap confidence intervals over 17 random topologies (50 instances each). Error generally decreases with $T$ and $N$, though discretization of measurement counts (e.g., $\lfloor 0.66 \times 12 \rfloor = 7$ vs.\ $\lfloor 0.66 \times 8 \rfloor = 5$) causes minor non-monotonicity at short durations. The best result is at $N=30$, $T=1000$: Granger-refined error of $0.053$. \textbf{(Right)} Error vs.\ network size $N$ at fixed recording durations $T \in \{100, 500, 1000\}$.}
+\caption{\textbf{Scaling properties of the covariance estimator.} \textbf{(Left)} Median recovery error (Frobenius distance / $N$) vs.\ recording duration $T$ for three network sizes ($N \in \{8, 15, 30\}$) with $66\%$ measurement. Shaded regions show 95\% bootstrap confidence intervals over 20 random topologies (50 sessions each). Error generally decreases with $T$ and $N$. The best result is at $N=30$, $T=1000$: Granger-refined error of $0.053$. \textbf{(Right)} Error vs.\ network size $N$ at fixed recording durations $T \in \{100, 500, 1000\}$.}
 \label{fig:scaling}
 \end{figure}
 
 \subsection{Granger Refinement (E2)}
 
-We evaluate the Granger-causality refinement step on $N=15$ networks with $T=1000$, $66\%$ measurement, and 30 repetitions.
+We evaluate the Granger-causality refinement step on $N=15$ networks with $T=1000$, $66\%$ measurement, and 20 network topologies.
 After enforcing the no-autapse prior ($W_{ii} = 0$, a known structural constraint applied to the raw estimate), the Granger refinement further reduces error by an additional $\sim 8\%$.
 
 Importantly, the refinement achieves \emph{perfect recall} (median $= 1.0$): all true edges in $W$ are preserved.
