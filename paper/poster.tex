@@ -1,4 +1,4 @@
-% NeurIPS Poster — Sparse Neural Connectivity Recovery
+% Poster — Sparse Neural Connectivity Recovery
 % Compile: tectonic poster.tex
 \documentclass[final]{beamer}
 \usepackage[orientation=landscape,size=a1,scale=1.2]{beamerposter}
@@ -10,13 +10,11 @@
 \usepackage{tikz}
 \usepackage[most]{tcolorbox}
 
-% ── Theme ──────────────────────────────────────────────────────────────────
 \usetheme{default}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{headline}{}
 \setbeamertemplate{footline}{}
 
-% Colors
 \definecolor{neuripsblue}{HTML}{2E4057}
 \definecolor{neuripsaccent}{HTML}{0077B6}
 \definecolor{neuripsgray}{HTML}{F0F0F0}
@@ -28,18 +26,11 @@
 \setbeamercolor{block body}{fg=black,bg=boxbg}
 \setbeamercolor{title}{fg=neuripsblue}
 
-% Box style
 \tcbset{
   posterbox/.style={
-    enhanced,
-    colback=white,
-    colframe=neuripsblue,
-    boxrule=1.5pt,
-    arc=4mm,
+    enhanced, colback=white, colframe=neuripsblue, boxrule=1.5pt, arc=4mm,
     left=8mm,right=8mm,top=6mm,bottom=6mm,
-    fonttitle=\Large\bfseries\color{white},
-    coltitle=white,
-    colbacktitle=neuripsblue,
+    fonttitle=\Large\bfseries\color{white}, coltitle=white, colbacktitle=neuripsblue,
     attach boxed title to top left={xshift=6mm,yshift=-3mm},
     boxed title style={sharp corners,colback=neuripsblue}
   }
@@ -48,170 +39,158 @@
 \begin{document}
 \begin{frame}[t]
 
-% ════════════════════════════════════════════════════════════════════════════
-% TITLE BAR
-% ════════════════════════════════════════════════════════════════════════════
 \vspace{-1cm}
 \begin{center}
 {\fontsize{52}{58}\selectfont\bfseries\color{neuripsblue}%
-Recovering Sparse Neural Connectivity from Partial Measurements}\\[12pt]
+Recovering Sparse Neural Connectivity from Partial Measurements:\\[6pt]
+A Covariance-Based Approach with Granger-Causality Refinement}\\[12pt]
 {\LARGE Quilee Simeon \hspace{1cm} Massachusetts Institute of Technology \hspace{1cm} \texttt{qsimeon@mit.edu}}
 \end{center}
-\vspace{0.3cm}
+\vspace{0.5cm}
 
 \begin{columns}[T]
 
-% ════════════════════════════════════════════════════════════════════════════
-% COLUMN 1 — The Problem + How We Solve It
-% ════════════════════════════════════════════════════════════════════════════
+% ═══════════════ COLUMN 1 — Problem + Method ═══════════════
 \begin{column}{0.32\linewidth}
 
-% ── The Question ──
-\begin{tcolorbox}[posterbox,title=The Question]
+\begin{tcolorbox}[posterbox,title=Problem]
 \large
-\textbf{How do you map a brain circuit's wiring when you can never see all the neurons at once?}
+\textbf{Goal}: Recover full $N{\times}N$ connectivity matrix $W$ from \textbf{partial measurements} across multiple recording sessions.
+
+\vspace{6mm}
+\textbf{Challenge}: In small brain circuits (\textit{C.\ elegans}, zebrafish, organoids), we can only observe a \emph{subset} of neurons per session.
+
+\vspace{6mm}
+\textbf{Dynamical model}:
+\[
+  x_{t+1} = W\phi(x_t) + b_t
+\]
+
+Each session $k$ observes $\mathcal{M}_k \subset \{1,\ldots,N\}$ and stimulates $\mathcal{S}_k$.
+
+\vspace{6mm}
+\textbf{Key insight}: Pairwise covariance statistics can be \textbf{accumulated across sessions} whenever neurons $i,j$ are co-observed.
+\end{tcolorbox}
+
+\vspace{1cm}
+
+\begin{tcolorbox}[posterbox,title=Method]
+\large
+\textbf{Step 1 --- Covariance accumulation} over $K{=}50$ sessions:
+\[
+  \hat{\Sigma}_{x_{t+1},x_t}(i,j) = \frac{1}{n_{ij}} \sum_{k: i,j\in\mathcal{M}_k} \hat{\Sigma}^{(k)}(i,j)
+\]
 
 \vspace{4mm}
-In small circuits (\textit{C.~elegans}, zebrafish, organoids), each recording session captures a different \emph{subset} of neurons. Different days $\to$ different views of the same circuit.
+\textbf{Step 2 --- Linear estimator}:
+\[
+  \hat{W} = \hat{\Sigma}_{x_{t+1},x_t}\, \hat{\Sigma}_{x_t,x_t}^{-1}
+\]
+with diagonal zeroed ($W_{ii}{=}0$, no autapses).
 
 \vspace{4mm}
+\textbf{Step 3 --- Granger-causality refinement}: Projected gradient descent enforcing sparsity, non-negativity ($W_{ij} \geq 0$), and no autapses ($W_{ii} = 0$).
+
+\vspace{4mm}
+\textbf{Identifiability}: $K \geq \log(N^2/\delta)/p^2$ sessions suffice for all-pairs coverage with probability $\geq 1{-}\delta$.
+\end{tcolorbox}
+
+\vspace{1cm}
+
+\begin{tcolorbox}[posterbox,title=Pipeline]
 \centering
-\includegraphics[width=0.92\linewidth]{figures/fig1_problem_schematic.pdf}
+\includegraphics[width=0.95\linewidth]{figures/fig1_problem_schematic.pdf}
 \end{tcolorbox}
 
-\vspace{0.8cm}
+\end{column}
 
-% ── Our Approach ──
-\begin{tcolorbox}[posterbox,title=Our Approach: Covariance Accumulation]
-\large
-\textbf{Whenever two neurons are co-observed}, their covariance tells you about the connection between them. Across $K{=}50$ sessions, you piece together the \textbf{full picture}.
+% ═══════════════ COLUMN 2 — Key Results ═══════════════
+\begin{column}{0.32\linewidth}
 
-\vspace{4mm}
-Three steps:
-\begin{itemize}\setlength{\itemsep}{3pt}
-  \item[\color{neuripsaccent}\textbf{1.}] \textbf{Accumulate} pairwise covariances across sessions
-  \item[\color{neuripsaccent}\textbf{2.}] \textbf{Estimate}: $\hat{W} = \hat{\Sigma}_{x_{t+1},x_t} \hat{\Sigma}_{x_t,x_t}^{-1}$, zero diagonal
-  \item[\color{neuripsaccent}\textbf{3.}] \textbf{Refine} with biological constraints (sparsity, non-negativity)
-\end{itemize}
-
-\vspace{4mm}
-Simple, closed-form, no deep learning required.
-\end{tcolorbox}
-
-\vspace{0.8cm}
-
-% ── Headline Numbers ──
-\begin{tcolorbox}[posterbox,title=Results at a Glance,colframe=neuripsaccent,colbacktitle=neuripsaccent]
+\begin{tcolorbox}[posterbox,title=Key Results,colframe=neuripsaccent,colbacktitle=neuripsaccent]
 \large
 \begin{center}
-\renewcommand{\arraystretch}{1.8}
+\renewcommand{\arraystretch}{1.6}
 \begin{tabular}{>{\bfseries\color{neuripsaccent}}l l}
-  Weight correlation & $r = 0.96$ \\
-  Improvement over chance & $84\%$ \\
-  Best error & $0.050$ at $N{=}30$ \\
-  Perfect edge recall & median $= 1.0$ \\
+  Weight correlation & $r = 0.96$ (Granger-refined) \\
+  Improvement over chance & $84\%$ ($0.084$ vs.\ $0.543$) \\
+  Best recovery & $N{=}30,\, T{=}1000$: error $0.053$ \\
+  Sessions needed & $K{=}50$ at $66\%$ coverage \\
 \end{tabular}
 \end{center}
 \end{tcolorbox}
 
-\end{column}
+\vspace{1cm}
 
-% ════════════════════════════════════════════════════════════════════════════
-% COLUMN 2 — What We Found
-% ════════════════════════════════════════════════════════════════════════════
-\begin{column}{0.32\linewidth}
-
-% ── Granger refinement ──
-\begin{tcolorbox}[posterbox,title=Recovery Quality]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig4_granger_refinement.pdf}
-\\[3mm]
-\large The Granger refinement step enforces biological constraints while preserving \textbf{all true edges} (perfect recall).
-\end{tcolorbox}
-
-\vspace{0.8cm}
-
-% ── The Tradeoff ──
-\begin{tcolorbox}[posterbox,title=The Experimenter's Dilemma]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig5_stimulation.pdf}
-\\[3mm]
-\large \textbf{Stimulation helps identification} --- but too much noise drowns the signal. The sweet spot: moderate intensity ($\sigma \approx 0.5$--$1.0$) on ${\sim}33\%$ of neurons.
-
-\vspace{3mm}
-Zero stimulation \emph{fails} at high measurement density because intrinsic dynamics alone don't excite all network modes.
-\end{tcolorbox}
-
-\vspace{0.8cm}
-
-% ── Scaling ──
-\begin{tcolorbox}[posterbox,title=Scales to Larger Networks]
+\begin{tcolorbox}[posterbox,title=Scaling (E1)]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig3_scaling.pdf}
-\\[3mm]
-\large Recovery improves with more neurons and longer recordings. At $N{=}30$, $T{=}1000$: error $0.050$ ($91\%$ over chance).
+\\[4mm]
+\large Error decreases with network size $N$ and duration $T$. Best result: $N{=}30$, $T{=}1000$ achieves Granger-refined error of $0.053$ ($91\%$ over chance).
+\end{tcolorbox}
+
+\vspace{1cm}
+
+\begin{tcolorbox}[posterbox,title=Control--Estimation Tradeoff (E3)]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig5_stimulation.pdf}
+\\[4mm]
+\large Stimulation is \textbf{necessary} for identifiability but \textbf{excessive} noise degrades recovery. Optimal: $\sigma \approx 0.5$--$1.0$ at $66\%$+ measurement.
 \end{tcolorbox}
 
 \end{column}
 
-% ════════════════════════════════════════════════════════════════════════════
-% COLUMN 3 — Surprising Findings + Impact
-% ════════════════════════════════════════════════════════════════════════════
+% ═══════════════ COLUMN 3 — Discoveries + Impact ═══════════════
 \begin{column}{0.32\linewidth}
 
-% ── The Surprise: Wrong Model Wins ──
-\begin{tcolorbox}[posterbox,title=Surprise: The ``Wrong'' Model Wins,colframe=neuripsred,colbacktitle=neuripsred]
+\begin{tcolorbox}[posterbox,title=Implicit Regularization (E6),colframe=neuripsred,colbacktitle=neuripsred]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig10_oracle_comparison.pdf}
-\\[3mm]
-\large The \textbf{linear approximation outperforms the oracle} that knows the true nonlinearity (up to $3.6\times$ worse for the oracle).
+\\[4mm]
+\large The ``incorrect'' linear approximation \textbf{outperforms the oracle} with known nonlinearity at \emph{all} tested regimes --- a James--Stein phenomenon.
 
-\vspace{3mm}
-\textbf{Why?}\; The oracle must invert a \emph{worse-conditioned} matrix. The ``incorrect'' linear version trades bias for stability --- like ridge regression beating OLS.
+\vspace{4mm}
+\textbf{Why?}\; $\Sigma_{\phi(x),x} = D\Sigma_{x,x}$ where $\tanh$ compression makes $D$ ill-conditioned, amplifying noise in the oracle inversion.
 
-\vspace{3mm}
-{\color{neuripsred}\textbf{You don't need to characterize the neuronal transfer function.}}
+\vspace{4mm}
+{\color{neuripsred}\textbf{Practical implication:}} No need to characterize neuronal nonlinearity --- the simpler model is \emph{better}.
 \end{tcolorbox}
 
-\vspace{0.8cm}
+\vspace{1cm}
 
-% ── Error Decomposition ──
-\begin{tcolorbox}[posterbox,title=The Real Bottleneck]
+\begin{tcolorbox}[posterbox,title=Error Decomposition]
 \large
-The linear approximation is \emph{not} the main error source. \textbf{Intrinsic CPG dynamics} are $3.1\times$ larger:
+\textbf{Dominant bottleneck}: CPG--state correlation, \textbf{not} model mismatch.
 
-\vspace{3mm}
+\vspace{4mm}
 \begin{center}
 \renewcommand{\arraystretch}{1.5}
 \begin{tabular}{lcc}
   \toprule
-  \textbf{Source} & \textbf{Error} & \textbf{Ratio} \\
+  \textbf{Error source} & $\|E\|_F / N$ & \textbf{Fraction} \\
   \midrule
-  Model mismatch & $0.073$ & $1\times$ \\
-  \rowcolor{neuripsred!15} CPG correlation & $0.229$ & $3.1\times$ \\
+  Model mismatch ($E_1$) & $0.073$ & $1\times$ \\
+  \rowcolor{neuripsred!15} CPG correlation ($E_2$) & $0.229$ & $3.1\times$ \\
+  Total estimation & $0.081$ & --- \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-\vspace{3mm}
-$\Rightarrow$ Future work: model the intrinsic dynamics, not the nonlinearity.
+\vspace{4mm}
+$\Rightarrow$ Future gains from modeling \textbf{intrinsic dynamics}, not refining the nonlinear approximation.
 \end{tcolorbox}
 
-\vspace{0.8cm}
+\vspace{1cm}
 
-% ── Takeaway ──
-\begin{tcolorbox}[posterbox,title=For Experimentalists,colframe=neuripsgreen,colbacktitle=neuripsgreen]
+\begin{tcolorbox}[posterbox,title=Practical Guidelines for Experimentalists,colframe=neuripsgreen,colbacktitle=neuripsgreen]
 \large
-\begin{itemize}\setlength{\itemsep}{3pt}
-  \item[\color{neuripsgreen}\textbf{1.}] Record $\geq 50\%$ of neurons per session
-  \item[\color{neuripsgreen}\textbf{2.}] Stimulate $\sim 33\%$ at moderate intensity
-  \item[\color{neuripsgreen}\textbf{3.}] Use the simple linear estimator --- it's \emph{better}
-  \item[\color{neuripsgreen}\textbf{4.}] Run $\geq 50$ sessions for reliable coverage
-\end{itemize}
-
-\vspace{3mm}
-\centering
-{\small Code: \texttt{github.com/qsimeon/sparse\_matrix\_recovery}}
+\begin{enumerate}
+  \item[\color{neuripsgreen}\textbf{1.}] \textbf{Measurement}: $\geq 50\%$ neuron coverage per session
+  \item[\color{neuripsgreen}\textbf{2.}] \textbf{Stimulation}: Moderate ($\sigma \approx 0.5$--$1.0$) on $\sim 33\%$ of neurons
+  \item[\color{neuripsgreen}\textbf{3.}] \textbf{Sessions}: $K \geq 50$ with random masks for all-pairs coverage
+  \item[\color{neuripsgreen}\textbf{4.}] \textbf{Model}: Use the linear approximation --- simpler \emph{and} better
+  \item[\color{neuripsgreen}\textbf{5.}] \textbf{Next}: Model CPG dynamics to tackle the $3.1\times$ dominant error
+\end{enumerate}
 \end{tcolorbox}
 
 \end{column}
