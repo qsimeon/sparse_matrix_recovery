@@ -38,7 +38,7 @@ from experiments.run_single_rep import one_repetition
 # ============================================================================
 
 def run_experiment(
-    random_seed=42, num_networks=20, num_sessions=50,
+    random_seed=42, num_networks=10, num_sessions=50,
     max_timesteps=1000, num_nodes=15, num_cpgs=None, num_measured=None,
     num_stimulated=None, fixed_stim=False, stim_gain=1.0,
     nonlinearity="tanh", non_negative_weights=True, force_stable=True,
@@ -134,19 +134,20 @@ def run_E1_baseline(seed=42, output_dir=None):
     print("=" * 60)
 
     results = []
-    for num_nodes in [8, 15, 30]:
+    # N values divisible by 3 so 33%/66% fractions give exact integers
+    for num_nodes in [15, 30, 159, 300, 1074]:
         num_cpgs = max(1, int(0.33 * num_nodes))
         num_measured = max(2, int(0.66 * num_nodes))
         num_stimulated = max(1, int(0.33 * num_nodes))
-        for T in [100, 500, 1000]:
+        for T in [100, 250, 500, 750, 1000]:
             print(f"\n  N={num_nodes}, T={T}, measured={num_measured}")
             r = run_experiment(
-                random_seed=seed, num_networks=20, num_sessions=50,
+                random_seed=seed, num_networks=10, num_sessions=50,
                 max_timesteps=T, num_nodes=num_nodes,
                 num_cpgs=num_cpgs, num_measured=num_measured,
                 num_stimulated=num_stimulated,
                 stim_gain=1.0, nonlinearity="tanh",
-                save_matrices=(num_nodes <= 15),
+                save_matrices=(num_nodes <= 30),
             )
             r["config"]["experiment"] = "E1"
             results.append(r)
@@ -168,7 +169,7 @@ def run_E4_sparsity(seed=42, output_dir=None):
         num_measured = max(2, int(meas_frac * num_nodes))
         print(f"\n  meas_frac={meas_frac} (num_measured={num_measured})")
         r = run_experiment(
-            random_seed=seed, num_networks=20, num_sessions=50,
+            random_seed=seed, num_networks=10, num_sessions=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_cpgs=5, num_measured=num_measured, num_stimulated=5,
             stim_gain=1.0, nonlinearity="tanh",
@@ -199,7 +200,7 @@ def run_E3_stimulation(seed=42, output_dir=None):
         for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0]:
             print(f"\n  meas={meas_frac:.0%}, stim_gain={stim_gain}")
             r = run_experiment(
-                random_seed=seed, num_networks=20, num_sessions=50,
+                random_seed=seed, num_networks=10, num_sessions=50,
                 max_timesteps=1000, num_nodes=num_nodes,
                 num_cpgs=5, num_measured=num_measured, num_stimulated=5,
                 stim_gain=stim_gain, nonlinearity="tanh",
@@ -226,7 +227,7 @@ def run_E2_granger(seed=42, output_dir=None):
     results = []
     num_nodes = 15
     r = run_experiment(
-        random_seed=seed, num_networks=20, num_sessions=50,
+        random_seed=seed, num_networks=10, num_sessions=50,
         max_timesteps=1000, num_nodes=num_nodes,
         num_cpgs=5, num_measured=10, num_stimulated=5,
         stim_gain=1.0, nonlinearity="tanh", save_matrices=True,
@@ -250,7 +251,7 @@ def run_E5_nonlinearity(seed=42, output_dir=None):
     for nl in ["tanh", "relu", "identity", "sigmoid"]:
         print(f"\n  nonlinearity={nl}")
         r = run_experiment(
-            random_seed=seed, num_networks=20, num_sessions=50,
+            random_seed=seed, num_networks=10, num_sessions=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_cpgs=5, num_measured=10, num_stimulated=5,
             stim_gain=1.0, nonlinearity=nl,
@@ -280,7 +281,7 @@ def run_E6_oracle_crossover(seed=42, output_dir=None):
     for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]:
         print(f"\n  stim_gain={stim_gain}")
         r = run_experiment(
-            random_seed=seed, num_networks=20, num_sessions=50,
+            random_seed=seed, num_networks=10, num_sessions=50,
             max_timesteps=1000, num_nodes=num_nodes,
             num_cpgs=5, num_measured=10, num_stimulated=5,
             stim_gain=stim_gain, nonlinearity="tanh",
@@ -309,15 +310,15 @@ def run_E7_stim_fraction(seed=42, output_dir=None):
     print("=" * 60)
 
     results = []
-    num_nodes = 15
-    # Sweep: 0%, 33%, 50%, 66%, 100% of N=15
-    for num_stimulated in [0, 5, 7, 10, 15]:
+    num_nodes = 30
+    # Sweep: 0%, 33%, 50%, 66%, 100% of N=30
+    for num_stimulated in [0, 10, 15, 20, 30]:
         stim_frac = num_stimulated / num_nodes
         print(f"\n  num_stimulated={num_stimulated} ({stim_frac:.0%} of N={num_nodes})")
         r = run_experiment(
-            random_seed=seed, num_networks=20, num_sessions=50,
+            random_seed=seed, num_networks=10, num_sessions=50,
             max_timesteps=1000, num_nodes=num_nodes,
-            num_cpgs=5, num_measured=10, num_stimulated=num_stimulated,
+            num_cpgs=10, num_measured=20, num_stimulated=num_stimulated,
             stim_gain=1.0, nonlinearity="tanh",
         )
         r["config"]["experiment"] = "E7"

@@ -435,10 +435,14 @@ def create_multinetwork_dataset(
 # Weight Estimation
 # ============================================================================
 
-def estimate_connectivity_weights(num_nodes, multinet_dataset):
+def estimate_connectivity_weights(num_nodes, multinet_dataset, non_negative_weights=True):
     """
     Estimate connectivity weights from multi-network dataset using
     covariance-based estimator: W_hat = Cov(y_{t+1}, y_t) @ pinv(Cov(y_t, y_t))
+
+    Structural priors applied to ALL estimates (not method-specific):
+      (i)  No autapses: W_ii = 0
+      (ii) Non-negativity: W_ij >= 0 (when non_negative_weights=True)
 
     NOTE: This operates on the OBSERVED data y_t (which may include measurement noise).
     When obs_noise_std > 0, y_t = x_t + ε_t, so:
@@ -493,14 +497,17 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset):
     cov_bx = np.divide(cov_bx, total_mask)
 
     approx_W = cov_dtx @ np.linalg.pinv(cov_x)
-    # Enforce no-autapse constraint: W_ii = 0 is a known structural prior,
-    # not something learned from data. The diagonal of the raw estimate is
-    # dominated by autocorrelation (3-4x larger than off-diagonal) and carries
-    # no connectivity information. Zeroing it is a basic preprocessing step.
+    # Structural priors applied uniformly to ALL estimates (not method-specific):
+    #   (i)  No autapses: W_ii = 0 — diagonal dominated by autocorrelation
+    #   (ii) Non-negativity: W_ij >= 0 — modeling prior for excitatory networks
     np.fill_diagonal(approx_W, 0)
+    if non_negative_weights:
+        approx_W = np.maximum(approx_W, 0.0)
 
     oracle_W = (cov_dtx - cov_bx) @ np.linalg.pinv(cov_phix)
     np.fill_diagonal(oracle_W, 0)
+    if non_negative_weights:
+        oracle_W = np.maximum(oracle_W, 0.0)
 
     # Diagnostics: condition number and error bound components
     # The estimation error decomposes as:
@@ -549,8 +556,8 @@ def least_squares_backsolve(W, B, alpha=1e-6):
     BBt = B @ B.T
     for i in range(n):
         BBt[i, i] += alpha
-    BBt_inv = np.linalg.inv(BBt)
-    A_new = W.dot(B.T).dot(BBt_inv)
+    # Use solve instead of inv for numerical stability at large N
+    A_new = np.linalg.solve(BBt, (W @ B.T).T).T
     return A_new
 
 
@@ -559,12 +566,14 @@ def projected_gradient_causal(
     steps=200, lr=1e-3, subiters=3,
 ):
     """
-    Minimize ||A - A_init||^2 subject to Granger-causality constraints.
+    Minimize ||A - A_init||^2 subject to Granger-causality sparsity constraints.
 
-    Constraints on W = A @ pinv(cov_x):
-      - W[i,i] = 0 (no self-connections)
+    The Granger step's unique contribution is enforcing non-causality zeros:
       - W[i,j] = 0 where cov_x[i,j] > cov_dtx[i,j] (Granger non-causality)
-      - W[i,j] >= 0 (non-negative weights)
+
+    Structural priors (no autapses, non-negativity) are applied upstream to ALL
+    estimates via estimate_connectivity_weights(). They are re-enforced here for
+    consistency but are not specific to the Granger refinement.
     """
     A_init = cov_dtx.copy()
     n = A_init.shape[0]

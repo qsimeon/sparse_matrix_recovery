@@ -73,8 +73,8 @@ def one_repetition(rep_idx, seed, num_sessions, max_timesteps, num_nodes,
         phi, non_negative_weights, force_stable, obs_noise_std,
     )
 
-    # Estimate connectivity
-    estim = estimate_connectivity_weights(num_nodes, dataset)
+    # Estimate connectivity (non-negativity prior applied uniformly to all estimates)
+    estim = estimate_connectivity_weights(num_nodes, dataset, non_negative_weights)
     true_W = estim["true_W"]
     approx_W = estim["approx_W"]
     Adj = estim["Adj"]
@@ -167,7 +167,7 @@ def get_experiment_configs(experiment):
             {"num_nodes": n, "max_timesteps": t,
              "num_cpgs": max(1, int(0.33*n)), "num_measured": max(2, int(0.66*n)),
              "num_stimulated": max(1, int(0.33*n)), "stim_gain": 1.0, "nonlinearity": "tanh"}
-            for n in [8, 15, 30] for t in [100, 500, 1000]
+            for n in [15, 30, 159, 300, 1074] for t in [100, 250, 500, 750, 1000]
         ]
     elif experiment == "E2":  # Granger ablation (single config)
         return [{"num_nodes": N, "max_timesteps": 1000, "num_cpgs": 5,
@@ -198,11 +198,11 @@ def get_experiment_configs(experiment):
              "num_measured": 10, "num_stimulated": 5, "stim_gain": sg, "nonlinearity": "tanh"}
             for sg in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
         ]
-    elif experiment == "E7":  # Stim fraction
+    elif experiment == "E7":  # Stim fraction (N=30)
         return [
-            {"num_nodes": N, "max_timesteps": 1000, "num_cpgs": 5,
-             "num_measured": 10, "num_stimulated": ns, "stim_gain": 1.0, "nonlinearity": "tanh"}
-            for ns in [0, 5, 7, 10, 15]
+            {"num_nodes": 30, "max_timesteps": 1000, "num_cpgs": 10,
+             "num_measured": 20, "num_stimulated": ns, "stim_gain": 1.0, "nonlinearity": "tanh"}
+            for ns in [0, 10, 15, 20, 30]
         ]
     else:
         raise ValueError(f"Unknown experiment: {experiment}")

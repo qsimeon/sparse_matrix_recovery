@@ -554,7 +554,7 @@ def plot_nonlinearity_robustness(results, output_path):
 
 
 # ============================================================================
-# Figure F8: Sensor Fraction — E7
+# Figure F8: Stimulation Fraction — E7
 # ============================================================================
 
 def plot_stim_fraction(results, output_path):
@@ -565,13 +565,13 @@ def plot_stim_fraction(results, output_path):
     # --- Left panel: schematic mini networks showing stimulation coverage ---
     _add_panel_label(ax_left, "A")
     ax_left.axis("off")
-    ax_left.set_title("Sensor coverage patterns", fontsize=11, fontweight="bold", pad=10)
+    ax_left.set_title("Stimulation coverage patterns", fontsize=11, fontweight="bold", pad=10)
 
     fracs_show = [0.08, 0.33, 1.0]
     labels_show = ["8%", "33%", "100%"]
     for i, (frac, lab) in enumerate(zip(fracs_show, labels_show)):
         inset = ax_left.inset_axes([0.05, 0.68 - i * 0.35, 0.9, 0.30])
-        _draw_mini_network(inset, n_nodes=8, frac_measured=frac, title=f"Sensors: {lab}")
+        _draw_mini_network(inset, n_nodes=8, frac_measured=frac, title=f"Stimulated: {lab}")
 
     # --- Right panel: error vs stimulation fraction ---
     _add_panel_label(ax_right, "B")
@@ -607,7 +607,7 @@ def plot_stim_fraction(results, output_path):
     if chance_val is not None:
         ax_right.axhline(chance_val, color=C_CHANCE, ls="--", lw=1.5, label="Chance baseline")
 
-    ax_right.set_xlabel("Sensor Fraction (stimulated neurons / N)")
+    ax_right.set_xlabel("Stimulation Fraction (stimulated neurons / N)")
     ax_right.set_ylabel("Recovery Error (Frobenius / N)")
     ax_right.set_title("Effect of stimulation coverage on recovery", fontsize=11, fontweight="bold")
     ax_right.legend(loc="upper right", framealpha=0.9)
