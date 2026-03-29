@@ -113,8 +113,8 @@ with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-nega
 \renewcommand{\arraystretch}{1.6}
 \begin{tabular}{>{\bfseries\color{neuripsaccent}}l l}
   Weight correlation & $r = 0.96$ (Granger-refined) \\
-  Improvement over chance & $84\%$ ($0.084$ vs.\ $0.543$) \\
-  Best recovery & $N{=}30,\, T{=}1000$: error $0.053$ \\
+  Improvement over chance & $85\%$ ($0.080$ vs.\ $0.544$) \\
+  Best recovery & $N{=}30,\, T{=}1000$: error $0.052$ \\
   Sessions needed & $K{=}50$ at $66\%$ coverage \\
 \end{tabular}
 \end{center}
@@ -126,7 +126,7 @@ with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-nega
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig3_scaling.pdf}
 \\[4mm]
-\large Error decreases with network size $N$ and duration $T$. Best result: $N{=}30$, $T{=}1000$ achieves Granger-refined error of $0.053$ ($91\%$ over chance).
+\large For $N \leq 30$, error decreases with network size and duration $T$. Best result: $N{=}30$, $T{=}1000$ achieves Granger-refined error of $0.052$ ($91\%$ over chance). Larger networks ($N{=}159$--$1074$) show higher variance.
 \end{tcolorbox}
 
 \vspace{1cm}
@@ -171,7 +171,7 @@ with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-nega
   \midrule
   Model mismatch ($E_1$) & $0.073$ & $1\times$ \\
   \rowcolor{neuripsred!15} CPG correlation ($E_2$) & $0.229$ & $3.1\times$ \\
-  Total estimation & $0.081$ & --- \\
+  Total estimation & $0.076$ & --- \\
   \bottomrule
 \end{tabular}
 \end{center}
