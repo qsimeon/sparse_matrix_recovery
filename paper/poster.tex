@@ -86,10 +86,10 @@ Each session $k$ observes $\mathcal{M}_k \subset \{1,\ldots,N\}$ and stimulates 
 \[
   \hat{W} = \hat{\Sigma}_{x_{t+1},x_t}\, \hat{\Sigma}_{x_t,x_t}^{-1}
 \]
-with diagonal zeroed ($W_{ii}{=}0$, no autapses).
+with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-negativity ($W_{ij} \geq 0$).
 
 \vspace{4mm}
-\textbf{Step 3 --- Granger-causality refinement}: Projected gradient descent enforcing sparsity, non-negativity ($W_{ij} \geq 0$), and no autapses ($W_{ii} = 0$).
+\textbf{Step 3 --- Granger-causality refinement}: Projected gradient descent enforcing Granger non-causality zeros ($W_{ij} = 0$ where contemporaneous covariance exceeds lagged).
 
 \vspace{4mm}
 \textbf{Identifiability}: $K \geq \log(N^2/\delta)/p^2$ sessions suffice for all-pairs coverage with probability $\geq 1{-}\delta$.
