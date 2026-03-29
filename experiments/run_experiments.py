@@ -15,7 +15,6 @@ import sys
 import json
 import argparse
 import numpy as np
-import torch
 import pandas as pd
 from pathlib import Path
 from scipy.stats import bootstrap

@@ -126,7 +126,7 @@ This connects the experimental value to the formal notation, makes the session s
 - $\mathcal{M}_k$ defined on line 117 (observation model) ✓
 - $\mathcal{S}_k$ defined on line 117 (observation model) ✓
 - K used in Algorithm 1 line 216 and estimation problem line 127 — now connected to K=50 ✓
-- Code confirms: `num_networks=50` in run_experiments.py, each drawing independent `np.random.choice` measurement masks ✓
+- Code confirms: `num_sessions=50` in run_experiments.py (`num_networks=20` topologies, each with K=50 sessions drawing independent `np.random.choice` measurement masks) ✓
 - Identifiability: K=50 > log(900/0.05)/0.66² ≈ 23 for N=30 (largest network), so all-pairs coverage is guaranteed with high probability ✓
 
 **Files changed**: `paper/main.tex` (line 267)

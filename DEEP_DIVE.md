@@ -66,15 +66,15 @@ You have a brain circuit with N neurons wired together by synapses. You want to 
 
 | File | Lines | What it does |
 |------|-------|-------------|
-| `experiments/core.py` | 597 | **The brain.** All algorithms: network generation, CPG dynamics, covariance estimation, Granger refinement |
-| `experiments/run_experiments.py` | 531 | **The lab.** Defines and runs E1-E7, each testing a specific hypothesis |
-| `experiments/analysis.py` | 973 | **The artist.** Generates 9 of the 10 publication figures |
-| `scripts/generate_all_figures.py` | 234 | **The orchestrator.** Calls analysis.py + generates fig8 (dynamics 9-panel) |
-| `paper/main.tex` | 630 | **The paper.** NeurIPS preprint, 10 main pages + 3 appendix |
-| `paper/references.bib` | 216 | 20 verified citations |
+| `experiments/core.py` | 622 | **The brain.** All algorithms: network generation, CPG dynamics, covariance estimation, Granger refinement |
+| `experiments/run_experiments.py` | 442 | **The lab.** Defines and runs E1-E7, each testing a specific hypothesis |
+| `experiments/analysis.py` | 1024 | **The artist.** Generates 9 of the 10 publication figures |
+| `scripts/generate_all_figures.py` | 231 | **The orchestrator.** Calls analysis.py + generates fig8 (dynamics 9-panel) |
+| `paper/main.tex` | 691 | **The paper.** NeurIPS preprint, 10 main pages + 3 appendix |
+| `paper/references.bib` | 215 | 20 verified citations |
 | `paper/math_walkthrough.md` | 215 | Educational companion — the full mathematical derivation story |
-| `paper/poster.tex` | 231 | A1 conference poster |
-| `paper/lightning_talk.md` | 59 | 3-minute talk script |
+| `paper/poster.tex` | 201 | A1 conference poster |
+| `paper/lightning_talk.md` | 54 | 3-minute talk script |
 | `experiments/results/*.json` | 7 files | Raw data from all experiments |
 
 ---
@@ -89,7 +89,7 @@ uv run python experiments/run_experiments.py --experiment E4 --seed 42
 
 ### Step 1: Generate a random brain circuit
 
-`core.py:202` — `random_network_topology(num_nodes=15, non_negative_weights=True, force_stable=True)`
+`core.py:230` — `random_network_topology(num_nodes=15, non_negative_weights=True, force_stable=True)`
 
 This creates a random directed graph, like a tiny connectome:
 
@@ -105,7 +105,7 @@ Grow density until strongly connected -> draw Unif(0,1) weights -> scale so rho(
 
 ### Step 2: Simulate 50 recording sessions
 
-`core.py:244` — `create_network_data(...)` called 50 times via `create_multinetwork_dataset`
+`core.py:272` — `create_network_data(...)` called 50 times via `create_multinetwork_dataset`
 
 Each session:
 1. **Pick which neurons to observe** (random 10 of 15 = 66%)
@@ -114,7 +114,7 @@ Each session:
 4. **Run the dynamics** for T=1000 timesteps (+ 300 warmup, discarded):
 
 ```python
-# core.py:326 — THE dynamics equation
+# core.py:354 — THE dynamics equation
 state = connection_weights @ nonlinearity(state) + total_input
 ```
 
@@ -134,18 +134,18 @@ where `total_input = extrinsic_drive + intrinsic_drive`:
                         +--------------------------------------+
 ```
 
-**The CPG is a chaotic reservoir** (`core.py:75`): a random sparse matrix M with gain g=1.3 (above edge of chaos), integrated via Euler steps: dx/dt = -x + M*tanh(x). This produces rich, unpredictable temporal signals — like the heartbeat that keeps the circuit alive when there's no external input.
+**The CPG is a chaotic reservoir** (`core.py:103`): a random sparse matrix M with gain g=1.3 (above edge of chaos), integrated via Euler steps: dx/dt = -x + M*tanh(x). This produces rich, unpredictable temporal signals — like the heartbeat that keeps the circuit alive when there's no external input.
 
 **Why does the circuit need a heartbeat?** With rho(W) <= 1 and tanh, the autonomous system (no input) contracts to zero — the network dies. CPGs are biologically real: think cardiac pacemaker cells, respiratory rhythm generators, locomotion circuits.
 
 ### Step 3: Accumulate covariances across sessions
 
-`core.py:410` — `estimate_connectivity_weights(num_nodes=15, multinet_dataset)`
+`core.py:438` — `estimate_connectivity_weights(num_nodes=15, multinet_dataset)`
 
 This is the core algorithm. For each session k:
 
 ```python
-# core.py:446-458
+# core.py:474-486
 mask = measured_nodes_mask.reshape(-1, 1)     # which neurons we see
 S = mask @ mask.T                              # co-measurement matrix
 total_mask += S                                # count co-observations
@@ -157,7 +157,7 @@ cov_dtx += (X[1:].T  @ X[:-1] / n) * S       # Sigma_{x+1,x} (lagged)
 Think of it like a jigsaw puzzle. Each session gives you some pieces (the covariance entries for co-observed pairs). After 50 sessions, you have the whole puzzle:
 
 ```python
-# core.py:461-465 — Average over sessions
+# core.py:489-493 — Average over sessions
 total_mask = np.clip(total_mask, a_min=1, a_max=None)  # avoid /0
 cov_x   = cov_x   / total_mask
 cov_dtx = cov_dtx / total_mask
@@ -166,7 +166,7 @@ cov_dtx = cov_dtx / total_mask
 ### Step 4: The Estimator
 
 ```python
-# core.py:467 — THE estimator (one line!)
+# core.py:495 — THE estimator (one line!)
 approx_W = cov_dtx @ np.linalg.pinv(cov_x)
 ```
 
@@ -181,7 +181,7 @@ That's it. The rest of the paper is about understanding *when and why this works
 ### Step 5: Zero the diagonal
 
 ```python
-# core.py:472
+# core.py:500
 np.fill_diagonal(approx_W, 0)
 ```
 
@@ -191,7 +191,7 @@ np.fill_diagonal(approx_W, 0)
 
 ### Step 6: Granger refinement
 
-`core.py:529` — `projected_gradient_causal(cov_x, cov_dtx)`
+`core.py:557` — `projected_gradient_causal(cov_x, cov_dtx)`
 
 This cleans up the estimate by enforcing biological constraints:
 
@@ -204,7 +204,7 @@ For 200 iterations:
      c. A = backsolve(W, Sigma^{-1})            <-- convert back
 ```
 
-**The Granger criterion** (`core.py:548`): Set W_ij = 0 wherever Sigma_{x,x}(i,j) > Sigma_{x+1,x}(i,j). Intuition: if the *contemporaneous* covariance between neurons i and j exceeds their *lagged* covariance, then j's past doesn't help predict i's future — so there's no causal connection.
+**The Granger criterion** (`core.py:576`): Set W_ij = 0 wherever Sigma_{x,x}(i,j) > Sigma_{x+1,x}(i,j). Intuition: if the *contemporaneous* covariance between neurons i and j exceeds their *lagged* covariance, then j's past doesn't help predict i's future — so there's no causal connection.
 
 Result: ~3% additional error reduction, **perfect recall** (all true edges preserved, zero missed).
 
@@ -219,8 +219,8 @@ Result: ~3% additional error reduction, **perfect recall** (all true edges prese
 | E3 | Stimulation tradeoff? | sigma x measurement density | Zero stim fails; sigma~0.5 optimal |
 | E4 | How much observation? | Measurement 33-100% | Plateaus above ~50% |
 | E5 | Robust to nonlinearity? | tanh, relu, identity, sigmoid | tanh best (bounds variance) |
-| E6 | Does oracle win? | Oracle vs approx across sigma | No — approx always wins (1.4-4.4x) |
-| E7 | How many stimulated? | 1,2,5,10,15 stimulated neurons | 1 fails; >=33% suffices |
+| E6 | Does oracle win? | Oracle vs approx across sigma | No — approx always wins (1.4-4.5x) |
+| E7 | How many stimulated? | 0,5,7,10,15 stimulated neurons | 0% fails; >=33% suffices |
 
 ---
 
@@ -252,7 +252,7 @@ The linear estimator avoids this — it's biased but better-conditioned. Classic
 ## Five Key Insights
 
 ### 1. The "wrong" model wins
-The oracle (which knows the true tanh) is 1.4-4.4x worse than the naive linear approximation. Don't bother characterizing the neuronal transfer function — the simpler model is provably better.
+The oracle (which knows the true tanh) is 1.4-4.5x worse than the naive linear approximation. Don't bother characterizing the neuronal transfer function — the simpler model is provably better.
 
 ### 2. CPG correlation is the real bottleneck
 E2 is 3.1x larger than E1. Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear model.
@@ -346,16 +346,16 @@ LEVEL 3: TIMESTEPS (max_timesteps = 1000, called T in the paper)
 ### How This Maps to Code
 
 ```python
-# LEVEL 1: run_experiments.py line 67
+# LEVEL 1: run_experiments.py line 66
 for rep in range(num_networks):    # 20 different random topologies
     result = one_repetition(rep, ...)  # each generates a fresh W
 
-# LEVEL 2: core.py line 385-401 (inside one_repetition)
+# LEVEL 2: core.py line 413-429 (inside create_multinetwork_dataset)
 W, _ = random_network_topology(...)   # ONE topology for this rep
 for session in range(num_sessions):   # 50 sessions with this W
     create_network_data(session, ...)  # each sees different subset
 
-# LEVEL 3: core.py line 312
+# LEVEL 3: core.py line 340
 for t in range(simulation_steps):     # 1000 timesteps per session
     state = W @ phi(state) + b_t      # one step of the dynamics
 ```
@@ -364,15 +364,15 @@ for t in range(simulation_steps):     # 1000 timesteps per session
 
 | Parameter | Value | Variable | Where set | What it means |
 |-----------|-------|----------|-----------|---------------|
-| N | 15 | `num_nodes` | run_experiments.py:43 | Neurons in the circuit |
-| T | 1000 | `max_timesteps` | run_experiments.py:43 | Timesteps per session |
-| K | 50 | `num_sessions` | run_experiments.py:42 | Sessions per topology |
-| Reps | 20 | `num_networks` | run_experiments.py:42 | Random topologies tested |
+| N | 15 | `num_nodes` | run_experiments.py:42 | Neurons in the circuit |
+| T | 1000 | `max_timesteps` | run_experiments.py:41 | Timesteps per session |
+| K | 50 | `num_sessions` | run_experiments.py:41 | Sessions per topology |
+| Reps | 20 | `num_networks` | run_experiments.py:41 | Random topologies tested |
 | Measured | 10 (66%) | `num_measured` | Computed from N | Neurons observed per session |
 | Stimulated | 5 (33%) | `num_stimulated` | Computed from N | Neurons receiving noise |
 | CPGs | 5 (33%) | `num_cpgs` | Computed from N | Neurons with intrinsic drive |
-| sigma | 1.0 | `stim_gain` | run_experiments.py:44 | Stimulation intensity |
-| phi | tanh | `nonlinearity` | run_experiments.py:45 | Transfer function |
+| sigma | 1.0 | `stim_gain` | run_experiments.py:43 | Stimulation intensity |
+| phi | tanh | `nonlinearity` | run_experiments.py:44 | Transfer function |
 | seed | 42 | `random_seed` | CLI arg | Reproducibility |
 
 ### The Mega Sweep (Cluster)

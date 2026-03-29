@@ -309,7 +309,7 @@ The subsections below present experiments in order (E1--E7): baseline scaling, G
 Table~\ref{tab:baseline} shows recovery error across network sizes $N \in \{8, 15, 30\}$ and recording durations $T \in \{100, 500, 1000\}$ with $66\%$ measurement.
 The covariance estimator (with diagonal zeroed) consistently outperforms the chance baseline, achieving median errors of $0.05$--$0.19$ vs.\ $\sim 0.54$ for chance.
 Note that the estimate already enforces the no-autapse prior ($W_{ii} = 0$), which removes the autocorrelation-dominated diagonal.
-For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.050$ (Granger-refined), a $91\%$ improvement over chance (Figure~\ref{fig:scaling}).
+For $N=30$ with $T=1000$, the method achieves excellent recovery: $0.053$ (Granger-refined), a $91\%$ improvement over chance (Figure~\ref{fig:scaling}).
 
 \begin{table}[ht]
 \centering
@@ -379,14 +379,14 @@ This confirms the control-estimation tradeoff: experimentalists must balance sti
 \subsection{Measurement Sparsity (E4)}
 
 We vary the fraction of neurons observed per session from $33\%$ to $100\%$ for $N=15$, $T=1000$.
-Full observability ($100\%$) yields error of $0.084$ compared to $0.321$ at $33\%$ measurement (Granger-refined), confirming that measurement sparsity is a significant challenge.
-At $33\%$ measurement, the raw estimate ($0.590$) is substantially worse due to ill-conditioning; the Granger refinement reduces this to $0.321$ ($46\%$ improvement).
+Full observability ($100\%$) yields error of $0.083$ compared to $0.213$ at $33\%$ measurement (Granger-refined), confirming that measurement sparsity is a significant challenge.
+At $33\%$ measurement, the raw estimate ($0.345$) is substantially worse due to ill-conditioning; the Granger refinement reduces this to $0.213$ ($38\%$ improvement).
 The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:sparsity}).
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig6_sparsity.pdf}
-\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=15$, $T=1000$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.084$; at $33\%$ the Granger-refined estimate ($0.321$) is $46\%$ better than the raw estimate ($0.590$). 20 topologies $\times$ 50 instances per condition.}
+\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=15$, $T=1000$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.083$; at $33\%$ the Granger-refined estimate ($0.213$) is $38\%$ better than the raw estimate ($0.345$). 20 topologies $\times$ 50 sessions per condition.}
 \label{fig:sparsity}
 \end{figure}
 
@@ -395,7 +395,7 @@ The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:
 We test four nonlinearities at $N=15$ with $66\%$ measurement and $\sigma=1.0$.
 Surprisingly, $\tanh$ yields the \emph{best} recovery (Granger error $0.084$), while identity and ReLU---for which the linear approximation is exact---perform worse (error $\sim 0.17$).
 This occurs because $\tanh$ \emph{bounds} the state values, improving $\kappa(\Sigma_{x,x})$, while unbounded nonlinearities allow state drift, severely degrading the conditioning of $\Sigma_{x,x}$.
-Sigmoid achieves intermediate error ($0.133$): its boundedness helps conditioning relative to identity and ReLU, but its non-zero mean ($\phi(0) = 0.5$) biases the covariance estimate.
+Sigmoid achieves intermediate error ($0.130$): its boundedness helps conditioning relative to identity and ReLU, but its non-zero mean ($\phi(0) = 0.5$) biases the covariance estimate.
 The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:nonlinearity}).
 
 \begin{figure}[ht]
@@ -436,7 +436,7 @@ Beyond $33\%$, performance plateaus near $0.083$, indicating that moderate stimu
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\linewidth]{figures/fig9_stim_fraction.pdf}
-\caption{\textbf{Effect of stimulation coverage} on connectivity recovery for $N=15$, $T=1000$, $66\%$ measured, $\sigma=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation. Zero stimulation ($0\%$, pure CPG dynamics) fails catastrophically (error $0.314$); $33\%$ stimulation drops error to $0.085$; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=20$). Stimulation coverage controls the \emph{rank} of the input covariance, distinct from stimulation intensity (E3).}
+\caption{\textbf{Effect of stimulation coverage} on connectivity recovery for $N=15$, $T=1000$, $66\%$ measured, $\sigma=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation. Zero stimulation ($0\%$, pure CPG dynamics) fails catastrophically (error $\sim 0.50$, near chance); $33\%$ stimulation drops error to $0.084$; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=20$). Stimulation coverage controls the \emph{rank} of the input covariance, distinct from stimulation intensity (E3).}
 \label{fig:sensors}
 \end{figure}
 
@@ -492,7 +492,7 @@ The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditione
 
 \paragraph{Granger refinement is consistently beneficial.}
 The no-autapse constraint ($W_{ii} = 0$), applied as a known structural prior before any refinement, accounts for the majority of the improvement over the raw estimate (the diagonal is dominated by autocorrelation, $3$--$4\times$ larger than off-diagonal entries).
-The projected gradient refinement provides an additional $\sim 8\%$ improvement and achieves perfect recall of true edges.
+The projected gradient refinement provides an additional $\sim 5\%$ improvement and achieves perfect recall of true edges.
 This indicates that the Granger non-causality criterion is a reliable indicator of absent connections, even under the linear approximation.
 
 \paragraph{Connection to neuroscience experiments.}

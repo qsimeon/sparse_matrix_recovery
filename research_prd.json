@@ -51,14 +51,14 @@
       "statement": "Approximate estimator beats oracle at all operating regimes",
       "experiment": "E6",
       "status": "CONFIRMED",
-      "result": "Oracle 1.4-4.4x worse across all stim levels, largest gap at sigma=0.1"
+      "result": "Oracle 1.4-4.5x worse across all stim levels, largest gap at sigma=0.5 (4.5x)"
     },
     {
       "id": "H7",
       "statement": "Recovery improves with stimulation coverage (number of stimulated neurons)",
       "experiment": "E7",
       "status": "CONFIRMED",
-      "result": "1 stimulated node: 0.218 Granger error; plateaus at 33%+ (~0.10). Stimulation fraction controls rank of stimulation covariance."
+      "result": "0% stim: error 0.501 (near chance); 33% stim: 0.084; plateaus at 33%+ (~0.08). Stimulation fraction controls rank of stimulation covariance."
     }
   ],
   "experiments": [
@@ -80,7 +80,8 @@
       "fixed": {
         "measurement": "66%",
         "stim": 1.0,
-        "reps": 50
+        "networks": 20,
+        "sessions_per_network": 50
       }
     },
     {
@@ -99,7 +100,8 @@
         "N": 15,
         "T": 1000,
         "stim": 1.0,
-        "reps": 50
+        "networks": 20,
+        "sessions_per_network": 50
       }
     },
     {
@@ -123,7 +125,8 @@
       "fixed": {
         "N": 15,
         "T": 1000,
-        "reps": 50
+        "networks": 20,
+        "sessions_per_network": 50
       }
     },
     {
@@ -142,7 +145,8 @@
         "N": 15,
         "T": 1000,
         "stim": 1.0,
-        "reps": 50
+        "networks": 20,
+        "sessions_per_network": 50
       }
     },
     {
@@ -160,7 +164,8 @@
         "N": 15,
         "T": 1000,
         "stim": 1.0,
-        "reps": 50
+        "networks": 20,
+        "sessions_per_network": 50
       }
     },
     {
@@ -181,7 +186,8 @@
         "N": 15,
         "T": 1000,
         "measurement": "66%",
-        "reps": 50
+        "networks": 20,
+        "sessions_per_network": 50
       }
     },
     {
@@ -189,9 +195,9 @@
       "name": "Stimulation fraction",
       "variables": {
         "num_stimulated": [
-          1,
-          2,
+          0,
           5,
+          7,
           10,
           15
         ]
@@ -201,7 +207,8 @@
         "T": 1000,
         "measurement": "66%",
         "stim": 1.0,
-        "reps": 50
+        "networks": 20,
+        "sessions_per_network": 50
       }
     }
   ],

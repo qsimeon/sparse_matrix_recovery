@@ -24,7 +24,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from experiments.analysis import (
     load_results,
     generate_problem_schematic,
-    generate_pipeline_schematic,
     plot_scaling,
     plot_granger_comparison,
     plot_stimulation_tradeoff,

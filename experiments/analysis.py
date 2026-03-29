@@ -19,7 +19,6 @@ import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
@@ -716,57 +715,24 @@ def plot_oracle_crossover(results, output_path):
 
 
 # ============================================================================
-# Utility figures (kept for optional use)
-# ============================================================================
-
-def generate_heatmaps(true_W, approx_W, optim_W, total_mask, output_path, title_suffix=""):
-    """Generate heatmap comparison of true vs estimated weights."""
-    small = true_W.shape[0] < 15
-    annot = small
-    ticklabels = "auto" if small else False
-    fig, axes = plt.subplots(2, 2, figsize=(8, 7))
-    vmax = max(np.abs(true_W).max(), np.abs(approx_W).max(), np.abs(optim_W).max())
-    vmin = -vmax
-    kw = dict(cmap="RdBu_r", annot=annot, square=True, cbar_kws={"shrink": 0.6},
-              fmt=".2f" if annot else "", xticklabels=ticklabels, yticklabels=ticklabels,
-              vmin=vmin, vmax=vmax)
-    sns.heatmap(true_W, ax=axes[0, 0], **kw); axes[0, 0].set_title("True W")
-    sns.heatmap(approx_W, ax=axes[0, 1], **kw); axes[0, 1].set_title("Covariance Estimate")
-    sns.heatmap(optim_W, ax=axes[1, 0], **kw); axes[1, 0].set_title("Granger Refined")
-    kw_mask = dict(cmap="viridis", annot=annot, square=True, cbar_kws={"shrink": 0.6},
-                   xticklabels=ticklabels, yticklabels=ticklabels)
-    if annot: kw_mask["fmt"] = "g"
-    hm = sns.heatmap(total_mask, ax=axes[1, 1], **kw_mask)
-    cbar = hm.collections[0].colorbar; cbar.locator = ticker.MaxNLocator(integer=True); cbar.update_ticks()
-    axes[1, 1].set_title("Co-measurement Counts")
-    plt.suptitle(f"Weight Recovery Comparison{title_suffix}", y=1.02)
-    plt.tight_layout(); plt.savefig(output_path); plt.close()
-    print(f"  Saved: {output_path}")
-
-
-def plot_summary_bar(results, output_path):
-    """Generate summary bar graph with confidence intervals."""
-    r = results[0]; df = r["distances"]
-    dist_cols = [c for c in df.columns if c.endswith("_distance")]
-    medians = df[dist_cols].median(); ci = r["confidence_intervals"]
-    labels = [c.replace("_distance", "").capitalize() for c in dist_cols]
-    values = medians.values
-    errors_low = [values[i] - ci[dist_cols[i]]["low"] for i in range(len(dist_cols))]
-    errors_high = [ci[dist_cols[i]]["high"] - values[i] for i in range(len(dist_cols))]
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(labels, values, color=[COLORS[i] for i in range(len(labels))])
-    ax.errorbar(labels, values, yerr=[errors_low, errors_high], fmt="none", capsize=5, color="black")
-    ax.set_ylabel("Frobenius Distance / N"); ax.set_title("Recovery Distance Comparison (95% CI)")
-    plt.tight_layout(); plt.savefig(output_path); plt.close()
-    print(f"  Saved: {output_path}")
-
-
-# ============================================================================
 # Figure F1: Problem Schematic (Network Diagram) — KEPT AS-IS
 # ============================================================================
 
-def generate_problem_schematic(output_path):
+def generate_problem_schematic(output_path, r_value=None):
     """Generate Figure F1 — network diagram illustrating the problem setup."""
+    if r_value is None:
+        # Compute from E2 data if available
+        results_dir = Path(__file__).parent / "results"
+        e2_path = results_dir / "E2_granger.json"
+        if e2_path.exists():
+            e2 = load_results(e2_path)
+            if e2 and "matrices" in e2[0] and e2[0]["matrices"]:
+                m = e2[0]["matrices"][0]
+                tf = m["true_W"].flatten()
+                ef = m["granger_W"].flatten()
+                r_value = float(np.corrcoef(tf, ef)[0, 1])
+        if r_value is None:
+            r_value = 0.96  # fallback
     N = 15
     np.random.seed(42)
     G = nx.DiGraph()
@@ -904,7 +870,7 @@ def generate_problem_schematic(output_path):
         arrowprops=dict(arrowstyle="-|>", color="#333333", lw=2.0))
     ax_inset.text(5.0, -3.0, r"$\hat{W}$  (recovered)", ha="center", va="center",
                   fontsize=11, fontweight="bold", color="#2E4057")
-    ax_inset.text(5.0, -3.5, r"$r = 0.96$", ha="center", va="center",
+    ax_inset.text(5.0, -3.5, f"$r = {r_value:.2f}$", ha="center", va="center",
                   fontsize=9, color="#2A9D8F", fontweight="bold")
 
     fig.suptitle("", fontsize=1)  # no suptitle — the combined figure speaks for itself

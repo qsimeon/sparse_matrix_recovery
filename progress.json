@@ -1,5 +1,5 @@
 {
-  "iteration": 28,
+  "iteration": 29,
   "max_iterations": 20,
   "phases": {
     "scope": {
@@ -93,6 +93,22 @@
         "Key fix: E7 stimulation errors updated to match Granger-refined metric",
         "Updated README to use uv instead of pip",
         "Updated progress.json and research_prd.json"
+      ],
+      "consistency_audit": "PASS"
+    },
+    {
+      "iteration": 29,
+      "timestamp": "2026-03-27",
+      "focus": "Final-pass: full pre-submission consistency audit, re-run, and polish",
+      "actions": [
+        "Re-ran all E1-E7 experiments fresh (seed=42), regenerated all 10 figures",
+        "Fixed EXPERIMENTS dict cross-wiring: function names now match experiment numbers",
+        "Fixed notebook: num_networks -> num_sessions in qsimeon_SparseMatrixRecovery.ipynb",
+        "Fixed REVIEW_NOTES.md: stale num_networks=50 reference",
+        "Updated research_prd.json: E7 sweep values [0,5,7,10,15], H6/H7 results, networks/sessions hierarchy",
+        "Updated STATUS.md and progress.json",
+        "Verified all paper numbers against fresh JSON data (all match)",
+        "Compiled paper and poster PDFs clean"
       ],
       "consistency_audit": "PASS"
     }
