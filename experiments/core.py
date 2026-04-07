@@ -61,22 +61,12 @@ def relu(x):
     return np.maximum(0, x)
 
 
-def sat(x, alpha=1):
-    """Saturation function used in nonlinear control."""
-    if isinstance(x, np.ndarray):
-        return np.where(np.abs(x) <= alpha, x, np.sign(x) * alpha)
-    else:
-        return x if np.abs(x) <= alpha else np.sign(x) * alpha
-
-
 # Map from string names to functions
 NONLINEARITIES = {
     "identity": identity,
     "sigmoid": sigmoid,
     "relu": relu,
-    "sat": sat,
     "tanh": np.tanh,
-    "sign": np.sign,
 }
 
 

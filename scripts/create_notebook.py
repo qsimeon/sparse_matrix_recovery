@@ -74,7 +74,7 @@ code(
     "    create_multinetwork_dataset, estimate_connectivity_weights,\n"
     "    projected_gradient_causal, calculate_spectral_radius,\n"
     "    adjust_spectral_radius, create_cpg_function, state_to_cpg,\n"
-    "    identity, sigmoid, relu, sat,\n"
+    "    identity, sigmoid, relu,\n"
     ")\n"
     "\n"
     "# Reproducibility\n"
