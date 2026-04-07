@@ -35,7 +35,7 @@ Then: zero diagonal (no autapses) → Granger-causality refinement → recovered
 
 | Exp | Question | Key Finding |
 |-----|----------|-------------|
-| E1 | How does recovery scale with N and T? | N=30, T=1000 → 0.053 error (91% vs chance) |
+| E1 | How does recovery scale with N and T? | N=159, T=1000 → 0.035 error (94% over chance) |
 | E2 | What does each pipeline step add? | Diagonal zeroing most impactful; Granger gives perfect recall |
 | E3 | What stimulation protocol is optimal? | Depends on measurement density |
 | E4 | How much measurement coverage is needed? | Plateaus above ~50% |
@@ -52,7 +52,7 @@ experiments/
   analysis.py          # Publication figure generation
   results/             # Experiment data (JSON)
 paper/
-  main.tex             # LaTeX paper (~630 lines, NeurIPS preprint format)
+  main.tex             # LaTeX paper (~700 lines, NeurIPS preprint format)
   references.bib       # 20 references
   figures/             # 10 paper figures (PDF)
   poster.tex           # A1 conference poster

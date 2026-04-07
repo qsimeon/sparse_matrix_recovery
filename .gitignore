@@ -21,6 +21,15 @@ paper/*.snm
 paper/*.toc
 paper/figures/test.pdf
 
+# Individual rep files (large, regenerable from SLURM runs)
+experiments/results/reps/
+experiments/results/sweep/
+
+# Secrets
+.env
+.env.local
+*.key
+
 # Ralph loop logs (not source, just execution traces)
 ralph_output.log
 ralph_code_output.log

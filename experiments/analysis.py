@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-import seaborn as sns
 import networkx as nx
 from pathlib import Path
 
@@ -320,8 +319,9 @@ def plot_granger_comparison(results, output_path):
             plt.colorbar(im, ax=ax, shrink=0.7, pad=0.02)
             _add_panel_label(ax, chr(65 + col))
 
-        err_a = np.linalg.norm(true_W - approx_W, "fro") / 15
-        err_g = np.linalg.norm(true_W - W_granger, "fro") / 15
+        N = len(true_W)
+        err_a = np.linalg.norm(true_W - approx_W, "fro") / N
+        err_g = np.linalg.norm(true_W - W_granger, "fro") / N
         fig.text(0.5, 0.48, f"Frobenius/N: Covariance={err_a:.3f}, Granger={err_g:.3f} "
                  f"({(1-err_g/err_a)*100:.0f}% improvement)",
                  ha="center", fontsize=10, fontstyle="italic")

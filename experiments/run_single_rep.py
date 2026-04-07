@@ -163,10 +163,11 @@ def get_experiment_configs(experiment):
     N = 15  # default baseline
 
     if experiment == "E1":
+        # N values chosen divisible by 3 so n//3 and 2*n//3 are exact integers
         return [
             {"num_nodes": n, "max_timesteps": t,
-             "num_cpgs": max(1, int(0.33*n)), "num_measured": max(2, int(0.66*n)),
-             "num_stimulated": max(1, int(0.33*n)), "stim_gain": 1.0, "nonlinearity": "tanh"}
+             "num_cpgs": n // 3, "num_measured": 2 * n // 3,
+             "num_stimulated": n // 3, "stim_gain": 1.0, "nonlinearity": "tanh"}
             for n in [15, 30, 159, 300, 1074] for t in [100, 250, 500, 750, 1000]
         ]
     elif experiment == "E2":  # Granger ablation (single config)
@@ -175,16 +176,16 @@ def get_experiment_configs(experiment):
     elif experiment == "E3":  # Stim × measurement
         return [
             {"num_nodes": N, "max_timesteps": 1000, "num_cpgs": 5,
-             "num_measured": max(2, int(mf*N)), "num_stimulated": 5,
+             "num_measured": round(mf * N), "num_stimulated": 5,
              "stim_gain": sg, "nonlinearity": "tanh"}
-            for mf in [0.33, 0.66, 1.0] for sg in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0]
+            for mf in [1/3, 2/3, 1.0] for sg in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0]
         ]
     elif experiment == "E4":  # Measurement sparsity
         return [
             {"num_nodes": N, "max_timesteps": 1000, "num_cpgs": 5,
-             "num_measured": max(2, int(mf*N)), "num_stimulated": 5,
+             "num_measured": round(mf * N), "num_stimulated": 5,
              "stim_gain": 1.0, "nonlinearity": "tanh"}
-            for mf in [0.33, 0.5, 0.66, 0.8, 1.0]
+            for mf in [1/3, 1/2, 2/3, 4/5, 1.0]
         ]
     elif experiment == "E5":  # Nonlinearity
         return [
@@ -254,7 +255,7 @@ def main():
         if val is not None:
             config[key] = val
     if args.measurement_frac is not None:
-        config["num_measured"] = max(2, int(args.measurement_frac * config["num_nodes"]))
+        config["num_measured"] = max(2, round(args.measurement_frac * config["num_nodes"]))
 
     # Run
     label = args.experiment or "custom"

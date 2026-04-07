@@ -206,7 +206,7 @@ For 200 iterations:
 
 **The Granger criterion** (`core.py:576`): Set W_ij = 0 wherever Sigma_{x,x}(i,j) > Sigma_{x+1,x}(i,j). Intuition: if the *contemporaneous* covariance between neurons i and j exceeds their *lagged* covariance, then j's past doesn't help predict i's future — so there's no causal connection.
 
-Result: ~3% additional error reduction, **perfect recall** (all true edges preserved, zero missed).
+Result: ~2% additional error reduction, **perfect recall** (all true edges preserved, zero missed).
 
 ---
 
@@ -214,13 +214,13 @@ Result: ~3% additional error reduction, **perfect recall** (all true edges prese
 
 | Exp | Question | What it varies | Key Finding |
 |-----|----------|---------------|-------------|
-| E1 | How does recovery scale? | N in {8,15,30}, T in {100,500,1000} | N=30, T=1000 -> 0.053 error (91% vs chance) |
-| E2 | What does each step add? | Ablation: chance->estimate->Granger | 84% improvement, perfect recall |
+| E1 | How does recovery scale? | N in {15, 30, 159, 300, 1074}, T in {100,250,500,750,1000} | Best: N=159 T=1000 → 0.035 (94% over chance) |
+| E2 | What does each step add? | Ablation: chance->estimate->Granger | 85% improvement, perfect recall |
 | E3 | Stimulation tradeoff? | sigma x measurement density | Zero stim fails; sigma~0.5 optimal |
 | E4 | How much observation? | Measurement 33-100% | Plateaus above ~50% |
 | E5 | Robust to nonlinearity? | tanh, relu, identity, sigmoid | tanh best (bounds variance) |
-| E6 | Does oracle win? | Oracle vs approx across sigma | No — approx always wins (1.4-4.5x) |
-| E7 | How many stimulated? | 0,5,7,10,15 stimulated neurons | 0% fails; >=33% suffices |
+| E6 | Does oracle win? | Oracle vs approx across sigma | No — approx always wins (1.3-5x) |
+| E7 | How many stimulated? | 0,10,15,20,30 stimulated (N=30) | 0% degrades (0.205); >=33% suffices (0.052) |
 
 ---
 
@@ -252,7 +252,7 @@ The linear estimator avoids this — it's biased but better-conditioned. Classic
 ## Five Key Insights
 
 ### 1. The "wrong" model wins
-The oracle (which knows the true tanh) is 1.4-4.5x worse than the naive linear approximation. Don't bother characterizing the neuronal transfer function — the simpler model is provably better.
+The oracle (which knows the true tanh) is 1.3-5x worse than the naive linear approximation. Don't bother characterizing the neuronal transfer function — the simpler model is provably better.
 
 ### 2. CPG correlation is the real bottleneck
 E2 is 3.1x larger than E1. Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear model.
@@ -290,7 +290,7 @@ THE WHOLE PROJECT IN ONE DIAGRAM:
                                                        |
                                                        v
                                                  Final W_hat
-                                              r=0.96, 84% > chance
+                                              r=0.96, 85% > chance
 ```
 
 ---
@@ -323,11 +323,11 @@ cd paper && tectonic poster.tex
 Think of it like a clinical trial:
 
 ```
-LEVEL 1: TOPOLOGIES (num_networks = 20)
-+-- Like: "20 different patients" (each with a different brain)
+LEVEL 1: TOPOLOGIES (num_networks = 10)
++-- Like: "10 different patients" (each with a different brain)
 +-- Purpose: Statistical power -- does the method work across different circuits?
 +-- Each gets: a fresh random W matrix
-+-- Output: 20 independent error measurements -> median, CI
++-- Output: 10 independent error measurements -> median, CI
 
 LEVEL 2: SESSIONS (num_sessions = 50, called K in the paper)
 +-- Like: "50 different MRI scans of the SAME patient"
@@ -347,7 +347,7 @@ LEVEL 3: TIMESTEPS (max_timesteps = 1000, called T in the paper)
 
 ```python
 # LEVEL 1: run_experiments.py line 66
-for rep in range(num_networks):    # 20 different random topologies
+for rep in range(num_networks):    # 10 different random topologies
     result = one_repetition(rep, ...)  # each generates a fresh W
 
 # LEVEL 2: core.py line 413-429 (inside create_multinetwork_dataset)
@@ -367,7 +367,7 @@ for t in range(simulation_steps):     # 1000 timesteps per session
 | N | 15 | `num_nodes` | run_experiments.py:42 | Neurons in the circuit |
 | T | 1000 | `max_timesteps` | run_experiments.py:41 | Timesteps per session |
 | K | 50 | `num_sessions` | run_experiments.py:41 | Sessions per topology |
-| Reps | 20 | `num_networks` | run_experiments.py:41 | Random topologies tested |
+| Reps | 10 | `num_networks` | run_experiments.py:41 | Random topologies tested |
 | Measured | 10 (66%) | `num_measured` | Computed from N | Neurons observed per session |
 | Stimulated | 5 (33%) | `num_stimulated` | Computed from N | Neurons receiving noise |
 | CPGs | 5 (33%) | `num_cpgs` | Computed from N | Neurons with intrinsic drive |
@@ -381,18 +381,18 @@ The sweep on the engaging cluster tested a 5D grid to find the optimal experimen
 
 ```
 LEVEL 0: PARAMETER GRID (243 = 3^5 configs)
-+-- N in {8, 15, 30}
++-- N in {15, 30, 159, 300, 1074}
 +-- T in {100, 500, 1000}
 +-- measurement in {33%, 66%, 100%}
 +-- stim_gain in {0.0, 0.5, 1.0}
 +-- stim_fraction in {33%, 66%, 100%}
 
 For EACH of those 243 configs:
-    50 reps x 50 sessions x T timesteps
+    10 reps x 50 sessions x T timesteps
 ```
 
-**Best config found**: N=30, stim_gain=0.5, measurement=63%, stim_frac=100%
--> **error 0.033 (94% over chance)**
+**Best config found**: N=159, T=1000, 66% measurement, σ=1.0 → error 0.035 (94% improvement over chance)
+
 
 **Key finding**: Zero stimulation catastrophically fails at large N (errors in the billions).
 Moderate stimulation (sigma=0.5) is optimal across all top configs.

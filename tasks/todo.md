@@ -1,33 +1,30 @@
 # Project Roadmap — Sparse Matrix Recovery
 > Generated: 2026-03-23 (resituate deep review)
-> Context: Paper structurally complete but numerical claims stale after final experiment re-run.
+> Updated: 2026-03-29 — All experiments re-run with corrected fractions (N//3), all numbers verified, paper compiled clean.
 
 ## Immediate (blocks arXiv submission)
-- [ ] Fix ALL stale numbers in paper/main.tex to match current experiments/results/*.json (M)
-  - Table 2 (E1 baseline): ~18 cells wrong
-  - E4 in-text claims (line 334): 0.095 → 0.097, 0.533 → 0.538
-  - E4 figure caption (line 340): 0.098 → 0.100, 0.095 → 0.097
-  - E6 oracle ratios (line 399): "4.0× at σ=0" should be 1.9× (or refer to σ=0.1 = 4.2×)
-  - E7 error values (lines 417-418): "0.244" and "0.128" don't match any metric
-  - E2 sparsity claims (lines 367-368): "0.270" → 0.321, "0.477" → 0.598
-  - E5 tanh claim (line 381): "0.095" → 0.101
-  - Abstract "82%" and "r=0.91" — verify against fresh Fig 8 run
-- [ ] Decide consistent reporting convention for E7: estimate or Granger? (S)
-- [ ] Verify abstract headline numbers still hold after fixes (S)
+- [x] Fix fraction computation bug: int(0.33*N) → N//3 with exact fractions
+- [x] Re-run E1, E3, E4 on cluster with corrected fractions (480 SLURM tasks)
+- [x] Fix ALL stale numbers in paper/main.tex — Table 2, E1/E3/E4/E6 text, all captions
+- [x] Regenerate all 10 figures from corrected data
+- [x] Recompile main.tex and poster.tex — both clean
+- [x] Verify abstract headline numbers (85%, r=0.96) against data
+- [x] Update STATUS.md, DEEP_DIVE.md, README.md, research_prd.json — no "pending re-run" remains
+- [x] Final-pass audit: dead code, broken imports, stale labels, .gitignore gaps
+- [ ] Compile PDF in Overleaf and read it yourself as a human (S)
+- [ ] Update progress.json iteration counter (S)
 
 ## Polish (before submission)
-- [ ] Update README: change `pip install` to `uv sync` (S)
-- [ ] Compile PDF in Overleaf and read it yourself as a human (S)
-- [ ] Update progress.json: 7 experiments, 10 figures, iteration 28 (S)
-- [ ] Update research_prd.json: add F9/F10 figures, fix E6 oracle ratio (S)
+- [ ] Visual inspection of compiled PDFs (poster column balance, figure quality)
+- [ ] Practice lightning talk with timer
 
 ## Nice-to-Have (defer for v2)
 - [ ] Add GLM/VAR baseline comparison (L) — strengthens empirical evaluation
-- [ ] Test at N=50-100 to expand scaling story (L)
 - [ ] Systematic noise robustness experiments (M)
 - [ ] E8: CPG fraction sweep (M)
+- [ ] Run WandB mega sweep on engaging cluster (243 configs × 10 topologies)
 
 ## Kill / Defer
-- tools/*.py (openai_math, gemini_research) — development tools, not paper artifacts. Consider gitignoring.
-- experiments/results/lit_review*.json, math_verification*.json — RALPH artifacts, not data
-- progress.json, research_prd.json — useful for development tracking only
+- tools/*.py (openai_math, gemini_research) — development tools, not paper artifacts
+- experiments/results/lit_review*.json, math_verification*.json — RALPH artifacts
+- progress.json, research_prd.json — development tracking only

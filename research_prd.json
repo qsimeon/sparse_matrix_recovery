@@ -16,21 +16,21 @@
       "statement": "Covariance estimator recovers W better than chance",
       "experiment": "E1",
       "status": "CONFIRMED",
-      "result": "84% improvement over chance at N=15, 66% measurement"
+      "result": "85% improvement over chance at N=15, 66% measurement"
     },
     {
       "id": "H2",
       "statement": "Recovery improves with measurement fraction",
       "experiment": "E4",
       "status": "CONFIRMED",
-      "result": "Error 0.279 at 33% → 0.094 at 100%"
+      "result": "Error 0.279 at 33% \u2192 0.094 at 100%"
     },
     {
       "id": "H3",
       "statement": "Stimulation-measurement interaction determines optimal protocol",
       "experiment": "E3",
       "status": "CONFIRMED (CORRECTED)",
-      "result": "Zero stim fails at high measurement; moderate stim (σ≈0.5) optimal"
+      "result": "Zero stim fails at high measurement; moderate stim (\u03c3\u22480.5) optimal"
     },
     {
       "id": "H4",
@@ -44,21 +44,21 @@
       "statement": "Linear approximation degrades gracefully with nonlinearity mismatch",
       "experiment": "E5",
       "status": "NUANCED",
-      "result": "tanh BEST (bounded states → good κ), identity worse (unbounded drift)"
+      "result": "tanh BEST (bounded states \u2192 good \u03ba), identity worse (unbounded drift)"
     },
     {
       "id": "H6",
       "statement": "Approximate estimator beats oracle at all operating regimes",
       "experiment": "E6",
       "status": "CONFIRMED",
-      "result": "Oracle 1.4-4.5x worse across all stim levels, largest gap at sigma=0.5 (4.5x)"
+      "result": "Oracle 1.3-5x worse across all stim levels, largest gap at low-to-moderate stimulation (~4-5x)"
     },
     {
       "id": "H7",
       "statement": "Recovery improves with stimulation coverage (number of stimulated neurons)",
       "experiment": "E7",
       "status": "CONFIRMED",
-      "result": "0% stim: error 0.501 (near chance); 33% stim: 0.084; plateaus at 33%+ (~0.08). Stimulation fraction controls rank of stimulation covariance."
+      "result": "0% stim: 0.205 (degraded but not chance-level); 33% stim: 0.052; plateaus at 33%+. Stimulation fraction controls rank of stimulation covariance."
     }
   ],
   "experiments": [
@@ -67,9 +67,11 @@
       "name": "Baseline scaling",
       "variables": {
         "N": [
-          8,
           15,
-          30
+          30,
+          159,
+          300,
+          1074
         ],
         "T": [
           100,
@@ -80,7 +82,7 @@
       "fixed": {
         "measurement": "66%",
         "stim": 1.0,
-        "networks": 20,
+        "networks": 10,
         "sessions_per_network": 50
       }
     },
@@ -100,13 +102,13 @@
         "N": 15,
         "T": 1000,
         "stim": 1.0,
-        "networks": 20,
+        "networks": 10,
         "sessions_per_network": 50
       }
     },
     {
       "id": "E3",
-      "name": "Stimulation × measurement interaction",
+      "name": "Stimulation \u00d7 measurement interaction",
       "variables": {
         "stim": [
           0.0,
@@ -125,7 +127,7 @@
       "fixed": {
         "N": 15,
         "T": 1000,
-        "networks": 20,
+        "networks": 10,
         "sessions_per_network": 50
       }
     },
@@ -145,7 +147,7 @@
         "N": 15,
         "T": 1000,
         "stim": 1.0,
-        "networks": 20,
+        "networks": 10,
         "sessions_per_network": 50
       }
     },
@@ -164,7 +166,7 @@
         "N": 15,
         "T": 1000,
         "stim": 1.0,
-        "networks": 20,
+        "networks": 10,
         "sessions_per_network": 50
       }
     },
@@ -186,7 +188,7 @@
         "N": 15,
         "T": 1000,
         "measurement": "66%",
-        "networks": 20,
+        "networks": 10,
         "sessions_per_network": 50
       }
     },
@@ -203,11 +205,11 @@
         ]
       },
       "fixed": {
-        "N": 15,
+        "N": 30,
         "T": 1000,
         "measurement": "66%",
         "stim": 1.0,
-        "networks": 20,
+        "networks": 10,
         "sessions_per_network": 50
       }
     }
@@ -242,7 +244,7 @@
     },
     {
       "id": "F5",
-      "description": "Stimulation × measurement interaction",
+      "description": "Stimulation \u00d7 measurement interaction",
       "in_paper": true
     },
     {

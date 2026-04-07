@@ -209,8 +209,8 @@ def main():
     print("\nFig 8: Dynamics analysis")
     generate_fig8_dynamics(FIGURES_DIR / "fig8_dynamics.pdf")
 
-    # Fig 9: Sensor fraction (E7 data)
-    print("\nFig 9: Sensor fraction (E7)")
+    # Fig 9: Stimulation fraction (E7 data)
+    print("\nFig 9: Stimulation fraction (E7)")
     data = load_results(RESULTS_DIR / "E7_stim_fraction.json")
     plot_stim_fraction(data, FIGURES_DIR / "fig9_stim_fraction.pdf")
 

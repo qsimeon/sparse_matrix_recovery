@@ -329,7 +329,7 @@ def create_network_data(
     )
 
     if fixed_stim:
-        stim_inds = np.arange(num_nodes)[-num_stimulated:].tolist()
+        stim_inds = np.arange(num_nodes)[-num_stimulated:].tolist() if num_stimulated > 0 else []
     else:
         stim_inds = sorted(
             np.random.choice(np.arange(num_nodes), size=num_stimulated, replace=False)

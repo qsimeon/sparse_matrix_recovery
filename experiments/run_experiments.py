@@ -134,11 +134,11 @@ def run_E1_baseline(seed=42, output_dir=None):
     print("=" * 60)
 
     results = []
-    # N values divisible by 3 so 33%/66% fractions give exact integers
+    # N values divisible by 3 so n//3 and 2*n//3 are exact integers
     for num_nodes in [15, 30, 159, 300, 1074]:
-        num_cpgs = max(1, int(0.33 * num_nodes))
-        num_measured = max(2, int(0.66 * num_nodes))
-        num_stimulated = max(1, int(0.33 * num_nodes))
+        num_cpgs = num_nodes // 3
+        num_measured = 2 * num_nodes // 3
+        num_stimulated = num_nodes // 3
         for T in [100, 250, 500, 750, 1000]:
             print(f"\n  N={num_nodes}, T={T}, measured={num_measured}")
             r = run_experiment(
@@ -165,9 +165,9 @@ def run_E4_sparsity(seed=42, output_dir=None):
 
     results = []
     num_nodes = 15
-    for meas_frac in [0.33, 0.5, 0.66, 0.8, 1.0]:
-        num_measured = max(2, int(meas_frac * num_nodes))
-        print(f"\n  meas_frac={meas_frac} (num_measured={num_measured})")
+    for meas_frac in [1/3, 1/2, 2/3, 4/5, 1.0]:
+        num_measured = round(meas_frac * num_nodes)
+        print(f"\n  meas_frac={meas_frac:.2f} (num_measured={num_measured})")
         r = run_experiment(
             random_seed=seed, num_networks=10, num_sessions=50,
             max_timesteps=1000, num_nodes=num_nodes,
@@ -195,8 +195,8 @@ def run_E3_stimulation(seed=42, output_dir=None):
 
     results = []
     num_nodes = 15
-    for meas_frac in [0.33, 0.66, 1.0]:
-        num_measured = max(2, int(meas_frac * num_nodes))
+    for meas_frac in [1/3, 2/3, 1.0]:
+        num_measured = round(meas_frac * num_nodes)
         for stim_gain in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0]:
             print(f"\n  meas={meas_frac:.0%}, stim_gain={stim_gain}")
             r = run_experiment(

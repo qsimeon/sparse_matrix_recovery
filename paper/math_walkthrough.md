@@ -115,7 +115,7 @@ When d_max/d_min is large, the oracle's inversion amplifies noise much more than
 
 This is a concrete instance of **James-Stein shrinkage**: a biased estimator with lower variance can achieve better total risk than an unbiased one with high variance. The linear approximation introduces bias (it doesn't know about tanh), but it uses a better-conditioned matrix, reducing variance. The total error is lower.
 
-**Data confirms**: At every tested stimulation level, the oracle is 1.4-4.5x worse. The gap is largest at sigma=0.5 (4.5x) because that's when state variances are most heterogeneous.
+**Data confirms**: At every tested stimulation level, the oracle is 1.3-5x worse. The gap is largest at low-to-moderate stimulation (~4-5x) because that's when state variances are most heterogeneous.
 
 ---
 
@@ -169,7 +169,7 @@ The algorithm alternates between:
 1. Gradient step toward the unconstrained optimum (data-fidelity)
 2. Projection onto the constraint set (biology)
 
-Result: ~3% additional improvement, **perfect recall** (all true edges preserved, median = 1.0).
+Result: ~2% additional improvement, **perfect recall** (all true edges preserved, median = 1.0).
 
 ---
 
