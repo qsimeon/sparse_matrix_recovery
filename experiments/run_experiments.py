@@ -1,14 +1,13 @@
 """
 Experiment Runner for Sparse Matrix Recovery
 
-Runs systematic experiments (E1-E7) for the paper.
+Runs systematic experiments (E1-E8) for the paper.
 Each experiment tests a specific hypothesis about connectivity recovery.
 
 Usage:
-    conda activate work_env
-    python experiments/run_experiments.py --experiment E1 --seed 42
-    python experiments/run_experiments.py --experiment all --seed 42
-    python experiments/run_experiments.py --experiment E3 --wandb
+    uv run python experiments/run_experiments.py --experiment E1 --seed 42
+    uv run python experiments/run_experiments.py --experiment all --seed 42
+    uv run python experiments/run_experiments.py --experiment E3 --wandb
 """
 
 import sys

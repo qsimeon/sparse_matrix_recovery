@@ -57,7 +57,7 @@ You have a brain circuit with N neurons wired together by synapses. You want to 
           +------------+------------+
                        v
                   Final W_hat
-           (r = 0.96 with true W)
+           (r = 0.90 with true W)
 ```
 
 ---
@@ -206,7 +206,7 @@ For 200 iterations:
 
 **The Granger criterion** (`core.py:576`): Set W_ij = 0 wherever Sigma_{x,x}(i,j) > Sigma_{x+1,x}(i,j). Intuition: if the *contemporaneous* covariance between neurons i and j exceeds their *lagged* covariance, then j's past doesn't help predict i's future — so there's no causal connection.
 
-Result: ~2% additional error reduction, **perfect recall** (all true edges preserved, zero missed).
+Result: ~2% additional error reduction, precision improved from 0.30 to 0.40 with recall 0.97.
 
 ---
 
@@ -215,7 +215,7 @@ Result: ~2% additional error reduction, **perfect recall** (all true edges prese
 | Exp | Question | What it varies | Key Finding |
 |-----|----------|---------------|-------------|
 | E1 | How does recovery scale? | N in {15, 30, 159, 300, 1074}, T in {100,250,500,750,1000} | Best: N=159 T=1000 → 0.035 (94% over chance) |
-| E2 | What does each step add? | Ablation: chance->estimate->Granger | 85% improvement, perfect recall |
+| E2 | What does each step add? | Ablation: chance->estimate->Granger | 85% improvement, precision 0.30→0.40, recall 0.97 |
 | E3 | Stimulation tradeoff? | sigma x measurement density | Zero stim fails; sigma~0.5 optimal |
 | E4 | How much observation? | Measurement 33-100% | Plateaus above ~50% |
 | E5 | Robust to nonlinearity? | tanh, relu, identity, sigmoid | tanh best (bounds variance) |
@@ -290,7 +290,7 @@ THE WHOLE PROJECT IN ONE DIAGRAM:
                                                        |
                                                        v
                                                  Final W_hat
-                                              r=0.96, 85% > chance
+                                              r=0.90, 85% > chance
 ```
 
 ---

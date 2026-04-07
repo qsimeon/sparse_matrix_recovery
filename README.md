@@ -36,7 +36,7 @@ Then: zero diagonal (no autapses) → Granger-causality refinement → recovered
 | Exp | Question | Key Finding |
 |-----|----------|-------------|
 | E1 | How does recovery scale with N and T? | N=159, T=1000 → 0.035 error (94% over chance) |
-| E2 | What does each pipeline step add? | Diagonal zeroing most impactful; Granger gives perfect recall |
+| E2 | What does each pipeline step add? | Diagonal zeroing most impactful; Granger improves precision from 0.30 to 0.40 with high recall (0.97) |
 | E3 | What stimulation protocol is optimal? | Depends on measurement density |
 | E4 | How much measurement coverage is needed? | Plateaus above ~50% |
 | E5 | How robust to nonlinearity mismatch? | tanh best (bounds state variance) |

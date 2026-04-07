@@ -1,30 +1,36 @@
 # Project Roadmap — Sparse Matrix Recovery
-> Generated: 2026-03-23 (resituate deep review)
-> Updated: 2026-03-29 — All experiments re-run with corrected fractions (N//3), all numbers verified, paper compiled clean.
+> Generated: 2026-04-07 (deep critical review v2)
 
-## Immediate (blocks arXiv submission)
-- [x] Fix fraction computation bug: int(0.33*N) → N//3 with exact fractions
-- [x] Re-run E1, E3, E4 on cluster with corrected fractions (480 SLURM tasks)
-- [x] Fix ALL stale numbers in paper/main.tex — Table 2, E1/E3/E4/E6 text, all captions
-- [x] Regenerate all 10 figures from corrected data
-- [x] Recompile main.tex and poster.tex — both clean
-- [x] Verify abstract headline numbers (85%, r=0.96) against data
-- [x] Update STATUS.md, DEEP_DIVE.md, README.md, research_prd.json — no "pending re-run" remains
-- [x] Final-pass audit: dead code, broken imports, stale labels, .gitignore gaps
-- [ ] Compile PDF in Overleaf and read it yourself as a human (S)
-- [ ] Update progress.json iteration counter (S)
+## Completed (this session)
+- [x] Fix precision/recall calculation bug (> 0 threshold, was density-matched)
+- [x] Full number audit: cross-check all 8 experiment JSONs against paper text
+- [x] Fix 16+ stale numbers in main.tex, poster.tex, presentation.tex
+- [x] Regenerate all 10 figures, recompile all PDFs
+- [x] Remove dead code (sat, sign nonlinearities)
+- [x] Fix notebook imports (sat reference removed)
+- [x] Verify results reproduce bit-for-bit from code (seed determinism)
+- [x] Verify citation integrity (22 cited, 23 in bib, 1 unused: marinazzo2008kernel)
+- [x] Fix stale doc references (DEEP_DIVE.md, README.md: r=0.96→0.90, perfect recall→actual)
 
-## Polish (before submission)
-- [ ] Visual inspection of compiled PDFs (poster column balance, figure quality)
-- [ ] Practice lightning talk with timer
+## In Progress — Deep Review
+- [ ] Core algorithm review: core.py line-by-line walkthrough with user
+- [ ] Experiment design review: E1-E8 parameter choices explained
+- [ ] Mathematical deep dive: trace paper equations through code
+- [ ] Run all 3 notebooks end-to-end, verify outputs
+- [ ] Scripts/tools review (generate_all_figures.py, create_notebook.py, tools/)
+- [ ] Paper critical review: line-by-line as reviewer
+- [ ] Update progress.json (stale at iteration 29, needs 30+)
 
-## Nice-to-Have (defer for v2)
-- [ ] Add GLM/VAR baseline comparison (L) — strengthens empirical evaluation
-- [ ] Systematic noise robustness experiments (M)
-- [ ] E8: CPG fraction sweep (M)
-- [ ] Run WandB mega sweep on engaging cluster (243 configs × 10 topologies)
+## Before arXiv Submission
+- [ ] Compile PDF in Overleaf and human-read the whole paper
+- [ ] Visual inspection of all compiled figures (quality, readability)
+- [ ] Consider adding marinazzo2008kernel citation to Related Work
+- [ ] Consider adding GLM/VAR baseline comparison (strengthens empirical eval)
+- [ ] Update progress.json iteration counter
 
-## Kill / Defer
-- tools/*.py (openai_math, gemini_research) — development tools, not paper artifacts
-- experiments/results/lit_review*.json, math_verification*.json — RALPH artifacts
-- progress.json, research_prd.json — development tracking only
+## Deferred (v2 / post-submission)
+- [ ] GLM/VAR baseline comparison (L)
+- [ ] Systematic noise robustness sweep beyond σ_ε=0.5 (M)
+- [ ] CPG fraction sweep experiment (M)
+- [ ] WandB mega sweep on cluster (243 configs × 10 topologies) (L)
+- [ ] Mixed-sign weight experiments (extends beyond non-negative assumption) (L)
