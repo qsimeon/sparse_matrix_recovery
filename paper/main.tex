@@ -32,14 +32,12 @@ A Covariance-Based Approach with Granger-Causality Refinement}
 \maketitle
 
 \begin{abstract}
-In many neural circuits---from \textit{C.~elegans} to cortical organoids---no single recording session captures the full network.
-How, then, can partial snapshots be stitched into a complete wiring diagram?
-We present a covariance-based framework that accumulates pairwise statistics across sessions with overlapping neuron subsets, recovering the connectivity matrix of a recurrent neural network without requiring full observability.
-A Granger-causality refinement step enforces biological sparsity constraints via projected gradient descent.
-Through systematic experiments on synthetic networks, we uncover three findings with practical implications:
-(i)~a fundamental \emph{control-estimation tradeoff} in which stimulation aids identifiability but disrupts intrinsic dynamics;
-(ii)~an implicit regularization effect in which the deliberately ``incorrect'' linear approximation outperforms the oracle estimator with known nonlinearity at all tested regimes---a concrete instance of James--Stein shrinkage;
-and (iii)~an error decomposition revealing that correlation from intrinsic oscillatory dynamics, not model mismatch, is the dominant estimation bottleneck, identifying autonomous dynamics modeling as the primary target for further improvement.
+Inferring the connectivity of neural circuits from incomplete observations is a fundamental challenge in neuroscience.
+We present a covariance-based method for recovering the weight matrix of a recurrent neural network from partial measurements across multiple recording sessions, accumulating pairwise covariance estimates from sessions with overlapping neuron subsets.
+A Granger-causality refinement step enforces biological constraints via projected gradient descent, achieving strong correlation with true connectivity and substantial improvement over chance baselines using partial neuron coverage per session.
+Through systematic experiments on synthetic networks modeling neural circuits, we characterize a fundamental \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
+We discover that the ``incorrect'' linear approximation acts as implicit regularization---matching or outperforming the oracle estimator with known nonlinearity at all tested regimes---a concrete instance of James--Stein shrinkage.
+Error decomposition reveals that correlation from central pattern generators, not model mismatch, is the dominant error bottleneck, identifying intrinsic dynamics modeling as the primary target for further improvement.
 \end{abstract}
 
 % ============================================================================
