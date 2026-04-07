@@ -118,18 +118,36 @@ with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-nega
   Weight correlation & $r = 0.90$ (Granger-refined) \\
   Improvement over chance & $85\%$ ($0.086$ vs.\ $0.555$) \\
   Best recovery & $N{=}300,\, T{=}1000$: error $0.014$ \\
-  Sessions needed & $K{=}50$ at $66\%$ coverage \\
 \end{tabular}
 \end{center}
 \end{tcolorbox}
 
-\vspace{1cm}
+\vspace{0.8cm}
+
+\begin{tcolorbox}[posterbox,title=Sampling Sufficiency]
+\large
+With $m{=}\lceil 2N/3 \rceil$ measured per session, the probability that a pair $(i,j)$ is co-observed is $P_{\text{pair}} = m(m{-}1)/(N(N{-}1)) \approx 0.44$.
+
+\vspace{3mm}
+After $K$ sessions, the probability any pair is missed:
+\[
+  \Pr[\text{gap}] \leq \tbinom{N}{2}(1 - P_{\text{pair}})^K
+\]
+
+\vspace{1mm}
+For $K{=}50$: $(0.56)^{50} \approx 10^{-13}$, giving \textbf{complete coverage} at all tested $N$.
+
+\vspace{3mm}
+However, estimation quality depends on the \textbf{degrees-of-freedom ratio} $KT / N^2$: for $N{=}300$, $T{=}100$, DOF $= 0.56$ (underdetermined), explaining high variance at large $N$ with short recordings.
+\end{tcolorbox}
+
+\vspace{0.8cm}
 
 \begin{tcolorbox}[posterbox,title=Scaling (E1)]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig3_scaling.pdf}
 \\[4mm]
-\large For $N \leq 30$, error decreases with network size and duration $T$. Best result: $N{=}30$, $T{=}1000$ achieves Granger-refined error of $0.052$ ($91\%$ over chance). Larger networks ($N{=}159$--$1074$) show higher variance.
+\large Error decreases with $T$ for all network sizes. Best: $N{=}300$, $T{=}1000$ achieves error $0.014$ ($97.5\%$ over chance). Dots: individual topologies ($n{=}10$).
 \end{tcolorbox}
 
 \vspace{1cm}

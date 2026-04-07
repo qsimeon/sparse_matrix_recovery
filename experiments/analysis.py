@@ -422,8 +422,15 @@ def plot_scaling(results, output_path):
         med = np.array(data["med"])[order]
         lo = np.array(data["lo"])[order]
         hi = np.array(data["hi"])[order]
-        ax_left.plot(T, med, "o-", color=COLORS[i], label=f"$N={N}$")
-        ax_left.fill_between(T, lo, hi, alpha=0.15, color=COLORS[i])
+        ax_left.plot(T, med, "o-", color=COLORS[i], label=f"$N={N}$", zorder=3)
+        ax_left.fill_between(T, lo, hi, alpha=0.25, color=COLORS[i], zorder=2)
+        # Show individual topology results as scatter
+        for r_inner in results:
+            if r_inner["config"]["num_nodes"] == N:
+                raw = r_inner["distances"]["estimate_distance"].values
+                t_val = r_inner["config"]["max_timesteps"]
+                ax_left.scatter([t_val]*len(raw), raw, s=12, alpha=0.3,
+                                color=COLORS[i], zorder=1, edgecolors="none")
 
     ax_left.set_xlabel("Recording Duration ($T$)")
     ax_left.set_ylabel("Recovery Error (Frobenius / $N$)")
@@ -450,8 +457,15 @@ def plot_scaling(results, output_path):
         med = np.array(data["med"])[order]
         lo = np.array(data["lo"])[order]
         hi = np.array(data["hi"])[order]
-        ax_right.plot(N_arr, med, "s-", color=COLORS[i], label=f"$T={T}$")
-        ax_right.fill_between(N_arr, lo, hi, alpha=0.15, color=COLORS[i])
+        ax_right.plot(N_arr, med, "s-", color=COLORS[i], label=f"$T={T}$", zorder=3)
+        ax_right.fill_between(N_arr, lo, hi, alpha=0.25, color=COLORS[i], zorder=2)
+        # Show individual topology results
+        for r_inner in results:
+            if r_inner["config"]["max_timesteps"] == T:
+                raw = r_inner["distances"]["estimate_distance"].values
+                n_val = r_inner["config"]["num_nodes"]
+                ax_right.scatter([n_val]*len(raw), raw, s=12, alpha=0.3,
+                                 color=COLORS[i], zorder=1, edgecolors="none")
 
     ax_right.set_xlabel("Network Size ($N$)")
     ax_right.set_ylabel("Recovery Error (Frobenius / $N$)")
@@ -672,15 +686,15 @@ def plot_oracle_crossover(results, output_path):
     _add_panel_label(ax1, "A")
     ax1.plot(x_plot, oracle_med, "o-", color=PALETTE["red"],
              label=r"Oracle ($\Sigma_{\phi(x),x}^{-1}$)", markersize=8, zorder=3)
-    ax1.fill_between(x_plot, o_lo, o_hi, color=PALETTE["red"], alpha=0.15)
+    ax1.fill_between(x_plot, o_lo, o_hi, color=PALETTE["red"], alpha=0.25)
 
     ax1.plot(x_plot, approx_med, "s-", color=C_EST,
              label=r"Approximation ($\Sigma_{x,x}^{-1}$)", markersize=8, zorder=3)
-    ax1.fill_between(x_plot, a_lo, a_hi, color=C_EST, alpha=0.15)
+    ax1.fill_between(x_plot, a_lo, a_hi, color=C_EST, alpha=0.25)
 
     ax1.plot(x_plot, granger_med, "D-", color=C_GRN,
              label="Granger-refined", markersize=7, zorder=3)
-    ax1.fill_between(x_plot, g_lo, g_hi, color=C_GRN, alpha=0.15)
+    ax1.fill_between(x_plot, g_lo, g_hi, color=C_GRN, alpha=0.25)
 
     ax1.set_yscale("log")
     ax1.set_xticks(x_plot)
