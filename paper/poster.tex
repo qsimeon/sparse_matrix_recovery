@@ -126,19 +126,12 @@ with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-nega
 
 \begin{tcolorbox}[posterbox,title=Sampling Sufficiency]
 \large
-With $m{=}\lceil 2N/3 \rceil$ measured per session, the probability that a pair $(i,j)$ is co-observed is $P_{\text{pair}} = m(m{-}1)/(N(N{-}1)) \approx 0.44$.
+With $m{=}\lceil 2N/3 \rceil$ measured/session, $P_{\text{pair}} = m(m{-}1)/(N(N{-}1)) \approx 0.44$.
+For $K{=}50$: $\Pr[\text{any pair missed}] \leq \binom{N}{2}(0.56)^{50} \approx 0$.
+\textbf{Coverage is not the bottleneck.}
 
-\vspace{3mm}
-After $K$ sessions, the probability any pair is missed:
-\[
-  \Pr[\text{gap}] \leq \tbinom{N}{2}(1 - P_{\text{pair}})^K
-\]
-
-\vspace{1mm}
-For $K{=}50$: $(0.56)^{50} \approx 10^{-13}$, giving \textbf{complete coverage} at all tested $N$.
-
-\vspace{3mm}
-However, estimation quality depends on the \textbf{degrees-of-freedom ratio} $KT / N^2$: for $N{=}300$, $T{=}100$, DOF $= 0.56$ (underdetermined), explaining high variance at large $N$ with short recordings.
+\vspace{2mm}
+Estimation quality depends on the \textbf{DOF ratio} $KT/N^2$: at $N{=}300$, $T{=}100$, DOF${=}0.56$ (underdetermined $\Rightarrow$ high variance).
 \end{tcolorbox}
 
 \vspace{0.8cm}

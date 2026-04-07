@@ -432,6 +432,7 @@ def plot_scaling(results, output_path):
                 ax_left.scatter([t_val]*len(raw), raw, s=12, alpha=0.3,
                                 color=COLORS[i], zorder=1, edgecolors="none")
 
+    ax_left.set_yscale("log")
     ax_left.set_xlabel("Recording Duration ($T$)")
     ax_left.set_ylabel("Recovery Error (Frobenius / $N$)")
     ax_left.set_title("Error vs. recording duration", fontsize=11, fontweight="bold")
@@ -467,6 +468,7 @@ def plot_scaling(results, output_path):
                 ax_right.scatter([n_val]*len(raw), raw, s=12, alpha=0.3,
                                  color=COLORS[i], zorder=1, edgecolors="none")
 
+    ax_right.set_yscale("log")
     ax_right.set_xlabel("Network Size ($N$)")
     ax_right.set_ylabel("Recovery Error (Frobenius / $N$)")
     ax_right.set_title("Error vs. network size", fontsize=11, fontweight="bold")

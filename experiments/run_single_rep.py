@@ -183,7 +183,7 @@ def get_experiment_configs(experiment):
             {"num_nodes": n, "max_timesteps": t,
              "num_cpgs": n // 3, "num_measured": 2 * n // 3,
              "num_stimulated": n // 3, "stim_gain": 1.0, "nonlinearity": "tanh"}
-            for n in [15, 159, 300] for t in [100, 500, 1000]
+            for n in [15, 159, 300] for t in [100, 350, 1000]
         ]
     elif experiment == "E2":  # Granger ablation (single config)
         return [{"num_nodes": N, "max_timesteps": 1000, "num_cpgs": 5,
