@@ -332,6 +332,38 @@ def run_E7_stim_fraction(seed=42, output_dir=None):
     return results
 
 
+def run_E8_noise(seed=42, output_dir=None):
+    """E8: Observation noise robustness.
+
+    Sweeps measurement noise σ_ε at baseline settings. When σ_ε > 0:
+      Cov(y,y) = Cov(x,x) + σ_ε²I   (noise inflates diagonal)
+      Cov(y_{t+1}, y_t) = Cov(x_{t+1}, x_t)  (cross-time noise independent)
+    The estimator becomes equivalent to ridge regression with λ = σ_ε²,
+    providing implicit regularization that may improve conditioning.
+    """
+    print("=" * 60)
+    print("E8: Observation Noise Robustness")
+    print("=" * 60)
+
+    results = []
+    for noise_std in [0.0, 0.05, 0.1, 0.2, 0.5]:
+        print(f"\n  obs_noise_std={noise_std}")
+        r = run_experiment(
+            random_seed=seed, num_networks=10, num_sessions=50,
+            max_timesteps=1000, num_nodes=15,
+            num_cpgs=5, num_measured=10, num_stimulated=5,
+            stim_gain=1.0, nonlinearity="tanh",
+            obs_noise_std=noise_std,
+        )
+        r["config"]["experiment"] = "E8"
+        r["config"]["obs_noise_std"] = noise_std
+        results.append(r)
+
+    if output_dir:
+        save_results(results, output_dir / "E8_noise.json")
+    return results
+
+
 # ============================================================================
 # I/O Helpers
 # ============================================================================
@@ -395,6 +427,7 @@ EXPERIMENTS = {
     "E5": run_E5_nonlinearity,
     "E6": run_E6_oracle_crossover,
     "E7": run_E7_stim_fraction,
+    "E8": run_E8_noise,
 }
 
 

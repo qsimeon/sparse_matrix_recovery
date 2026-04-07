@@ -220,6 +220,13 @@ def get_experiment_configs(experiment):
              "num_measured": 20, "num_stimulated": ns, "stim_gain": 1.0, "nonlinearity": "tanh"}
             for ns in [0, 10, 15, 20, 30]
         ]
+    elif experiment == "E8":  # Observation noise robustness
+        return [
+            {"num_nodes": N, "max_timesteps": 1000, "num_cpgs": 5,
+             "num_measured": 10, "num_stimulated": 5, "stim_gain": 1.0,
+             "nonlinearity": "tanh", "obs_noise_std": ns}
+            for ns in [0.0, 0.05, 0.1, 0.2, 0.5]
+        ]
     else:
         raise ValueError(f"Unknown experiment: {experiment}")
 
