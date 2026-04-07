@@ -709,19 +709,22 @@ The estimation quality depends on the \textbf{degrees-of-freedom (DOF) ratio} $K
 
 \begin{center}
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{lccc}
+\begin{tabular}{lccl}
     \toprule
-    $N$ & DOF ratio & $\kappa(\hat{\Sigma}_{x,x})$ & Quality \\
+    $N$ & DOF ratio & $\kappa(\hat{\Sigma}_{x,x})$ & Estimation quality \\
     \midrule
-    15  & 222    & $\sim 30$  & Overdetermined \\
-    159 & 1.98   & $\sim 500$ & Borderline \\
-    300 & 0.56   & $\sim 10^3$--$10^4$ & Underdetermined \\
+    15  & 222    & $\sim 30$  & Good ($\kappa$ moderate; noise amplified $\sim\!30\times$) \\
+    159 & 1.98   & $\sim 500$ & Degraded ($\kappa$ large; errors amplified $\sim\!500\times$) \\
+    300 & 0.56   & $10^3$--$10^4$ & Catastrophic at $T{=}100$; manageable at $T{=}1000$ ($\kappa{\approx}460$) \\
     \bottomrule
 \end{tabular}
 \end{center}
 
-When the DOF ratio falls below 1, the sample covariance matrix is rank-deficient relative to the true dimensionality, and the pseudoinverse amplifies estimation noise.
-This explains the non-monotonic error and high variance observed at large $N$ in E1 (Figure~\ref{fig:scaling}), and is a fundamental limitation of covariance-based methods in high dimensions~\citep{ledoit2004well}.
+The condition number $\kappa = \sigma_{\max}/\sigma_{\min}$ measures how much the pseudoinverse amplifies estimation noise: a perfectly conditioned matrix has $\kappa = 1$, while $\kappa \gg 1$ indicates severe noise amplification.
+Even at $N{=}15$, $\kappa \approx 30$ means noise is amplified $30\times$, but the signal-to-noise ratio in the covariance is high enough to overcome this.
+At $N{=}300$, $T{=}100$, $\kappa \approx 40{,}000$ makes the inversion catastrophically unstable, explaining the blow-up observed in E1.
+When the DOF ratio falls below 1, the sample covariance is rank-deficient, and the pseudoinverse amplifies noise in the null space.
+This is a fundamental limitation of covariance-based methods in high dimensions~\citep{ledoit2004well}.
 
 \subsection{Central Pattern Generator Model}
 \label{sec:app_cpg}
