@@ -126,16 +126,15 @@ def one_repetition(rep_idx, seed, num_sessions, max_timesteps, num_nodes,
         "weight_correlation": float(np.corrcoef(true_W.ravel(), approx_W.ravel())[0, 1]),
     }
 
-    # Edge detection metrics for both estimate and Granger-refined.
-    # For the raw estimate, threshold at a percentile matching the true
-    # edge density (sparsity-calibrated), since the raw estimate has no
-    # exact zeros. For the Granger-refined estimate, use > 0 since the
-    # refinement explicitly zeroes non-causal entries.
+    # Edge detection: threshold both estimates at the true sparsity level.
+    # Both estimates have nonzero entries everywhere (raw from covariance,
+    # Granger from residual values that passed the non-causality test).
+    # Using > 0 for Granger would over-predict edges, deflating precision.
     true_edges = (np.abs(true_W) > 0).astype(float)
     true_density = true_edges.sum() / max(true_edges.size, 1)
-    sparsity_pct = 100 * (1.0 - true_density)  # percentile for non-edges
+    sparsity_pct = 100 * (1.0 - true_density)
     est_edges = (np.abs(approx_W) > np.percentile(np.abs(approx_W), sparsity_pct)).astype(float)
-    opt_edges = (np.abs(optim_W) > 0).astype(float)
+    opt_edges = (np.abs(optim_W) > np.percentile(np.abs(optim_W), sparsity_pct)).astype(float)
     np.fill_diagonal(true_edges, 0)
     np.fill_diagonal(est_edges, 0)
     np.fill_diagonal(opt_edges, 0)
