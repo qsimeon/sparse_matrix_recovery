@@ -185,6 +185,46 @@ def create_cpg_function(state_dim, **kwargs):
     return cpg_net
 
 
+def serialize_cpg(cpg_net):
+    """Serialize a CPG to a dict of numpy arrays for safe passage through joblib.
+
+    The CPG represents the intrinsic oscillatory drive of a neural circuit.
+    It is a property of the circuit topology, NOT of the recording session —
+    the same CPG must be used across all sessions for a given topology.
+    Serialization allows passing the CPG through joblib's multiprocessing
+    without relying on PyTorch pickle, and each worker reconstructs a fresh
+    instance (with shifts=0) so sessions have independent time counters.
+    """
+    return {
+        'state_dict': {k: v.cpu().numpy() for k, v in cpg_net.state_dict().items()},
+        'chaos_buffer': cpg_net.chaos_buffer.copy(),
+        'input_size': cpg_net.input_size,
+        'n_layers': cpg_net.n_layers,
+        'layer_width': cpg_net.layer_width,
+        'gain': cpg_net.gain,
+        'use_chaos': cpg_net.use_chaos,
+    }
+
+
+def deserialize_cpg(cpg_config):
+    """Reconstruct a CPG from serialized config. Shifts counter starts at 0."""
+    net = RandomNet(
+        input_size=cpg_config['input_size'],
+        n_layers=cpg_config['n_layers'],
+        layer_width=cpg_config['layer_width'],
+        gain=cpg_config['gain'],
+        use_chaos=cpg_config['use_chaos'],
+    )
+    # Override the randomly-initialized weights and chaos buffer
+    # with the saved ones from the topology's CPG
+    state_dict = {k: torch.from_numpy(v) for k, v in cpg_config['state_dict'].items()}
+    net.load_state_dict(state_dict)
+    net.chaos_buffer = cpg_config['chaos_buffer']
+    net = net.double()
+    net.eval()
+    return net
+
+
 def state_to_cpg(state, cpg_net):
     """Converts a state vector to a CPG drive vector using the provided neural network."""
     if isinstance(state, np.ndarray):
@@ -272,7 +312,7 @@ def random_network_topology(num_nodes, non_negative_weights, force_stable, stron
 def create_network_data(
     session_idx, max_timesteps, num_nodes, num_cpgs, num_measured,
     num_stimulated, fixed_stim, stim_gain, nonlinearity, connection_weights,
-    obs_noise_std=0.0, worker_seed=None,
+    obs_noise_std=0.0, worker_seed=None, cpg_config=None,
 ):
     """
     Simulate dynamics on a network and return recorded data.
@@ -341,7 +381,13 @@ def create_network_data(
         stimulation = np.random.normal(loc=0.0, scale=stim_gain, size=num_nodes)
 
         if t == 0:
-            cpg_net = create_cpg_function(state_dim=num_nodes)
+            # CPG is a property of the circuit topology, shared across sessions.
+            # Reconstruct from serialized config so each session gets the same
+            # oscillator but with an independent time counter (shifts=0).
+            if cpg_config is not None:
+                cpg_net = deserialize_cpg(cpg_config)
+            else:
+                cpg_net = create_cpg_function(state_dim=num_nodes)
             extrinsic_drive = np.zeros(num_nodes)
             intrinsic_drive = np.zeros(num_nodes)
             total_input = extrinsic_drive + intrinsic_drive
@@ -414,6 +460,11 @@ def create_multinetwork_dataset(
         num_nodes, non_negative_weights, force_stable
     )
 
+    # Create CPG once per topology — it represents the circuit's intrinsic
+    # oscillatory drive, which does not change between recording sessions.
+    cpg_net = create_cpg_function(state_dim=num_nodes)
+    cpg_config = serialize_cpg(cpg_net)
+
     # Pre-generate per-worker seeds from parent RNG so results are
     # deterministic regardless of joblib scheduling order.
     worker_seeds = np.random.randint(0, 2**31, size=num_sessions).tolist()
@@ -424,6 +475,7 @@ def create_multinetwork_dataset(
             num_measured, num_stimulated, fixed_stim, stim_gain,
             nonlinearity, connection_weights, obs_noise_std,
             worker_seed=worker_seeds[session_idx],
+            cpg_config=cpg_config,
         )
         for session_idx in range(num_sessions)
     )
@@ -490,6 +542,12 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset, non_negative_weig
         cov_bx += ((inputs[:-1].T @ X[:-1]) / n) * S
 
     num_never_obs = (np.diag(total_mask) < 1).sum()
+    # Clip minimum to 1 so we can safely divide. Pairs never co-observed
+    # get covariance 0 (from the zero-initialized accumulators), which is
+    # equivalent to assuming independence — a practical choice for handling
+    # partial coverage in real experimental settings where not every pair
+    # can be guaranteed to co-occur. With K=50 and 66% measurement, the
+    # expected number of unobserved pairs is ~0 (see sampling analysis).
     total_mask = np.clip(total_mask, a_min=1, a_max=None)
     cov_x = np.divide(cov_x, total_mask)
     cov_dtx = np.divide(cov_dtx, total_mask)

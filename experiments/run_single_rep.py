@@ -115,6 +115,15 @@ def one_repetition(rep_idx, seed, num_sessions, max_timesteps, num_nodes,
         "oracle_distance": float(np.linalg.norm(true_W - oracle_W, "fro") / num_nodes),
         "estimate_distance": float(np.linalg.norm(true_W - approx_W, "fro") / num_nodes),
         "optimized_distance": float(np.linalg.norm(true_W - optim_W, "fro") / num_nodes),
+        # Diagnostics for sampling sufficiency analysis
+        "condition_number": float(estim["condition_number"]),
+        "model_mismatch_norm": float(estim["model_mismatch_norm"]),
+        "input_correlation_norm": float(estim["input_correlation_norm"]),
+        "error_bound": float(estim["error_bound"]),
+        "pair_coverage": float(
+            (estim["total_mask"] > 1).sum() / max(estim["total_mask"].size, 1)
+        ),
+        "weight_correlation": float(np.corrcoef(true_W.ravel(), approx_W.ravel())[0, 1]),
     }
 
     # Edge detection metrics for both estimate and Granger-refined
@@ -168,7 +177,7 @@ def get_experiment_configs(experiment):
             {"num_nodes": n, "max_timesteps": t,
              "num_cpgs": n // 3, "num_measured": 2 * n // 3,
              "num_stimulated": n // 3, "stim_gain": 1.0, "nonlinearity": "tanh"}
-            for n in [15, 30, 159, 300, 1074] for t in [100, 250, 500, 750, 1000]
+            for n in [15, 159, 300] for t in [100, 500, 1000]
         ]
     elif experiment == "E2":  # Granger ablation (single config)
         return [{"num_nodes": N, "max_timesteps": 1000, "num_cpgs": 5,

@@ -134,12 +134,14 @@ def run_E1_baseline(seed=42, output_dir=None):
     print("=" * 60)
 
     results = []
-    # N values divisible by 3 so n//3 and 2*n//3 are exact integers
-    for num_nodes in [15, 30, 159, 300, 1074]:
+    # N values divisible by 3 so n//3 and 2*n//3 are exact integers.
+    # N=15 (small test circuit), N=159 (moderate, good recovery),
+    # N=300 (~C. elegans scale, tests DOF limits).
+    for num_nodes in [15, 159, 300]:
         num_cpgs = num_nodes // 3
         num_measured = 2 * num_nodes // 3
         num_stimulated = num_nodes // 3
-        for T in [100, 250, 500, 750, 1000]:
+        for T in [100, 500, 1000]:
             print(f"\n  N={num_nodes}, T={T}, measured={num_measured}")
             r = run_experiment(
                 random_seed=seed, num_networks=10, num_sessions=50,
