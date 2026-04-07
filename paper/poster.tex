@@ -115,9 +115,9 @@ with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-nega
 \begin{center}
 \renewcommand{\arraystretch}{1.6}
 \begin{tabular}{>{\bfseries\color{neuripsaccent}}l l}
-  Weight correlation & $r = 0.96$ (Granger-refined) \\
-  Improvement over chance & $85\%$ ($0.080$ vs.\ $0.544$) \\
-  Best recovery & $N{=}30,\, T{=}1000$: error $0.052$ \\
+  Weight correlation & $r = 0.90$ (Granger-refined) \\
+  Improvement over chance & $85\%$ ($0.086$ vs.\ $0.555$) \\
+  Best recovery & $N{=}300,\, T{=}1000$: error $0.014$ \\
   Sessions needed & $K{=}50$ at $66\%$ coverage \\
 \end{tabular}
 \end{center}
@@ -172,8 +172,8 @@ with structural priors: diagonal zeroed ($W_{ii}{=}0$, no autapses) and non-nega
   \toprule
   \textbf{Error source} & $\|E\|_F / N$ & \textbf{Fraction} \\
   \midrule
-  Model mismatch ($E_1$) & $0.073$ & $1\times$ \\
-  \rowcolor{neuripsred!15} CPG correlation ($E_2$) & $0.229$ & $3.1\times$ \\
+  Model mismatch ($E_1$) & $0.080$ & $1\times$ \\
+  \rowcolor{neuripsred!15} CPG correlation ($E_2$) & $0.226$ & $2.8\times$ \\
   Total estimation & $0.076$ & --- \\
   \bottomrule
 \end{tabular}
@@ -192,7 +192,7 @@ $\Rightarrow$ Future gains from modeling \textbf{intrinsic dynamics}, not refini
   \item[\color{neuripsgreen}\textbf{2.}] \textbf{Stimulation}: Moderate ($\sigma \approx 0.5$--$1.0$) on $\sim 33\%$ of neurons
   \item[\color{neuripsgreen}\textbf{3.}] \textbf{Sessions}: $K \geq 50$ with random masks for all-pairs coverage
   \item[\color{neuripsgreen}\textbf{4.}] \textbf{Model}: Use the linear approximation --- simpler \emph{and} better
-  \item[\color{neuripsgreen}\textbf{5.}] \textbf{Next}: Model CPG dynamics to tackle the $3.1\times$ dominant error
+  \item[\color{neuripsgreen}\textbf{5.}] \textbf{Next}: Model CPG dynamics to tackle the ${\sim}3\times$ dominant error
 \end{enumerate}
 \end{tcolorbox}
 

@@ -155,7 +155,7 @@ with probability $\geq 1{-}\delta$.
 % ──────────────────────────────────────────────────────────────
 % SLIDE 4 — It Works  (1:20–1:45)
 % ──────────────────────────────────────────────────────────────
-\begin{frame}{Result: $r = 0.96$ at 66\% Coverage}
+\begin{frame}{Result: $r = 0.90$ at 66\% Coverage}
 
 \begin{columns}[T]
 \begin{column}{0.44\textwidth}
@@ -170,9 +170,9 @@ with probability $\geq 1{-}\delta$.
   \begin{center}
   \renewcommand{\arraystretch}{1.3}
   \begin{tabular}{>{\bfseries\color{accentblue}}l l}
-    Correlation & $r = 0.96$ \\
+    Correlation & $r = 0.90$ \\
     Over chance & $85\%$ improvement \\
-    Best error & $0.052$ ($N{=}30,T{=}1000$) \\
+    Best error & $0.014$ ($N{=}300,T{=}1000$) \\
     Coverage & $66\%$ / session \\
     Sessions & $K{=}50$ \\
   \end{tabular}
@@ -244,9 +244,9 @@ The estimation error decomposes into two terms:
   \toprule
   \textbf{Error Source} & $\|E\|_F / N$ & \textbf{Relative} \\
   \midrule
-  $E_1$: Model mismatch (linear $\approx$ tanh) & $0.073$ & $1\times$ \\
+  $E_1$: Model mismatch (linear $\approx$ tanh) & $0.080$ & $1\times$ \\
   \rowcolor{accentred!15}
-  $E_2$: CPG--state correlation & $0.229$ & $\mathbf{3.1\times}$ \\
+  $E_2$: CPG--state correlation & $0.226$ & $\mathbf{2.8\times}$ \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -286,7 +286,7 @@ The estimation error decomposes into two terms:
 
     \vspace{4pt}
     \item[\color{accentgreen}\textbf{5.}]
-      \textbf{Next:} Model CPG dynamics ($3.1\times$ dominant error)
+      \textbf{Next:} Model CPG dynamics (${\sim}3\times$ dominant error)
   \end{enumerate}
 \end{column}
 
