@@ -283,6 +283,16 @@ We run 10 repetitions per parameter setting (10 distinct random topologies) to m
 The two levels serve distinct purposes: the 50 sessions per topology are necessary for covariance accumulation; the 10 topologies give error bars over the space of possible circuits.
 We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap confidence intervals ($n_{\text{resamples}}=1000$).
 
+\paragraph{Reference baselines.}
+Recovery error is evaluated against a hierarchy of reference estimates, each incorporating additional knowledge of the ground truth (see E2 ablation, Figure~\ref{fig:granger}H):
+\emph{Chance}: a dense random non-negative matrix $W_{\mathrm{rand}} \sim U(0,1)^{N \times N}$ (no structural knowledge);
+\emph{Adjacency}: random $U(0,1)$ weights placed on the true sparsity pattern (knows which edges exist, but not their weights);
+\emph{Spectral}: an independent draw from the same generative distribution as $W$ (true sparsity pattern, random weights, scaled to the true spectral radius $\rho(W)$)---this is the fairest ``chance'' comparison, representing what an experimenter could achieve by guessing from the prior;
+\emph{Estimate}: our covariance-based method (no oracle knowledge);
+\emph{Granger}: estimate refined with Granger non-causality zeros.
+When we report ``improvement over chance'' ($85\%$, using the dense random baseline), this represents the total information extracted by the method compared to having no knowledge of the circuit.
+The more informative comparison is against the \emph{Spectral} baseline: improvement from $0.120$ to $0.083$ ($31\%$), which isolates the contribution of the data-driven estimation beyond what the generative prior alone provides.
+
 \begin{table}[ht]
 \centering
 \caption{Experimental design: each experiment varies one or two parameters while holding others at baseline.}
@@ -382,7 +392,7 @@ The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig6_sparsity.pdf}
-\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=15$, $T=1000$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Dashed line shows the chance baseline. Full observability ($100\%$) yields error $0.083$; at $33\%$ the Granger-refined estimate ($0.105$) modestly improves on the raw estimate ($0.110$). 10 topologies $\times$ 50 sessions per condition.}
+\caption{\textbf{Effect of measurement density on connectivity recovery} for $N=15$, $T=1000$. \textbf{(Left)} Schematic: three example measurement patterns at 33\%, 66\%, and 100\% neuron observability (green = measured, gray = unobserved). \textbf{(Right)} Median recovery error vs.\ measurement fraction for the raw covariance estimator (blue) and Granger-refined estimator (green), with 95\% bootstrap CI (shaded). Full observability ($100\%$) yields error $0.083$; at $33\%$ the Granger-refined estimate ($0.105$) modestly improves on the raw estimate ($0.110$). 10 topologies $\times$ 50 sessions per condition.}
 \label{fig:sparsity}
 \end{figure}
 
@@ -566,7 +576,9 @@ Preliminary tests with mixed-sign weights yield qualitatively similar recovery a
 % ============================================================================
 
 We presented a covariance-based method for recovering sparse neural connectivity from partial measurements across multiple recording sessions.
-By accumulating pairwise covariance statistics from sessions with overlapping neuron observations, the method reconstructs the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons, achieving $r = 0.90$ correlation between true and estimated weights and an $85\%$ improvement over chance at the baseline configuration, improving to over $97\%$ at larger network sizes ($N = 300$, $T = 1000$).
+By accumulating pairwise covariance statistics from sessions with overlapping neuron observations, the method reconstructs the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons, achieving $r = 0.90$ correlation between true and estimated weights.
+Compared to a dense random baseline (no structural knowledge), the method achieves $85\%$ error reduction; compared to an independent draw from the same generative prior (matching sparsity and spectral radius), it achieves $31\%$ error reduction---demonstrating that the data-driven estimation extracts information beyond what the structural prior alone provides.
+At larger network sizes ($N = 300$, $T = 1000$), improvement over the dense baseline exceeds $97\%$.
 
 Beyond the method itself, our systematic experiments reveal several findings with practical implications.
 First, a fundamental \emph{control-estimation tradeoff} governs experimental design: stimulation is necessary for identifiability (zero stimulation fails at high measurement density), but excessive stimulation degrades the covariance structure.

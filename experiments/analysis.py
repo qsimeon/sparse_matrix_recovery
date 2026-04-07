@@ -167,9 +167,6 @@ def plot_sparsity_effect(results, output_path):
     ax_right.plot(fracs, opt_med, "s-", color=C_GRN, label="Granger refined", zorder=3)
     ax_right.fill_between(fracs, opt_lo, opt_hi, alpha=0.2, color=C_GRN)
 
-    if chance_val is not None:
-        ax_right.axhline(chance_val, color=C_CHANCE, ls="--", lw=1.5, label="Chance baseline")
-
     ax_right.set_xlabel("Measurement Fraction")
     ax_right.set_ylabel("Recovery Error (Frobenius / N)")
     ax_right.set_title("Effect of measurement density", fontsize=11, fontweight="bold")
@@ -619,9 +616,6 @@ def plot_stim_fraction(results, output_path):
 
     ax_right.plot(fracs, opt_med, "s-", color=C_GRN, label="Granger refined", zorder=3)
     ax_right.fill_between(fracs, opt_lo, opt_hi, alpha=0.2, color=C_GRN)
-
-    if chance_val is not None:
-        ax_right.axhline(chance_val, color=C_CHANCE, ls="--", lw=1.5, label="Chance baseline")
 
     ax_right.set_xlabel("Stimulation Fraction (stimulated neurons / N)")
     ax_right.set_ylabel("Recovery Error (Frobenius / N)")
