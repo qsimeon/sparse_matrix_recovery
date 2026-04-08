@@ -290,8 +290,7 @@ Recovery error is evaluated against a hierarchy of reference estimates, each inc
 \emph{Spectral}: an independent draw from the same generative distribution as $W$ (true sparsity pattern, random weights, scaled to the true spectral radius $\rho(W)$)---this is the fairest ``chance'' comparison, representing what an experimenter could achieve by guessing from the prior;
 \emph{Estimate}: our covariance-based method (no oracle knowledge);
 \emph{Granger}: estimate refined with Granger non-causality zeros.
-When we report ``improvement over chance'' ($85\%$, using the dense random baseline), this represents the total information extracted by the method compared to having no knowledge of the circuit.
-The more informative comparison is against the \emph{Spectral} baseline: improvement from $0.120$ to $0.083$ ($31\%$), which isolates the contribution of the data-driven estimation beyond what the generative prior alone provides.
+The primary comparison is against the \emph{Spectral} baseline: improvement from $0.120$ to $0.083$ ($31\%$), which isolates the contribution of the data-driven estimation beyond what the generative prior alone provides.
 
 \begin{table}[ht]
 \centering
@@ -352,13 +351,13 @@ After enforcing the no-autapse prior ($W_{ii} = 0$) and non-negativity ($W_{ij} 
 
 The raw estimate is dense (nearly all off-diagonal entries positive), yielding high recall (median $0.97$) but low precision (median $0.30$).
 The Granger refinement improves precision to $0.40$ while maintaining recall at $0.97$, eliminating spurious edges without sacrificing true connectivity.
-Crucially, the estimator achieves an $85\%$ improvement over the chance baseline ($0.083$ vs.\ $0.555$), demonstrating that the covariance accumulation framework extracts genuine connectivity information.
+Crucially, the estimator achieves a $31\%$ improvement over an independent draw from the same generative prior ($0.083$ vs.\ $0.120$), demonstrating that the covariance accumulation framework extracts genuine connectivity information beyond what structural knowledge alone provides.
 The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} ($N=15$, $66\%$ measured, $\sigma=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing Granger non-causality zeros. \textbf{(E--G)} Quantitative evaluation over 10 random topologies (50 sessions each): (E)~Frobenius error (estimate already has diagonal zeroed and non-negativity applied) reduced from $0.086$ to $0.083$ with Granger, (F)~edge detection precision improves from $0.30$ to $0.40$, (G)~recall remains high at median $0.97$. Violin plots with individual topologies overlaid. \textbf{(H)} Recovery error with increasing prior knowledge of the ground truth: Chance (no knowledge), Adj (know sparsity pattern), Spec (know sparsity + spectral radius), Est (covariance-based, no oracle knowledge), Grn (Granger-refined with biological constraints). From chance ($0.555$) to Granger-refined ($0.083$): $85\%$ total improvement.}
+\caption{\textbf{Effect of Granger-causality refinement} ($N=15$, $66\%$ measured, $\sigma=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing Granger non-causality zeros. \textbf{(E--G)} Quantitative evaluation over 10 random topologies (50 sessions each): (E)~Frobenius error (estimate already has diagonal zeroed and non-negativity applied) reduced from $0.086$ to $0.083$ with Granger, (F)~edge detection precision improves from $0.30$ to $0.40$, (G)~recall remains high at median $0.97$. Violin plots with individual topologies overlaid. \textbf{(H)} Recovery error with increasing prior knowledge of the ground truth: Chance (no knowledge), Adj (know sparsity pattern), Spec (know sparsity + spectral radius), Est (covariance-based, no oracle knowledge), Grn (Granger-refined with biological constraints). From the same-prior baseline (Spec, $0.120$) to Granger-refined ($0.083$): $31\%$ improvement attributable to data-driven estimation.}
 \label{fig:granger}
 \end{figure}
 
@@ -576,9 +575,8 @@ Preliminary tests with mixed-sign weights yield qualitatively similar recovery a
 % ============================================================================
 
 We presented a covariance-based method for recovering sparse neural connectivity from partial measurements across multiple recording sessions.
-By accumulating pairwise covariance statistics from sessions with overlapping neuron observations, the method reconstructs the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons, achieving $r = 0.90$ correlation between true and estimated weights.
-Compared to a dense random baseline (no structural knowledge), the method achieves $85\%$ error reduction; compared to an independent draw from the same generative prior (matching sparsity and spectral radius), it achieves $31\%$ error reduction---demonstrating that the data-driven estimation extracts information beyond what the structural prior alone provides.
-At larger network sizes ($N = 300$, $T = 1000$), improvement over the dense baseline exceeds $97\%$.
+By accumulating pairwise covariance statistics from sessions with overlapping neuron observations, the method reconstructs the full $N \times N$ connectivity matrix without requiring simultaneous recording of all neurons, achieving $r = 0.90$ correlation between true and estimated weights and a $31\%$ error reduction over an independent draw from the same generative prior (matching sparsity pattern and spectral radius), demonstrating that the data-driven estimation extracts information beyond what structural knowledge alone provides.
+At larger network sizes ($N = 300$, $T = 1000$), recovery error drops to $0.014$ ($97.5\%$ below the dense random baseline).
 
 Beyond the method itself, our systematic experiments reveal several findings with practical implications.
 First, a fundamental \emph{control-estimation tradeoff} governs experimental design: stimulation is necessary for identifiability (zero stimulation fails at high measurement density), but excessive stimulation degrades the covariance structure.
