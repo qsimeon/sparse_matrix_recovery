@@ -2,62 +2,69 @@
 
 > A complete technical walkthrough of the project — what it does, how it works,
 > why every design choice was made, and what the surprising findings are.
-> Generated 2026-03-24.
+> Last updated: 2026-04-11 (comprehensive rewrite — all numbers verified against Apr 7 data).
 
 ---
 
 ## What Is This?
 
-You have a brain circuit with N neurons wired together by synapses. You want to figure out the full wiring diagram (an N x N matrix W), but your microscope can only see ~66% of neurons at a time. Each recording session gives you a different partial view. This project shows how to stitch those partial views together using covariance statistics, recover W, and then clean it up with biological constraints — all without deep learning, just linear algebra and some clever bookkeeping.
+You have a brain circuit with N neurons wired together by synapses. You want to figure out the full
+wiring diagram (an N×N matrix W), but your microscope can only see ~66% of neurons at a time.
+Each recording session gives you a different partial view. This project shows how to stitch those
+partial views together using covariance statistics, recover W, and then clean it up with biological
+constraints — all without deep learning, just linear algebra and some clever bookkeeping.
+
+**The core insight**: Whenever two neurons are simultaneously observed in a session, their
+covariance contributes one "puzzle piece" toward the full N×N covariance matrix. After enough
+sessions, the whole puzzle is assembled — and the connectivity matrix follows immediately from
+one matrix equation.
 
 ---
 
 ## System Architecture
 
 ```
-                          YOUR EXPERIMENT
-                    (K=50 recording sessions)
-                              |
-          Session 1           |          Session 2          ...
-     see {0,2,4,6,8,10,12,14}      |     see {1,3,5,7,9,11,13}
-     stim neurons {10,12,14}      |     stim neurons {3,7,9}
-              |                |              |
-              v                |              v
-    +-------------------+     |    +-------------------+
-    |  Partial Sigma_1  |     |    |  Partial Sigma_2  |
-    |  (only co-obs     |     |    |  (only co-obs     |
-    |   pairs filled)   |     |    |   pairs filled)   |
-    +---------+---------+     |    +---------+---------+
-              |                |              |
-              +--------+-------+--------------+
-                       v
-          +-------------------------+
-          |  ACCUMULATE             |  Average each (i,j) entry
-          |  element-wise across    |  over sessions where both
-          |  all K sessions         |  i and j were observed
-          +------------+------------+
-                       v
-          +-------------------------+
-          |  ESTIMATE               |  W_hat = Sigma_{x+1,x} * Sigma_{x,x}^{-1}
-          |  (one matrix multiply   |
-          |   + pseudoinverse)      |
-          +------------+------------+
-                       v
-          +-------------------------+
-          |  ZERO DIAGONAL          |  W_hat_ii = 0  (no autapses)
-          |  (biggest single        |  Removes autocorrelation
-          |   improvement)          |  artifact (3-4x too large)
-          +------------+------------+
-                       v
-          +-------------------------+
-          |  GRANGER REFINEMENT     |  Projected gradient descent:
-          |  Enforce: W_ij >= 0     |  - non-negative weights
-          |           W_ij = 0      |  - zero non-causal edges
-          |  where not causal       |  - preserve all true edges
-          +------------+------------+
-                       v
-                  Final W_hat
-           (r = 0.90 with true W)
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                    YOUR EXPERIMENT (K=50 sessions)              │
+  │                                                                 │
+  │  Session 1           Session 2           ...    Session K       │
+  │  see {0,2,4,6,...}   see {1,3,5,7,...}          see {random}   │
+  │  stim {2,5,8}        stim {3,7,9}                              │
+  │       │                    │                                    │
+  │       ▼                    ▼                                    │
+  │  ┌──────────┐        ┌──────────┐                               │
+  │  │ Partial  │        │ Partial  │   ...   (K partial matrices)  │
+  │  │ Σ̂_1     │        │ Σ̂_2     │                               │
+  │  │ co-obs   │        │ co-obs   │                               │
+  │  │ pairs    │        │ pairs    │                               │
+  │  └────┬─────┘        └────┬─────┘                               │
+  └───────┼──────────────────┼─────────────────────────────────────┘
+          └──────────┬────────┘
+                     ▼
+          ┌─────────────────────┐
+          │  ACCUMULATE         │   Average Σ̂(i,j) over sessions
+          │  element-wise       │   where both i and j were observed
+          └──────────┬──────────┘
+                     ▼
+          ┌─────────────────────┐
+          │  ESTIMATE           │   Ŵ = Σ̂_{x_{t+1},x_t} · Σ̂_{x_t,x_t}^{-1}
+          │  (pseudoinverse)    │   (one matrix multiply)
+          └──────────┬──────────┘
+                     ▼
+          ┌─────────────────────┐
+          │  ZERO DIAGONAL      │   Ŵ_ii = 0  (no autapses)
+          │  no-autapse prior   │   Removes autocorrelation artifact
+          │  [biggest win]      │   (diagonal 3–4× too large)
+          └──────────┬──────────┘
+                     ▼
+          ┌─────────────────────┐
+          │  GRANGER REFINE     │   Projected gradient descent:
+          │  non-causal zeros   │   W_ij = 0 where Σ_{x,x}(i,j) > Σ_{x+1,x}(i,j)
+          └──────────┬──────────┘   (unique Granger contribution)
+                     ▼
+               Final Ŵ
+        r = 0.90 (median), 0.94 (representative topology)
+        31% error reduction over spectral prior baseline
 ```
 
 ---
@@ -67,332 +74,269 @@ You have a brain circuit with N neurons wired together by synapses. You want to 
 | File | Lines | What it does |
 |------|-------|-------------|
 | `experiments/core.py` | 622 | **The brain.** All algorithms: network generation, CPG dynamics, covariance estimation, Granger refinement |
-| `experiments/run_experiments.py` | 442 | **The lab.** Defines and runs E1-E7, each testing a specific hypothesis |
-| `experiments/analysis.py` | 1024 | **The artist.** Generates 9 of the 10 publication figures |
-| `scripts/generate_all_figures.py` | 231 | **The orchestrator.** Calls analysis.py + generates fig8 (dynamics 9-panel) |
-| `paper/main.tex` | 691 | **The paper.** NeurIPS preprint, 10 main pages + 3 appendix |
-| `paper/references.bib` | 215 | 20 verified citations |
-| `paper/math_walkthrough.md` | 215 | Educational companion — the full mathematical derivation story |
-| `paper/poster.tex` | 201 | A1 conference poster |
-| `paper/lightning_talk.md` | 54 | 3-minute talk script |
-| `experiments/results/*.json` | 7 files | Raw data from all experiments |
+| `experiments/run_experiments.py` | 480 | **The lab.** Defines and runs E1–E8; each tests a specific hypothesis |
+| `experiments/run_single_rep.py` | ~200 | **One repetition.** Runs a full topology→sessions→estimate→measure pipeline |
+| `experiments/analysis.py` | ~1060 | **The artist.** Generates all 11 publication figures |
+| `experiments/aggregate_results.py` | ~100 | Results aggregation utility |
+| `scripts/generate_all_figures.py` | ~250 | **The orchestrator.** Calls analysis.py functions in order |
+| `paper/main.tex` | ~760 | **The paper.** 21 pages: 10 main + 3 appendix, NeurIPS preprint format |
+| `paper/references.bib` | ~250 | 23 verified citations |
+| `paper/math_walkthrough.md` | ~500 | Educational companion — full mathematical derivation |
+| `paper/poster.tex` | ~215 | A1 conference poster |
+| `paper/presentation.tex` | ~335 | SDSCon 2026 lightning talk slides |
+| `experiments/results/*.json` | 8 files | Raw data from all experiments (E1–E8) |
 
 ---
 
-## Tracing Through the System
+## Step-by-Step: Tracing One Experiment
 
-Let's follow a single experiment from start to finish. Imagine you type:
-
+Imagine you type:
 ```bash
-uv run python experiments/run_experiments.py --experiment E4 --seed 42
+uv run python experiments/run_experiments.py --experiment E2 --seed 42
 ```
 
 ### Step 1: Generate a random brain circuit
-
-`core.py:230` — `random_network_topology(num_nodes=15, non_negative_weights=True, force_stable=True)`
-
-This creates a random directed graph, like a tiny connectome:
+`core.py:260` → `random_network_topology(num_nodes=15, non_negative_weights=True, force_stable=True)`
 
 ```
-Grow density until strongly connected -> draw Unif(0,1) weights -> scale so rho(W) <= 1
+Grow density until strongly connected
+→ draw Uniform(0,1) weights on edges
+→ scale so ρ(W) ≤ 1  (spectral radius control)
 ```
 
-**Why strongly connected?** Real connectomes (C. elegans) have a giant strongly connected component — every neuron can influence every other through some path. We match that.
+**Why strongly connected?** Sink nodes with no stimulation path leave Σ_{x,x} rank-deficient. Every node must be reachable from some stimulated node.
 
-**Why non-negative weights?** Electron microscopy measures synapse *size* (contact area, vesicle count) — always positive. The *sign* of a connection (excitatory vs inhibitory) isn't directly observed. So we model W >= 0 and let the sign of the *activity* carry the inhibitory effect: a positive weight on a negative (hyperpolarized) state drives the target neuron down.
+**Why non-negative weights?** EM connectomics measures synapse *size* (always positive); sign is carried by the *activity* direction. We use W ≥ 0 and let hyperpolarized states propagate inhibitory effects.
 
-**Why rho(W) <= 1?** Spectral radius controls stability. With rho(W) <= 1 and tanh (1-Lipschitz), the map x -> W*phi(x) is non-expansive — states can't blow up. We set rho(W) = 1 - eps (edge of stability) for maximally rich dynamics.
+**Why ρ(W) ≤ 1?** With tanh (1-Lipschitz) and ρ(W) ≤ 1, the map x → Wφ(x) is non-expansive. The network falls silent without input — which motivates the CPG.
 
-### Step 2: Simulate 50 recording sessions
+### Step 2: Create the CPG (once per topology)
+`core.py:455` → `create_cpg_function(state_dim=N)` then `serialize_cpg(cpg_net)`
 
-`core.py:272` — `create_network_data(...)` called 50 times via `create_multinetwork_dataset`
+The CPG (Central Pattern Generator) models intrinsic oscillatory drive in biological circuits. It is a **frozen random deep network** that maps the current state x_t to an intrinsic drive signal b_CPG(t). Key properties:
+
+```
+  x_t (network state)
+       │
+       ▼
+ ┌─────────────────────────────────┐
+ │  CPG Function (frozen, per topology)
+ │                                 │
+ │  1. Circular shift of x_t by t  │  ← time-dependence (parameter-free)
+ │  2. Random deep network         │  ← 3 layers, abs activations, Xavier
+ │     (frozen weights)            │
+ │  3. + Chaotic reservoir drive   │  ← Sussillo-style, g=1.3 (chaotic)
+ │  4. Final tanh → output ∈[-1,1] │
+ └────────────────┬────────────────┘
+                  │
+                  ▼
+            b_CPG(t)    ← STATE-DEPENDENT! Cov(b_CPG, x_t) ≠ 0
+```
+
+**Why chaotic?** Real CPGs (e.g., lobster STG, respiratory rhythm generators) produce rich, non-periodic signals. Simple sinusoids would not capture this. The Sussillo-Abbott gain g=1.3 places the reservoir firmly in the chaotic regime.
+
+**Why abs activations in hidden layers?** Empirically, abs produces richer frequency content (spectral entropy 1.75) than ReLU (1.16) — ReLU kills the negative half of activations, creating overly smooth, repetitive signals. Tanh (entropy 2.67) is broadest but saturates more in deeper networks.
+
+**The critical state-dependence**: b_CPG(t) = f_CPG(x_t), so Cov(b_CPG, x_t) ≠ 0. This violates the independence assumption Cov(b_t, x_t) ≈ 0 in the estimator derivation, producing the dominant **E₂ error** (CPG correlation ~2× larger than E₁ model mismatch at median).
+
+**Topology invariance**: The CPG is created **once per topology** and serialized. Each session worker deserializes a fresh copy (shifts=0 = independent time counter) but with the same weights. This was a critical bug fix — previously CPGs were created per session, giving each session a different oscillator.
+
+### Step 3: Simulate K=50 recording sessions
+`core.py:302` → `create_network_data(...)` called 50 times via `create_multinetwork_dataset`
 
 Each session:
-1. **Pick which neurons to observe** (random 10 of 15 = 66%)
-2. **Pick which neurons to stimulate** (random 5 of 15 = 33%)
-3. **Pick which neurons have CPG** (5 of 15 = 33%)
-4. **Run the dynamics** for T=1000 timesteps (+ 300 warmup, discarded):
+1. **Draw random measurement mask**: 10 of 15 neurons (66%) observed
+2. **Draw random stimulation mask**: 5 of 15 neurons (33%) receive i.i.d. Gaussian noise
+3. **CPG mask**: Always nodes 0–4 (fixed per topology, random circuit means no bias)
+4. **Run dynamics** for T=1000 timesteps (+ T/3=333 warmup, discarded):
 
 ```python
-# core.py:354 — THE dynamics equation
+# core.py:390 — THE dynamics equation
 state = connection_weights @ nonlinearity(state) + total_input
+# where total_input = stim_mask * N(0, σ²) + cpg_mask * f_CPG(state)
 ```
 
-where `total_input = extrinsic_drive + intrinsic_drive`:
+Workers run in parallel via `joblib.Parallel(n_jobs=-2)`. Per-worker seeds are pre-generated from the parent RNG to guarantee determinism regardless of scheduling order.
 
-```
-                        +--------------------------------------+
-                        |         total_input (b_t)             |
-                        |                                       |
-  extrinsic_drive ------+  stim_mask * N(0, sigma^2)          |
-  (you control this)    |  i.i.d. Gaussian per stimulated node      |
-                        |  Cov(b_stim, x) = 0  <-- KEY!        |
-                        |                                       |
-  intrinsic_drive ------+  cpg_mask * cpg_net(state)            |
-  (the circuit's own    |  chaotic reservoir -> random MLP      |
-   heartbeat)           |  Cov(b_CPG, x) != 0  <-- PROBLEM!    |
-                        +--------------------------------------+
-```
+### Step 4: Accumulate covariances across sessions
+`core.py:480` → `estimate_connectivity_weights(num_nodes=15, multinet_dataset)`
 
-**The CPG is a chaotic reservoir** (`core.py:103`): a random sparse matrix M with gain g=1.3 (above edge of chaos), integrated via Euler steps: dx/dt = -x + M*tanh(x). This produces rich, unpredictable temporal signals — like the heartbeat that keeps the circuit alive when there's no external input.
-
-**Why does the circuit need a heartbeat?** With rho(W) <= 1 and tanh, the autonomous system (no input) contracts to zero — the network dies. CPGs are biologically real: think cardiac pacemaker cells, respiratory rhythm generators, locomotion circuits.
-
-### Step 3: Accumulate covariances across sessions
-
-`core.py:438` — `estimate_connectivity_weights(num_nodes=15, multinet_dataset)`
-
-This is the core algorithm. For each session k:
-
+For each session k, let S = mask @ mask.T (co-measurement indicator):
 ```python
-# core.py:474-486
-mask = measured_nodes_mask.reshape(-1, 1)     # which neurons we see
-S = mask @ mask.T                              # co-measurement matrix
-total_mask += S                                # count co-observations
-
-cov_x   += (X[:-1].T @ X[:-1] / n) * S       # Sigma_{x,x}  (same-time)
-cov_dtx += (X[1:].T  @ X[:-1] / n) * S       # Sigma_{x+1,x} (lagged)
+total_mask += S                         # count co-observations per pair
+cov_x   += (X[:-1].T @ X[:-1] / n) * S   # Σ_{y_t, y_t}
+cov_dtx += (X[1:].T  @ X[:-1] / n) * S   # Σ_{y_{t+1}, y_t}
 ```
+Then average: `cov_x /= total_mask` (clipped to 1 to avoid division by zero; unobserved pairs get covariance 0 — a practical choice).
 
-Think of it like a jigsaw puzzle. Each session gives you some pieces (the covariance entries for co-observed pairs). After 50 sessions, you have the whole puzzle:
-
+### Step 5: The Estimator
 ```python
-# core.py:489-493 — Average over sessions
-total_mask = np.clip(total_mask, a_min=1, a_max=None)  # avoid /0
-cov_x   = cov_x   / total_mask
-cov_dtx = cov_dtx / total_mask
-```
-
-### Step 4: The Estimator
-
-```python
-# core.py:495 — THE estimator (one line!)
+# core.py:547 — THE estimator (one line)
 approx_W = cov_dtx @ np.linalg.pinv(cov_x)
 ```
-
-**The derivation in 30 seconds**: Starting from x_{t+1} = W*phi(x_t) + b_t, multiply both sides by x_t^T, take expectations, approximate phi(x) ~ x and Cov(b,x) ~ 0:
-
+**Derivation**: x_{t+1} = Wφ(x_t) + b_t. Approximate φ(x) ≈ x and Cov(b,x) ≈ 0:
 ```
-Sigma_{x+1,x} ~ W * Sigma_{x,x}    ->    W ~ Sigma_{x+1,x} * Sigma_{x,x}^{-1}
+Σ_{x+1,x} ≈ W · Σ_{x,x}   →   W ≈ Σ_{x+1,x} · Σ_{x,x}^{-1}
 ```
+`pinv` handles rank-deficient cases (large N, small T) via truncated SVD.
 
-That's it. The rest of the paper is about understanding *when and why this works*, and *what the error looks like*.
-
-### Step 5: Zero the diagonal
-
+### Step 6: Structural priors (applied to ALL estimates)
 ```python
-# core.py:500
-np.fill_diagonal(approx_W, 0)
+# core.py:551-553
+np.fill_diagonal(approx_W, 0)          # no autapses — single biggest improvement
+approx_W = np.maximum(approx_W, 0.0)   # non-negativity — modeling prior
 ```
+These are enforced on both the approximate AND oracle estimators. They are not Granger-specific.
 
-**Why this matters so much**: The diagonal of W_hat measures autocorrelation — how much neuron i predicts *itself* one timestep later. This is dominated by the neuron's own momentum (persistence), which is huge (3-4x larger than off-diagonal entries) and has nothing to do with self-connectivity (we know W_ii = 0). Removing it is the single biggest improvement in the pipeline.
+### Step 7: Granger refinement
+`core.py:612` → `projected_gradient_causal(cov_x, cov_dtx)`
 
-**Analogy**: Imagine trying to figure out who influences whom in a conversation. Each person's speech at time t+1 is most correlated with their *own* speech at time t (they tend to keep talking about the same topic). You need to remove that self-correlation before you can see the cross-influences.
+Unique contribution: zero W[i,j] where `cov_x[i,j] > cov_dtx[i,j]` (lagged cov ≤ contemporaneous cov → no causal influence from j to i). Applied via projected gradient descent, 200 steps, lr=1e-3.
 
-### Step 6: Granger refinement
-
-`core.py:557` — `projected_gradient_causal(cov_x, cov_dtx)`
-
-This cleans up the estimate by enforcing biological constraints:
-
-```
-For 200 iterations:
-  1. Gradient step: A -= lr * (A - A_init)     <-- pull toward data
-  2. For 3 sub-iterations:
-     a. W = A @ Sigma^{-1}                     <-- convert to weight space
-     b. Clamp: W_ii=0, W_ij>=0, zero non-causal  <-- enforce biology
-     c. A = backsolve(W, Sigma^{-1})            <-- convert back
-```
-
-**The Granger criterion** (`core.py:576`): Set W_ij = 0 wherever Sigma_{x,x}(i,j) > Sigma_{x+1,x}(i,j). Intuition: if the *contemporaneous* covariance between neurons i and j exceeds their *lagged* covariance, then j's past doesn't help predict i's future — so there's no causal connection.
-
-Result: ~2% additional error reduction, precision improved from 0.30 to 0.40 with recall 0.97.
+**Net effect**: ~4% additional error reduction; precision 0.30 → 0.40; recall maintained at 0.97.
 
 ---
 
-## The Seven Experiments
+## The Eight Experiments (E1–E8)
 
-| Exp | Question | What it varies | Key Finding |
-|-----|----------|---------------|-------------|
-| E1 | How does recovery scale? | N in {15, 30, 159, 300, 1074}, T in {100,250,500,750,1000} | Best: N=159 T=1000 → 0.035 (94% over chance) |
-| E2 | What does each step add? | Ablation: chance->estimate->Granger | 85% improvement, precision 0.30→0.40, recall 0.97 |
-| E3 | Stimulation tradeoff? | sigma x measurement density | Zero stim fails; sigma~0.5 optimal |
-| E4 | How much observation? | Measurement 33-100% | Plateaus above ~50% |
-| E5 | Robust to nonlinearity? | tanh, relu, identity, sigmoid | tanh best (bounds variance) |
-| E6 | Does oracle win? | Oracle vs approx across sigma | No — approx always wins (1.3-5x) |
-| E7 | How many stimulated? | 0,10,15,20,30 stimulated (N=30) | 0% degrades (0.205); >=33% suffices (0.052) |
+| Exp | Question | Parameters | Key Result |
+|-----|----------|-----------|------------|
+| E1 | How does recovery scale? | N ∈ {15,159,300}, T ∈ {100,350,1000} | Best: N=300, T=1000 → 0.014 (97.5% over chance) |
+| E2 | What does each step add? | Ablation: Chance→Adj→Spec→Est→Granger | 31% over spectral prior (0.083 vs 0.120) |
+| E3 | Stimulation tradeoff? | σ ∈ [0,2] × meas ∈ {33,66,100%} | σ≈0.5 optimal at full measurement |
+| E4 | How much observation? | Measurement 33–100%, N=15 | Plateaus above ~50% |
+| E5 | Robust to nonlinearity? | tanh, relu, identity, sigmoid | tanh best (bounds variance, improves κ) |
+| E6 | Does oracle win? | σ ∈ {0,0.1,0.25,0.5,1,2,5}, N=15 | Never — approx wins 1.45–2.72× at all σ |
+| E7 | How many stimulated? | 0–100% of N=30 | ≥33% suffices; 0% catastrophically fails (0.83 vs 0.05) |
+| E8 | Robust to noise? | σ_ε ∈ {0,0.05,0.1,0.2,0.5}, N=15 | σ_ε=0.1 → +1.5%; σ_ε=0.5 → +32% error |
+
+**E8 is not in Table 1** — it is a robustness sanity check, not a primary hypothesis test.
+
+### Baseline configuration (used for all experiments unless swept):
+- N=15 neurons, T=1000 timesteps per session
+- K=50 sessions per topology, 10 topologies per configuration
+- 10 measured (66%), 5 stimulated (33%), 5 CPG nodes (33%)
+- σ=1.0 stimulation gain, φ=tanh nonlinearity, seed=42
 
 ---
 
 ## The Error Decomposition (Why the "Wrong" Model Wins)
 
-The full estimation error is:
-
+The estimation error decomposes exactly as:
 ```
-W_hat - W = W(D - I)              +  Sigma_{b,x} * Sigma_{x,x}^{-1}
-             E1: model mismatch       E2: CPG correlation
-             (0.073)                   (0.229)
-             1x                        3.1x  <-- DOMINANT
-```
-
-**E1 (model mismatch)**: The price of approximating phi(x) ~ x. The Stein-Price identity gives an exact formula: E1 = W(D-I) where D = diag(E[sech^2(x_i)]). For small state variance, 1-d_i ~ sigma_i^2.
-
-**E2 (CPG correlation)**: The price of ignoring Cov(b_CPG, x). The stimulation is truly independent, but the CPG depends on state. This is 3.1x larger than E1.
-
-**Why the oracle loses**: It must invert D*Sigma_{x,x} instead of Sigma_{x,x}. The D matrix compresses rows heterogeneously (high-variance neurons get compressed more), worsening the condition number:
-
-```
-kappa(D*Sigma) <= kappa(Sigma) * d_max/d_min
+Ŵ - W = W(D - I)            +  Σ_{b,x} · Σ_{x,x}^{-1}
+          E₁: model mismatch       E₂: CPG correlation
+          ||E₁||_F/N ≈ 0.080      ||E₂||_F/N ≈ 0.225
+          (1×)                     (~2.8×  ← DOMINANT)
 ```
 
-The linear estimator avoids this — it's biased but better-conditioned. Classic bias-variance tradeoff, a concrete James-Stein phenomenon.
+**E₁ (model mismatch)**: Price of approximating φ(x) ≈ x. Stein-Price identity gives D = diag(𝔼[sech²(x_i)]), so E₁ = W(D-I). For small state variance, 1-d_i ≈ σ_i².
+
+**E₂ (CPG correlation)**: Price of ignoring Cov(b_CPG, x). State-dependent CPG drive creates this non-zero term. Dominates E₁ by ~2× at median, ~3× at representative topology.
+
+**Why the oracle loses** (James-Stein phenomenon): The oracle must invert Σ_{φ(x),x} = D·Σ_{x,x} rather than Σ_{x,x}. The D matrix compresses rows heterogeneously, potentially worsening condition number: κ(D·Σ) ≤ κ(Σ) · d_max/d_min. The linear approximation avoids this compression — it is biased but better-conditioned. Classic bias-variance tradeoff.
+
+**Oracle penalty across stimulation levels** (E6 data): ranges from 2.72× (σ=0) to 1.45× (σ=2). No crossover point exists.
 
 ---
 
 ## Five Key Insights
 
-### 1. The "wrong" model wins
-The oracle (which knows the true tanh) is 1.3-5x worse than the naive linear approximation. Don't bother characterizing the neuronal transfer function — the simpler model is provably better.
+### 1. The "wrong" model wins (James-Stein)
+Oracle (knows true tanh) is 1.45–2.72× *worse* than the naive linear approximation. Don't bother characterizing the neuronal transfer function.
 
 ### 2. CPG correlation is the real bottleneck
-E2 is 3.1x larger than E1. Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear model.
+E₂ is ~2.8× larger than E₁ (representative topology: ~3×). Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear approximation.
 
 ### 3. The control-estimation tradeoff is quantifiable
-Zero stimulation fails (Sigma_{x,x} ill-conditioned). Too much overwhelms the signal. Sweet spot: sigma ~ 0.5-1.0, ~33% of neurons.
+Zero stimulation fails (Σ_{x,x} ill-conditioned, E7: error 0.83 vs 0.05). Sweet spot: σ ≈ 0.5–1.0, ~33% of neurons stimulated.
 
 ### 4. Diagonal zeroing is the unsung hero
-One line of code (`np.fill_diagonal(approx_W, 0)`) matters more than 200 iterations of Granger refinement.
+One line (`np.fill_diagonal(approx_W, 0)`) matters more than 200 iterations of Granger refinement. The diagonal is dominated by autocorrelation (3–4× off-diagonal magnitude).
 
 ### 5. Partial observation has diminishing returns
-Going 33% -> 50% coverage = huge improvement. Going 50% -> 100% = barely helps. You don't need full-circuit access.
+33%→50% coverage: large improvement. 50%→100%: barely matters. You don't need full-circuit access — just enough sessions to cover all pairs.
 
 ---
 
-## Summary
+## Mathematical Core (30-second version)
 
+The whole method follows from one identity. Start from the dynamics:
 ```
-THE WHOLE PROJECT IN ONE DIAGRAM:
+x_{t+1} = W φ(x_t) + b_t
+```
+Multiply both sides by x_t^T, take expectations, approximate φ(x) ≈ x and Cov(b, x) ≈ 0:
+```
+Σ_{x+1, x} ≈ W · Σ_{x, x}    →    W ≈ Σ_{x+1, x} · Σ_{x, x}^{-1}
+```
+The rest of the paper — the Stein-Price identity, the oracle analysis, the Granger refinement — explains *when this works*, *why the approximation beats the oracle*, and *how to clean up the edges*.
 
-    Partial observations          Accumulate            Estimate
-    +--------+ +--------+       covariances            connectivity
-    |Sess 1  | |Sess 2  | ...   piece by piece    ->  W_hat = Sigma_1 * Sigma_0^{-1}
-    |see 10  | |see 10  |       across 50              (one equation)
-    |of 15   | |of 15   |       sessions
-    +--------+ +--------+
-                                                          |
-                                                          v
-    Three surprise findings:                    Zero diagonal
-    1. Linear > Oracle (James-Stein)            (biggest win)
-    2. CPG correlation >> model mismatch               |
-    3. Sweet spot: sigma~0.5, 33% stimulated              v
-                                                 Granger refine
-                                                 (non-neg, sparse)
-                                                       |
-                                                       v
-                                                 Final W_hat
-                                              r=0.90, 85% > chance
-```
+For the full derivation with every step shown, see `paper/math_walkthrough.md`.
 
 ---
 
 ## How to Run
 
 ```bash
-# Install
+# Install dependencies
 uv sync
 
-# Run all experiments (~30 min)
+# Run a single experiment (~2 min for one, ~20 min for all)
+uv run python experiments/run_experiments.py --experiment E2 --seed 42
 uv run python experiments/run_experiments.py --experiment all --seed 42
 
-# Generate all 10 figures
+# Generate all 11 figures
 uv run python scripts/generate_all_figures.py
 
-# Compile paper
-cd paper && tectonic main.tex
+# Compile paper (requires TeX Live)
+cd paper && pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex
 
-# Compile poster
-cd paper && tectonic poster.tex
+# Compile poster / presentation
+cd paper && pdflatex poster.tex
+cd paper && pdflatex presentation.tex
 ```
 
 ---
 
-## Experiment Design: From Vision to Numbers
+## Verified Key Numbers (2026-04-07 data, cross-checked 2026-04-11)
 
-### The Three Levels of the Experiment
+| Metric | Value | Source |
+|--------|-------|--------|
+| Weight correlation r | 0.90 (median), 0.94 (representative topology) | E2_granger.json |
+| Error vs spectral prior | 31% improvement (0.083 vs 0.120) | E2_granger.json |
+| Best recovery | N=300, T=1000 → 0.014 (97.5% over chance) | E1_baseline.json |
+| Precision (raw→Granger) | 0.30 → 0.40 | E2_granger.json |
+| Recall (raw→Granger) | 0.97 → 0.97 | E2_granger.json |
+| Oracle ratio range | 1.45×–2.72× worse | E6_oracle_crossover.json |
+| E₂/E₁ error ratio | ~2× median, ~3× representative topology | E2_granger.json |
+| E7 (0% stim) | 0.83 error (catastrophic) | E7_stim_fraction.json |
+| E7 (33% stim) | 0.051 error (recovers) | E7_stim_fraction.json |
+| E8 (σ_ε=0.1) | +1.5% error increase | E8_noise.json |
+| E8 (σ_ε=0.5) | +32% error increase | E8_noise.json |
 
-Think of it like a clinical trial:
+---
+
+## Experiment Design: The Three Levels
 
 ```
 LEVEL 1: TOPOLOGIES (num_networks = 10)
-+-- Like: "10 different patients" (each with a different brain)
-+-- Purpose: Statistical power -- does the method work across different circuits?
-+-- Each gets: a fresh random W matrix
-+-- Output: 10 independent error measurements -> median, CI
+├── "10 different circuits" — each a fresh random W matrix
+├── Purpose: statistical power over diverse circuit structures
+└── Output: 10 independent error measurements → median ± 95% bootstrap CI
 
-LEVEL 2: SESSIONS (num_sessions = 50, called K in the paper)
-+-- Like: "50 different MRI scans of the SAME patient"
-+-- Purpose: Covariance accumulation -- piece together partial views
-+-- Each shares: the same W, but sees different neuron subsets
-+-- This is the CORE of the method
-+-- Output: one accumulated Sigma_hat -> one W_hat estimate
+LEVEL 2: SESSIONS (K = num_sessions = 50)
+├── "50 scans of the SAME circuit"
+├── Purpose: covariance accumulation — piece together partial views
+├── Each shares W, but sees different measured/stimulated subsets
+└── This is the CORE of the method
 
-LEVEL 3: TIMESTEPS (max_timesteps = 1000, called T in the paper)
-+-- Like: "1000 data points per scan"
-+-- Purpose: Good empirical covariance estimates within each session
-+-- Each shares: the same session setup (same measured/stim nodes)
-+-- Output: one session covariance matrix Sigma_hat_k
+LEVEL 3: TIMESTEPS (T = max_timesteps = 1000)
+├── "1000 data points per scan"
+├── Purpose: reliable empirical covariance estimates per session
+└── Output: one session covariance matrix Σ̂_k
 ```
 
-### How This Maps to Code
-
-```python
-# LEVEL 1: run_experiments.py line 66
-for rep in range(num_networks):    # 10 different random topologies
-    result = one_repetition(rep, ...)  # each generates a fresh W
-
-# LEVEL 2: core.py line 413-429 (inside create_multinetwork_dataset)
-W, _ = random_network_topology(...)   # ONE topology for this rep
-for session in range(num_sessions):   # 50 sessions with this W
-    create_network_data(session, ...)  # each sees different subset
-
-# LEVEL 3: core.py line 340
-for t in range(simulation_steps):     # 1000 timesteps per session
-    state = W @ phi(state) + b_t      # one step of the dynamics
-```
-
-### The Paper's Exact Configuration
-
-| Parameter | Value | Variable | Where set | What it means |
-|-----------|-------|----------|-----------|---------------|
-| N | 15 | `num_nodes` | run_experiments.py:42 | Neurons in the circuit |
-| T | 1000 | `max_timesteps` | run_experiments.py:41 | Timesteps per session |
-| K | 50 | `num_sessions` | run_experiments.py:41 | Sessions per topology |
-| Reps | 10 | `num_networks` | run_experiments.py:41 | Random topologies tested |
-| Measured | 10 (66%) | `num_measured` | Computed from N | Neurons observed per session |
-| Stimulated | 5 (33%) | `num_stimulated` | Computed from N | Neurons receiving noise |
-| CPGs | 5 (33%) | `num_cpgs` | Computed from N | Neurons with intrinsic drive |
-| sigma | 1.0 | `stim_gain` | run_experiments.py:43 | Stimulation intensity |
-| phi | tanh | `nonlinearity` | run_experiments.py:44 | Transfer function |
-| seed | 42 | `random_seed` | CLI arg | Reproducibility |
-
-### The Mega Sweep (Cluster)
-
-The sweep on the engaging cluster tested a 5D grid to find the optimal experimental design:
-
-```
-LEVEL 0: PARAMETER GRID (243 = 3^5 configs)
-+-- N in {15, 30, 159, 300, 1074}
-+-- T in {100, 500, 1000}
-+-- measurement in {33%, 66%, 100%}
-+-- stim_gain in {0.0, 0.5, 1.0}
-+-- stim_fraction in {33%, 66%, 100%}
-
-For EACH of those 243 configs:
-    10 reps x 50 sessions x T timesteps
-```
-
-**Best config found**: N=159, T=1000, 66% measurement, σ=1.0 → error 0.035 (94% improvement over chance)
-
-
-**Key finding**: Zero stimulation catastrophically fails at large N (errors in the billions).
-Moderate stimulation (sigma=0.5) is optimal across all top configs.
+**DOF ratio** = (K × T) / N² tells you the estimation quality:
+- N=15: DOF=222 → κ≈30 (good)
+- N=159: DOF=1.98 → κ≈500 (degraded at T=100)
+- N=300: DOF=0.56 (at T=100) → catastrophic rank deficiency

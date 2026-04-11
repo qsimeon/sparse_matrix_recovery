@@ -372,7 +372,7 @@ This confirms the control-estimation tradeoff: experimentalists must balance sti
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig5_stimulation.pdf}
-\caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=15$, $T=1000$, 10 topologies $\times$ 50 instances). \textbf{(A)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to stimulated nodes. \textbf{(B)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 67\%, 100\%; $5$, $10$, $15$ of $N{=}15$ neurons). At low measurement, the effect is mild. At full measurement, zero stimulation yields substantially degraded recovery because CPG dynamics alone leave $\Sigma_{x,x}$ ill-conditioned, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery. This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
+\caption{\textbf{Stimulation-dynamics tradeoff} reveals a critical interaction between stimulation and measurement density ($N=15$, $T=1000$, 10 topologies $\times$ 50 instances). \textbf{(A)} Schematic: extrinsic Gaussian stimulation of varying intensity applied to stimulated nodes. \textbf{(B)} Recovery error vs.\ stimulation gain $\sigma$ for three measurement fractions (33\%, 66\%, 100\%; $5$, $10$, $15$ of $N{=}15$ neurons). At low measurement, the effect is mild. At full measurement, zero stimulation yields substantially degraded recovery because CPG dynamics alone leave $\Sigma_{x,x}$ ill-conditioned, while moderate stimulation ($\sigma \approx 0.5$) yields the best recovery. This confirms the control-estimation tradeoff: stimulation is necessary for identifiability but excessive noise degrades the covariance structure.}
 \label{fig:tradeoff}
 \end{figure}
 
@@ -751,5 +751,18 @@ This state dependence is the source of the $E_2$ error term in the estimation er
 The CPG function is constructed once per network topology and shared across all $K$ recording sessions.
 Each session starts with an independent time counter, so the CPG produces different trajectories due to different network states, measurement masks, and stimulation patterns; the underlying oscillatory function is the same across sessions.
 This models the biological reality that intrinsic oscillators are properties of the circuit, not the recording session.
+
+Figure~\ref{fig:cpg_architecture} summarizes the CPG's role in the simulation.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figures/fig11_cpg_architecture.pdf}
+\caption{\textbf{Central Pattern Generator (CPG) architecture and role.}
+The CPG maps the current network state $x_t$ to an intrinsic drive signal $b^{\mathrm{CPG}}_t$, which is added to the extrinsic stimulation $b^{\mathrm{stim}}_t$ to form the total input to the network.
+The CPG is a frozen (non-trainable) function combining a circularly-shifted state input, a random deep network, and a chaotic reservoir drive.
+It is constructed once per network topology and shared (with independent time counters) across all $K$ recording sessions.
+The state-dependence $\mathrm{Cov}(b^{\mathrm{CPG}}_t, x_t) \neq 0$ is the source of the $E_2$ estimation error, which dominates model mismatch $E_1$ by ${\sim}2\times$ (median across topologies).}
+\label{fig:cpg_architecture}
+\end{figure}
 
 \end{document}

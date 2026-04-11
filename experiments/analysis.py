@@ -995,5 +995,140 @@ def main():
             print(f"  Run the corresponding experiment first.")
 
 
+def generate_cpg_architecture_figure(output_path):
+    """
+    Generate a high-level diagram of the Central Pattern Generator (CPG) model.
+
+    Shows the CPG's role in the simulation: it maps the current network state x_t
+    to an intrinsic drive signal b_CPG(t), producing state-dependent input that
+    is the source of the E2 estimation error.
+    """
+    fig, ax = plt.subplots(figsize=(12, 5.5))
+    ax.set_xlim(0, 12); ax.set_ylim(0, 5.5); ax.axis("off")
+
+    # Color palette — consistent with rest of paper figures
+    c_state   = "#E3F2FD"   # light blue — network state
+    c_cpg     = "#FFF3E0"   # light orange — CPG internals
+    c_output  = "#E8F5E9"   # light green — output / drive
+    c_network = "#FCE4EC"   # light pink — network dynamics
+    c_border  = "#333333"
+    c_arrow   = "#555555"
+    c_warn    = "#B71C1C"   # dark red — for the "≠0" annotation
+
+    def box(x, y, w, h, text, color, fs=9, bold=False, italic=False):
+        patch = FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.15",
+                               facecolor=color, edgecolor=c_border, linewidth=1.5, zorder=3)
+        ax.add_patch(patch)
+        style = "italic" if italic else "normal"
+        weight = "bold" if bold else "normal"
+        ax.text(x + w/2, y + h/2, text, ha="center", va="center",
+                fontsize=fs, fontstyle=style, fontweight=weight,
+                zorder=4, linespacing=1.5, wrap=True)
+
+    def arrow(x1, y1, x2, y2, label="", color=c_arrow, lw=2.0):
+        ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
+                    arrowprops=dict(arrowstyle="-|>", color=color, lw=lw), zorder=2)
+        if label:
+            mx, my = (x1+x2)/2, (y1+y2)/2
+            ax.text(mx + 0.1, my, label, fontsize=8, color=color, va="center", style="italic")
+
+    def bracket(ax, x, y_lo, y_hi, color="#777777", label="", label_x_offset=0.25):
+        ax.plot([x, x+0.15, x+0.15, x], [y_lo, y_lo, y_hi, y_hi],
+                color=color, lw=1.5, zorder=2)
+        if label:
+            ax.text(x + label_x_offset, (y_lo+y_hi)/2, label,
+                    fontsize=7.5, color=color, va="center", style="italic")
+
+    # ── Column layout ────────────────────────────────────────────────────────
+    # [state x_t] → [CPG Function] → [b_CPG(t)] → [+] → [dynamics]
+    #                 ┌─────────────┐
+    #                 │ Frozen deep │
+    #                 │ network     │
+    #                 │ (3-layer,   │
+    #                 │ abs, Xavier)│
+    #                 └─────────────┘
+    #                 ┌─────────────┐
+    #                 │  Chaotic    │
+    #                 │  reservoir  │
+    #                 │  (g=1.3)    │
+    #                 └─────────────┘
+
+    # Main input
+    box(0.3, 2.2, 1.6, 1.1, r"$x_t$" + "\nnetwork state", c_state, fs=9, bold=False)
+
+    # CPG outer bounding box (dashed style)
+    cpg_rect = FancyBboxPatch((2.3, 0.5), 5.2, 4.5,
+                              boxstyle="round,pad=0.2",
+                              facecolor="#FFFDE7", edgecolor="#F9A825",
+                              linewidth=2.0, linestyle="--", zorder=1)
+    ax.add_patch(cpg_rect)
+    ax.text(4.9, 4.75, "CPG Function  (one per topology, frozen)",
+            ha="center", va="center", fontsize=9, color="#F57F17",
+            fontweight="bold", zorder=4)
+
+    # CPG internals: two sub-boxes
+    box(2.6, 2.6, 2.2, 1.6,
+        "Frozen deep\nnetwork\n(3 layers, |·|,\nXavier init)",
+        c_cpg, fs=8)
+    box(5.1, 2.6, 2.2, 1.6,
+        "Chaotic\nreservoir\n(Sussillo-style,\ng = 1.3)",
+        c_cpg, fs=8)
+    box(2.6, 0.8, 4.7, 1.4,
+        r"Circular shift of $x_t$ by $t$ positions $\;\to\;$ time-varying input",
+        c_cpg, fs=8, italic=True)
+
+    # Arrows within CPG
+    arrow(1.9, 2.75, 2.6, 2.75)
+    arrow(1.9, 2.75, 4.9, 2.0)      # to shift box
+    arrow(4.8, 3.4,  5.1, 3.4)      # deep net → reservoir
+    arrow(7.3, 3.4,  8.0, 3.4)      # reservoir → sum circle
+
+    # Main input → CPG
+    arrow(1.9, 2.75, 2.6, 3.2, color=c_arrow)
+
+    # Sum circle
+    theta = np.linspace(0, 2*np.pi, 100)
+    cx, cy, r = 8.35, 3.4, 0.3
+    ax.plot(cx + r*np.cos(theta), cy + r*np.sin(theta), color=c_border, lw=1.5, zorder=3)
+    ax.text(cx, cy, "+", ha="center", va="center", fontsize=14, fontweight="bold", zorder=4)
+
+    # b_stim arrow (from above)
+    box(8.05, 4.4, 0.6, 0.7, r"$b^{\rm stim}_t$" + "\n(i.i.d.)", c_state, fs=8)
+    arrow(8.35, 4.4, 8.35, 3.7)
+
+    # b_CPG output label
+    ax.text(7.55, 3.62, r"$b^{\rm CPG}_t$", fontsize=9, color="#E65100",
+            fontstyle="italic", zorder=5)
+    ax.annotate("", xy=(8.05, 3.4), xytext=(7.3, 3.4),
+                arrowprops=dict(arrowstyle="-|>", color="#E65100", lw=1.8), zorder=2)
+
+    # Network dynamics box
+    box(8.8, 2.5, 2.9, 1.8,
+        r"$x_{t+1} = W\phi(x_t) + b^{\rm stim}_t + b^{\rm CPG}_t$"
+        + "\n\nnetwork dynamics",
+        c_network, fs=8.5)
+    arrow(8.65, 3.4, 8.8, 3.4)
+
+    # State-dependence annotation — the key E2 point
+    ax.annotate("",
+                xy=(2.3, 1.5), xytext=(8.8, 2.5),
+                arrowprops=dict(arrowstyle="-|>", color=c_warn, lw=1.5,
+                                connectionstyle="arc3,rad=0.3"), zorder=2)
+    ax.text(5.6, 1.15,
+            r"$\mathrm{Cov}(b^{\rm CPG}_t,\, x_t) \neq 0$  →  source of $E_2$ error",
+            ha="center", fontsize=8.5, color=c_warn, fontweight="bold", zorder=5)
+
+    # "shared across K sessions" annotation
+    ax.text(4.9, 0.25,
+            "Created once per topology — same weights for all K sessions, "
+            "independent time counter per session",
+            ha="center", fontsize=8, color="#5D4037", fontstyle="italic", zorder=5)
+
+    plt.tight_layout(pad=0.3)
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  CPG architecture figure saved to {output_path}")
+
+
 if __name__ == "__main__":
     main()
