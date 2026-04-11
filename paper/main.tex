@@ -545,7 +545,7 @@ This suggests a natural extension: downweighting detected CPG nodes during covar
 \textbf{(F)} Power spectral density (Welch's method) of neural activity, averaged across neurons. Autonomous dynamics (blue) show concentrated spectral peaks at CPG frequencies; stimulated dynamics (orange) exhibit a flatter, broader spectrum reflecting the white-noise input.
 \textbf{(G)} Per-node activity variance (bar chart, sorted). CPG nodes (red) have systematically higher variance than non-CPG nodes (blue), enabling detection via a variance threshold (F1$\sim$0.8).
 \textbf{(H)} Error decomposition: $\|E_1\|_F/N$ (model mismatch, $0.080$) vs.\ $\|E_2\|_F/N$ (CPG--state correlation, $0.225$) vs.\ total estimation error $\|\hat{W} - W\|_F/N$ ($0.087$). $E_1$ and $E_2$ are Frobenius norms of the \emph{individual error components} (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel in different matrix entries.  For this representative topology, $E_2$ is ${\sim}3\times$ larger than $E_1$ (median across topologies: ${\sim}2\times$), confirming that CPG correlation (not the linear approximation) is the dominant error source.
-\textbf{(I)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical). Pearson $r = 0.90$; dashed line: $y=x$.}
+\textbf{(I)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical) for this representative topology. Pearson $r = 0.94$; dashed line: $y=x$. Median across all 10 topologies: $r = 0.90$.}
 \label{fig:dynamics}
 \end{figure}
 

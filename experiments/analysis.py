@@ -319,9 +319,10 @@ def plot_granger_comparison(results, output_path):
         N = len(true_W)
         err_a = np.linalg.norm(true_W - approx_W, "fro") / N
         err_g = np.linalg.norm(true_W - W_granger, "fro") / N
-        fig.text(0.5, 0.48, f"Frobenius/N: Covariance={err_a:.3f}, Granger={err_g:.3f} "
-                 f"({(1-err_g/err_a)*100:.0f}% improvement)",
-                 ha="center", fontsize=10, fontstyle="italic")
+        fig.text(0.5, 0.48,
+                 f"(A\u2013D) representative topology: Covariance\u202f=\u202f{err_a:.3f}, "
+                 f"Granger\u202f=\u202f{err_g:.3f}  \u2014  (E\u2013G) all 10 topologies",
+                 ha="center", fontsize=9, fontstyle="italic")
     except Exception as e:
         print(f"  Warning: could not generate heatmaps: {e}")
 
@@ -736,13 +737,11 @@ def generate_problem_schematic(output_path, r_value=None):
         e2_path = results_dir / "E2_granger.json"
         if e2_path.exists():
             e2 = load_results(e2_path)
-            if e2 and "matrices" in e2[0] and e2[0]["matrices"]:
-                m = e2[0]["matrices"][0]
-                tf = m["true_W"].flatten()
-                ef = m["granger_W"].flatten()
-                r_value = float(np.corrcoef(tf, ef)[0, 1])
+            if e2 and "distances" in e2[0]:
+                wc = e2[0]["distances"]["weight_correlation"]
+                r_value = float(np.median(wc.values if hasattr(wc, "values") else list(wc)))
         if r_value is None:
-            r_value = 0.96  # fallback
+            r_value = 0.90  # fallback (median across topologies)
     N = 15
     np.random.seed(42)
     G = nx.DiGraph()
