@@ -36,7 +36,7 @@ Inferring the connectivity of neural circuits from incomplete observations is a 
 We present a covariance-based method for recovering the weight matrix of a recurrent neural network from partial measurements across multiple recording sessions, accumulating pairwise covariance estimates from sessions with overlapping neuron subsets.
 A Granger-causality refinement step enforces biological constraints via projected gradient descent, achieving strong correlation with true connectivity and substantial improvement over chance baselines using partial neuron coverage per session.
 Through systematic experiments on synthetic networks modeling neural circuits, we characterize a fundamental \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
-We discover that the ``incorrect'' linear approximation acts as implicit regularization---matching or outperforming the oracle estimator with known nonlinearity at all tested regimes---a concrete instance of James--Stein shrinkage.
+We discover that the ``incorrect'' linear approximation acts as implicit regularization, matching or outperforming the oracle estimator with known nonlinearity at all tested regimes, a concrete instance of James--Stein shrinkage.
 Error decomposition reveals that correlation from central pattern generators, not model mismatch, is the dominant error bottleneck, identifying intrinsic dynamics modeling as the primary target for further improvement.
 \end{abstract}
 
@@ -46,12 +46,12 @@ Error decomposition reveals that correlation from central pattern generators, no
 % ============================================================================
 
 A central goal in systems neuroscience is to map the connectivity of neural circuits from functional measurements \citep{power2011functional}.
-In neural circuits---from the lobster stomatogastric ganglion ($\sim$30 neurons; \citep{marder2007understanding}), to \textit{C.~elegans} (302 neurons; \citep{white1986structure, cook2019whole}), larval zebrafish \citep{ahrens2013whole}, and cortical organoids \citep{quadrato2017cell}---the number of neurons ranges from tens to $10^4$ but simultaneous recording of the entire circuit remains difficult.
+In neural circuits (from the lobster stomatogastric ganglion, $\sim$30 neurons \citep{marder2007understanding}, to \textit{C.~elegans}, 302 neurons \citep{white1986structure, cook2019whole}, larval zebrafish \citep{ahrens2013whole}, and cortical organoids \citep{quadrato2017cell}), neuron counts range from tens to $10^4$ but simultaneous recording of the entire circuit remains difficult.
 This creates a fundamental inverse problem: given partial, noisy measurements of neural dynamics across multiple sessions, can we recover the full connectivity matrix?
 
 This problem embodies a \emph{control-estimation tradeoff} related to classical notions of persistent excitation in system identification \citep{ljung1998system}: stimulating neurons with random perturbations aids connectivity estimation by exciting network modes, but disrupts the intrinsic dynamics that make the circuit biologically relevant.
 An ideal experimental protocol must balance identifiability against preservation of natural dynamics.
-Furthermore, real circuits possess intrinsic oscillatory patterns---central pattern generators (CPGs) \citep{marder2001central}---whose detailed structure is unknown to the experimenter.
+Furthermore, real circuits possess intrinsic oscillatory patterns, specifically central pattern generators (CPGs) \citep{marder2001central}, whose detailed structure is unknown to the experimenter.
 These represent \emph{unmodeled autonomous dynamics} that influence the observed activity.
 
 We formalize this as a matrix recovery problem from partial observations.
@@ -88,7 +88,7 @@ We impose three structural priors on $W$, each a modeling choice motivated by pr
 
 \emph{(i) No autapses}: $W_{ii} = 0$ for all $i$.
 We hypothesize that self-connections are not a necessary feature of the circuits we model, for two reasons.
-First, autapses appear to be rare in connectomics reconstructions: to our knowledge, most electron microscopy (EM) studies across organisms (\textit{C.~elegans}, \textit{Drosophila}, mouse cortex) do not report self-synapses as a distinct structural feature.
+First, autapses are not reported as distinct structural features in published connectomics reconstructions, including \textit{C.~elegans} \citep{white1986structure, cook2019whole} and \textit{Drosophila} circuit maps.
 Second, any self-loop on neuron $i$ can be equivalently modeled by a reciprocating pair $i \to j \to i$ for some neighbor $j$, making explicit autapses redundant in a strongly connected graph.
 In our estimation pipeline, this prior is applied as a \emph{known structural constraint}: we zero the diagonal of $\hat{W}$ before any refinement.
 This is a qualitatively different use of prior knowledge than the ``oracle'' that knows the nonlinearity $\phi$ (Section~\ref{sec:experiments}); it is an experimenter's belief about circuit architecture, not a biophysical measurement.
@@ -98,7 +98,7 @@ This is a practical requirement for identifiability: in a weakly connected graph
 Empirically, weakly connected topologies produced dead zones where activity collapsed to zero, while strong connectivity ensured signal reverberation through the entire network.
 
 \emph{(iii) Non-negative weights}: $W_{ij} \geq 0$.
-Like the no-autapse prior, this is a modeling belief applied uniformly to \emph{all} estimates---both the raw covariance estimator and the Granger-refined output---not a constraint specific to any refinement step.
+Like the no-autapse prior, this is a modeling belief applied uniformly to \emph{all} estimates (both the raw covariance estimator and the Granger-refined output), not a constraint specific to any refinement step.
 It is motivated by the measurement modality: EM connectomics, the primary source of ground-truth wiring data, measures synapse \emph{size} (contact area, vesicle count) but not synapse \emph{sign} (excitatory vs.\ inhibitory), yielding an inherently unsigned weight matrix.
 In our formulation, inhibitory effects arise from the \emph{sign of the activity}: a positive weight applied to negative (hyperpolarized) presynaptic activity drives the postsynaptic neuron downward.
 This is a dual of the standard neuroscience convention (non-negative firing rates with signed weights), and is functionally equivalent for the covariance estimator, which assumes no sign structure on $W$.
@@ -119,12 +119,12 @@ This deliberately includes nonlinearities that violate our default's symmetry an
 For stability, we require $\rho(W) \leq 1$, where $\rho(\cdot)$ denotes the spectral radius.
 Combined with the 1-Lipschitz property of $\phi$, this ensures bounded autonomous dynamics ($b_t = 0$): since $\|\phi(x)\| \leq \|x\|$ and $\rho(W) \leq 1$, the map $x \mapsto W\phi(x)$ is non-expansive.
 The spectral radius is scaled to $\rho(W) \approx 1.0$ (edge of stability), producing marginally stable dynamics that are neither trivially decaying nor divergent.
-Crucially, with $\rho(W) \leq 1$ and 1-Lipschitz $\phi$ satisfying $|\phi(x)| < |x|$ for $x \neq 0$ (as with $\tanh$), the autonomous system ($b_t = 0$) \emph{contracts to the origin}: the network falls silent without input.
+With $\rho(W) \leq 1$ and 1-Lipschitz $\phi$ satisfying $|\phi(x)| < |x|$ for $x \neq 0$ (as with $\tanh$), the autonomous system ($b_t = 0$) \emph{contracts to the origin}: the network falls silent without input.
 This motivates the central pattern generator (CPG) component of the input $b_t$: a subset of neurons possess autonomous oscillatory drive (analogous to cardiac pacemaker cells) that sustains network activity in the absence of external stimulation \citep{marder2001central}.
 The input thus decomposes as $b_t = b_t^{\text{stim}} + b_t^{\text{CPG}}$, where $b_t^{\text{stim}}$ is extrinsic i.i.d.\ Gaussian noise (independent of $x_t$) and $b_t^{\text{CPG}} = \text{cpg}(x_t)$ is state-dependent intrinsic drive with $\text{Cov}(b_t^{\text{CPG}}, x_t) \neq 0$.
 This decomposition is critical: the extrinsic component satisfies our independence assumption, while the CPG component violates it and dominates the estimation error (Section~\ref{sec:discussion}).
 
-\emph{Crucially, CPG identity is hidden from the estimation pipeline.}
+\emph{CPG identity is hidden from the estimation pipeline.}
 Which neurons possess intrinsic drive is a property of the ground-truth simulation, not available to the observer.
 In each session, any measured or stimulated node may also be a CPG node; the experimenter does not know.
 The variance-based CPG detection described in Section~\ref{sec:discussion} is a \emph{post-hoc} analysis, not an oracle input to the estimator.
@@ -204,18 +204,13 @@ Since $\mathbb{E}[\tanh(x_i) x_j] = \Sigma_{ij} \, \mathbb{E}[\mathrm{sech}^2(x_
 where $0 < D_{ii} < 1$ for $\sigma_i > 0$.
 Since $E_1 = W(D - I)\Sigma_{x,x}\Sigma_{x,x}^{-1} = W(D - I)$, the mismatch error simplifies to $\|E_1\|_F = \|W(D-I)\|_F \leq \|W\|_F \max_i(1 - \mathbb{E}[\mathrm{sech}^2(x_i)])$.
 For small state variance, $1 - \mathbb{E}[\mathrm{sech}^2(x_i)] \approx \sigma_i^2$, so the error is $O(\max_i \sigma_i^2)$, substantially tighter than generic Lipschitz bounds.
-Crucially, $\|\Sigma_{x,x}^{-1}\|_2$ amplifies both error sources: ill-conditioned covariance (from sparse measurement) degrades recovery even with perfect model knowledge.
+Note that $\|\Sigma_{x,x}^{-1}\|_2$ amplifies both error sources: ill-conditioned covariance (from sparse measurement) degrades recovery even with perfect model knowledge.
 
 \subsection{Granger-Causality Refinement}
 
-The raw estimator $\hat{W}$ already enforces the structural priors from Section~\ref{sec:formulation} (no autapses, non-negativity).
-The Granger refinement adds one additional constraint via projected gradient descent:
-
-\begin{enumerate}
-    \item \textbf{No self-connections}: $W_{ii} = 0$ for all $i$ (enforced on all estimates; re-enforced here for consistency).
-    \item \textbf{Granger non-causality}: $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$, indicating that the lagged covariance does not exceed the contemporaneous covariance. This sparsity pattern is the unique contribution of the Granger step.
-\end{enumerate}
-Non-negativity ($W_{ij} \geq 0$) is a modeling prior applied to all estimates (Section~\ref{sec:formulation}), not specific to the Granger refinement.
+The raw estimator $\hat{W}$ already enforces the structural priors from Section~\ref{sec:formulation}: no autapses ($\hat{W}_{ii} = 0$) and non-negativity ($W_{ij} \geq 0$).
+The Granger refinement adds one additional constraint via projected gradient descent.
+\textbf{Granger non-causality}: $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$, indicating that the lagged covariance does not exceed the contemporaneous covariance. This sparsity pattern is the unique contribution of the Granger step.
 
 The optimization solves:
 \begin{equation}
@@ -287,7 +282,7 @@ We report median Frobenius distance $\|W - \hat{W}\|_F / N$ with 95\% bootstrap 
 Recovery error is evaluated against a hierarchy of reference estimates, each incorporating additional knowledge of the ground truth (see E2 ablation, Figure~\ref{fig:granger}H):
 \emph{Chance}: a dense random non-negative matrix $W_{\mathrm{rand}} \sim U(0,1)^{N \times N}$ (no structural knowledge);
 \emph{Adjacency}: random $U(0,1)$ weights placed on the true sparsity pattern (knows which edges exist, but not their weights);
-\emph{Spectral}: an independent draw from the same generative distribution as $W$ (true sparsity pattern, random weights, scaled to the true spectral radius $\rho(W)$)---this is the fairest ``chance'' comparison, representing what an experimenter could achieve by guessing from the prior;
+\emph{Spectral}: an independent draw from the same generative distribution as $W$ (true sparsity pattern, random weights, scaled to the true spectral radius $\rho(W)$); this is the fairest ``chance'' comparison, representing what an experimenter could achieve by guessing from the prior;
 \emph{Estimate}: our covariance-based method (no oracle knowledge);
 \emph{Granger}: estimate refined with Granger non-causality zeros.
 The primary comparison is against the \emph{Spectral} baseline: improvement from $0.120$ to $0.083$ ($31\%$), which isolates the contribution of the data-driven estimation beyond what the generative prior alone provides.
@@ -351,7 +346,7 @@ After enforcing the no-autapse prior ($W_{ii} = 0$) and non-negativity ($W_{ij} 
 
 The raw estimate is dense (nearly all off-diagonal entries positive), yielding high recall (median $0.97$) but low precision (median $0.30$).
 The Granger refinement improves precision to $0.40$ while maintaining recall at $0.97$, eliminating spurious edges without sacrificing true connectivity.
-Crucially, the estimator achieves a $31\%$ improvement over an independent draw from the same generative prior ($0.083$ vs.\ $0.120$), demonstrating that the covariance accumulation framework extracts genuine connectivity information beyond what structural knowledge alone provides.
+The estimator achieves a $31\%$ improvement over an independent draw from the same generative prior ($0.083$ vs.\ $0.120$), demonstrating that the covariance accumulation framework extracts genuine connectivity information beyond what structural knowledge alone provides.
 The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
 
 \begin{figure}[ht]
@@ -367,7 +362,7 @@ We examine the interaction between stimulation gain $\sigma$ and measurement fra
 The results reveal a fundamental \emph{interaction effect}: the optimal stimulation level depends critically on measurement density.
 
 At low measurement ($33\%$), recovery error is relatively insensitive to stimulation level because partial observation implicitly regularizes $\Sigma_{x,x}$.
-At full measurement ($100\%$), a striking pattern emerges: \emph{zero stimulation} yields substantially degraded recovery, while moderate stimulation ($\sigma \approx 0.5$) yields the best performance.
+At full measurement ($100\%$), zero stimulation yields substantially degraded recovery, while moderate stimulation ($\sigma \approx 0.5$) yields the best performance.
 This occurs because CPG-driven dynamics alone do not excite all network modes; without stimulation, $\Sigma_{x,x}$ becomes ill-conditioned.
 A small amount of stochastic input breaks the CPG autocorrelation structure and ensures persistent excitation.
 However, beyond $\sigma \approx 1$, recovery begins to degrade as noise dominates the signal (Figure~\ref{fig:tradeoff}).
@@ -398,7 +393,7 @@ The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:
 \subsection{Nonlinearity Robustness (E5)}
 
 We test four nonlinearities at $N=15$ with $66\%$ measurement and $\sigma=1.0$.
-Surprisingly, $\tanh$ yields the \emph{best} recovery (Granger error $0.083$), while identity and ReLU---for which the linear approximation is exact---perform worse (error $\sim 0.17$).
+$\tanh$ yields the \emph{best} recovery (Granger error $0.083$), while identity and ReLU (for which the linear approximation is exact) perform worse (error $\sim 0.17$).
 This occurs because $\tanh$ \emph{bounds} the state values, improving $\kappa(\Sigma_{x,x})$, while unbounded nonlinearities allow state drift, severely degrading the conditioning of $\Sigma_{x,x}$.
 Sigmoid achieves intermediate error ($0.132$): its boundedness helps conditioning relative to identity and ReLU, but its non-zero mean ($\phi(0) = 0.5$) biases the covariance estimate.
 The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:nonlinearity}).
@@ -430,11 +425,11 @@ This confirms that the linear approximation provides implicit regularization ana
 \subsection{Stimulation Coverage (E7)}
 
 The experiments above hold the number of stimulated neurons (\emph{stimulation fraction}) fixed at $33\%$.
-But how many neurons receive stimulation is a distinct experimental knob from how intensely they are stimulated---stimulation fraction controls the \emph{rank} of the stimulation covariance, while gain controls its \emph{magnitude}.
+The number of neurons receiving stimulation is a distinct experimental knob from how intensely they are stimulated; stimulation fraction controls the \emph{rank} of the stimulation covariance, while gain controls its \emph{magnitude}.
 In practice, stimulation fraction is determined by the choice of optogenetic tool (e.g., the number of neurons expressing a light-sensitive opsin).
 
 We vary the number of stimulated neurons at fractions $\{0\%, 33\%, 50\%, 67\%, 100\%\}$ of $N=30$ (i.e., $n_s \in \{0, 10, 15, 20, 30\}$) at fixed $\sigma=1.0$ and $66\%$ measurement.
-With zero stimulation ($0\%$), the network relies entirely on CPG-driven dynamics, yielding substantially degraded recovery---the covariance matrix $\Sigma_{x,x}$ is ill-conditioned without independent noise input.
+With zero stimulation ($0\%$), the network relies entirely on CPG-driven dynamics, yielding substantially degraded recovery, as the covariance matrix $\Sigma_{x,x}$ is ill-conditioned without independent noise input.
 At $33\%$ stimulation ($10$ neurons), error drops dramatically, matching the baseline performance.
 Beyond $33\%$, performance plateaus, indicating that moderate stimulation coverage suffices when stimulation gain is adequate (Figure~\ref{fig:sensors}).
 
@@ -452,7 +447,7 @@ Beyond $33\%$, performance plateaus, indicating that moderate stimulation covera
 
 \paragraph{Neural connectivity inference.}
 Inferring functional connectivity from neural recordings is a longstanding challenge.
-Modern calcium imaging enables simultaneous recording of hundreds of neurons in small circuits \citep{kato2015global, yemini2021neuropal}, but full coverage in a single session remains difficult.
+Modern calcium imaging enables simultaneous recording of hundreds of neurons in neural circuits \citep{kato2015global, yemini2021neuropal}, but full coverage in a single session remains difficult.
 Generalized linear models (GLMs) \citep{pillow2008spatio} provide a principled regression-based framework for inferring directed connectivity, though they assume all relevant neurons are observed.
 Transfer entropy \citep{schreiber2000measuring} offers a model-free alternative that captures nonlinear interactions, but is sensitive to unobserved confounders.
 Our covariance-based approach is complementary: it explicitly handles partial observations by accumulating statistics across sessions.
@@ -468,7 +463,7 @@ Compressed sensing methods have been applied to reconstruct synaptic connections
 Our approach differs in that we recover a full matrix rather than a sparse vector, and leverage temporal covariance structure rather than random projections.
 
 \paragraph{Matrix completion.}
-Matrix completion---recovering a matrix from a subset of its entries---has been studied extensively under low-rank assumptions \citep{candes2009exact}.
+Matrix completion (recovering a matrix from a subset of its entries) has been studied extensively under low-rank assumptions \citep{candes2009exact}.
 Nuclear norm minimization can recover a rank-$r$ matrix of size $N \times N$ from $O(rN \log^2 N)$ uniformly sampled entries.
 Our problem shares the high-level structure (recover a matrix from partial information) but differs in two key respects: the connectivity matrix $W$ is sparse rather than low-rank, and the ``observations'' are not direct entries of $W$ but temporal covariance statistics accumulated across recording sessions.
 Nevertheless, the coupon-collector argument for session coverage (Section~\ref{sec:discussion}) mirrors the sampling requirements in matrix completion theory, and both frameworks share the insight that structured matrices can be recovered from far fewer measurements than their ambient dimension would suggest.
@@ -511,7 +506,7 @@ Our experiments reveal two complementary axes of stimulation design: \emph{inten
 Stimulation gain controls the \emph{magnitude} of the input covariance, while stimulation fraction controls its \emph{rank}, the number of independent input directions exciting the network.
 The E7 results show that zero stimulation yields substantially degraded recovery because CPG-driven dynamics alone leave $\Sigma_{x,x}$ ill-conditioned.
 At $33\%$ stimulation ($10$ of $N=30$ neurons), error drops substantially, and performance plateaus beyond $\sim 33\%$ stimulation coverage.
-This has a direct practical implication: in optogenetic experiments, an experimenter need not achieve pan-neuronal actuator expression---targeting roughly one-third of neurons suffices, provided stimulation intensity is moderate ($\sigma \approx 0.5$--$1.0$).
+This has a direct practical implication: in optogenetic experiments, an experimenter need not achieve pan-neuronal actuator expression. Targeting roughly one-third of neurons suffices, provided stimulation intensity is moderate ($\sigma \approx 0.5$--$1.0$).
 Combined with the E3 finding that excessive stimulation degrades recovery, this defines a practical operating regime: moderate gain applied to a modest subset of neurons.
 
 \paragraph{Identifiability conditions.}
@@ -529,7 +524,7 @@ Our experiments (Section~\ref{sec:experiments}) show that measurement density di
 The E6 results (Section~\ref{sec:experiments}) confirm the bias-variance prediction of Appendix~\ref{sec:app_oracle}: across all seven stimulation intensities tested, the approximate estimator matches or outperforms the oracle that uses the true nonlinearity.
 The gap is largest at low stimulation ($\sim2.7\times$ at $\sigma = 0$, $\sim1.7\times$ at $\sigma = 0.25$--$0.5$) and narrows at high stimulation ($1.5$--$1.6\times$ for $\sigma \geq 1$) as both estimators degrade.
 This is a concrete instance of the James--Stein phenomenon: the ``incorrect'' linear covariance is better-conditioned because $\tanh$ compression makes $\Sigma_{\phi(x),x}$ a row-scaled version of $\Sigma_{x,x}$ with heterogeneous scaling, amplifying noise during inversion.
-The practical implication is that experimentalists need not characterize the precise neuronal nonlinearity---the linear approximation is not just simpler but \emph{better}.
+The practical implication is that experimentalists need not characterize the precise neuronal nonlinearity: the linear approximation is not just simpler but \emph{better}.
 
 \paragraph{Error decomposition: CPG correlation dominates.}
 The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ is only partially justified.
@@ -546,10 +541,10 @@ This suggests a natural extension: downweighting detected CPG nodes during covar
 \textbf{(B)} Same network under \emph{stimulated} dynamics ($\sigma=1.0$, i.i.d.\ Gaussian per stimulated node per timestep): extrinsic noise elevates overall variance across all nodes while preserving CPG structure.
 \textbf{(C)} Intrinsic CPG drive signals $b_{\mathrm{CPG},i}(t)$ for 5 CPG nodes, generated by a chaotic reservoir network. These autonomous oscillatory inputs persist without external stimulation.
 \textbf{(D)} PCA phase portrait of autonomous dynamics: scatter of the first 3 principal components of $X \in \mathbb{R}^{T \times N}$, colored by time (dark$\to$light). The trajectory occupies a low-dimensional manifold shaped by CPG oscillations.
-\textbf{(E)} PCA phase portrait under stimulation: the trajectory fills a larger volume in PC space, indicating that stochastic input excites network modes beyond those driven by CPGs---this expanded coverage is what enables covariance-based estimation.
+\textbf{(E)} PCA phase portrait under stimulation: the trajectory fills a larger volume in PC space, indicating that stochastic input excites network modes beyond those driven by CPGs, and this expanded coverage is what enables covariance-based estimation.
 \textbf{(F)} Power spectral density (Welch's method) of neural activity, averaged across neurons. Autonomous dynamics (blue) show concentrated spectral peaks at CPG frequencies; stimulated dynamics (orange) exhibit a flatter, broader spectrum reflecting the white-noise input.
 \textbf{(G)} Per-node activity variance (bar chart, sorted). CPG nodes (red) have systematically higher variance than non-CPG nodes (blue), enabling detection via a variance threshold (F1$\sim$0.8).
-\textbf{(H)} Error decomposition: $\|E_1\|_F/N$ (model mismatch, $0.080$) vs.\ $\|E_2\|_F/N$ (CPG--state correlation, $0.225$) vs.\ total estimation error $\|\hat{W} - W\|_F/N$ ($0.087$). $E_1$ and $E_2$ are Frobenius norms of the \emph{individual error components} (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel in different matrix entries.  For this representative topology, $E_2$ is ${\sim}3\times$ larger than $E_1$ (median across topologies: ${\sim}2\times$), confirming that CPG correlation---not the linear approximation---is the dominant error source.
+\textbf{(H)} Error decomposition: $\|E_1\|_F/N$ (model mismatch, $0.080$) vs.\ $\|E_2\|_F/N$ (CPG--state correlation, $0.225$) vs.\ total estimation error $\|\hat{W} - W\|_F/N$ ($0.087$). $E_1$ and $E_2$ are Frobenius norms of the \emph{individual error components} (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel in different matrix entries.  For this representative topology, $E_2$ is ${\sim}3\times$ larger than $E_1$ (median across topologies: ${\sim}2\times$), confirming that CPG correlation (not the linear approximation) is the dominant error source.
 \textbf{(I)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical). Pearson $r = 0.90$; dashed line: $y=x$.}
 \label{fig:dynamics}
 \end{figure}
@@ -562,11 +557,11 @@ The graceful degradation follows from the ridge structure: noise regularizes the
 \paragraph{Limitations.}
 Several limitations should be noted.
 (1)~The Stein--Price bound assumes Gaussian states, but our states are driven by a chaotic reservoir through $\tanh$; the bound is directionally correct but not formally tight for non-Gaussian distributions.
-(2)~Our experiments use excitatory networks ($W_{ij} \geq 0$), where the Perron--Frobenius theorem guarantees a unique real dominant eigenvalue and simplifies spectral radius control.
+(2)~Our experiments use excitatory networks ($W_{ij} \geq 0$), where the Perron--Frobenius theorem \citep{horn1985matrix} guarantees a unique real dominant eigenvalue and simplifies spectral radius control.
 Real circuits include inhibitory connections (mixed-sign $W$); extending the method requires relaxing the non-negativity modeling prior.
 Preliminary tests with mixed-sign weights yield qualitatively similar recovery accuracy for the covariance estimator itself, since the estimator $\hat{W} = \Sigma_{y_{t+1},y_t}\Sigma_{y_t,y_t}^{-1}$ does not assume sign constraints.
 (3)~We compare against a chance baseline but not against established methods such as GLMs \citep{pillow2008spatio} or vector autoregressive models; such comparisons are needed for a stronger empirical evaluation.
-(4)~Our experiments span $N = 15$ to $1074$, covering small CPG circuits through moderate-scale networks. The computational bottleneck is the $O(N^3)$ covariance inversion; iterative solvers and sparse approximations could extend to larger $N$.
+(4)~Our experiments span $N \in \{15, 159, 300\}$, motivated by biologically relevant circuit scales: from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) to \textit{C.~elegans} (302 neurons; \citep{white1986structure}). The method itself places no upper bound on $N$; the computational bottleneck is the $O(N^3)$ covariance inversion, for which efficient iterative and sparse solvers exist.
 (5)~Our primary results assume noiseless observations; noise robustness tests (E8) show graceful degradation ($1\%$ at $\sigma_\epsilon = 0.1$, $33\%$ at $\sigma_\epsilon = 0.5$).
 
 % ============================================================================
@@ -582,13 +577,13 @@ Beyond the method itself, our systematic experiments reveal several findings wit
 First, a fundamental \emph{control-estimation tradeoff} governs experimental design: stimulation is necessary for identifiability (zero stimulation fails at high measurement density), but excessive stimulation degrades the covariance structure.
 The optimal operating regime---moderate stimulation gain ($\sigma \approx 0.5$--$1.0$) applied to a modest subset of neurons ($\sim 33\%$ stimulation coverage)---defines a practical target for optogenetic experimental protocols.
 Second, the ``incorrect'' linear approximation matches or outperforms the oracle estimator with known nonlinearity at \emph{all} tested regimes, a concrete instance of the James--Stein phenomenon where implicit regularization reduces total risk.
-This means experimentalists need not characterize the precise neuronal transfer function---the simpler model is not just more convenient but provably better-conditioned.
+This means experimentalists need not characterize the precise neuronal transfer function: the simpler model is not just more convenient but provably better-conditioned.
 Third, error decomposition reveals that CPG--state correlation (${\sim}2\times$ larger than model mismatch) is the dominant bottleneck, suggesting that future gains will come from modeling intrinsic dynamics rather than refining the nonlinear approximation.
 
 Several directions merit future investigation.
-Extending the framework to real neural recordings, particularly \textit{C.~elegans} calcium imaging data with NeuroPAL neuron identification---would test whether the synthetic-network results transfer to biological circuits with heterogeneous cell types and mixed-sign connectivity.
+Extending the framework to real neural recordings, particularly \textit{C.~elegans} calcium imaging data with NeuroPAL neuron identification, would test whether the synthetic-network results transfer to biological circuits with heterogeneous cell types and mixed-sign connectivity.
 Structured stimulation protocols (e.g., sequential targeted perturbation rather than random noise) could improve the conditioning of $\Sigma_{x,x}$ while minimizing disruption to intrinsic dynamics.
-Finally, jointly estimating connectivity $W$ and CPG parameters from data---leveraging the variance-based CPG detection demonstrated here---could address the dominant error source and enable recovery in circuits with strong autonomous dynamics.
+Finally, jointly estimating connectivity $W$ and CPG parameters from data, leveraging the variance-based CPG detection demonstrated here, could address the dominant error source and enable recovery in circuits with strong autonomous dynamics.
 
 % ============================================================================
 % References
@@ -737,7 +732,7 @@ This is a fundamental limitation of covariance-based methods in high dimensions~
 \label{sec:app_cpg}
 
 The CPG provides intrinsic oscillatory drive to a subset of neurons, modeling autonomous circuit dynamics observed in biological neural circuits~\citep{marder2001central}.
-We designed the CPG to produce rich, nonstationary, state-dependent spatiotemporal signals---deliberately avoiding simple sinusoidal toy signals that would fail to capture the complexity of real biological oscillators.
+We designed the CPG to produce rich, nonstationary, state-dependent spatiotemporal signals, deliberately avoiding simple sinusoidal toy signals that would fail to capture the complexity of real biological oscillators.
 
 \paragraph{Architecture.}
 The CPG is a frozen (non-trainable) deep neural network $f_{\text{CPG}}: \mathbb{R}^N \to \mathbb{R}^N$ that maps the current network state $x_t$ to a drive signal $b_{\text{CPG}}(t)$:
@@ -754,7 +749,7 @@ This state dependence is the source of the $E_2$ error term in the estimation er
 
 \paragraph{Topology invariance.}
 The CPG function is constructed once per network topology and shared across all $K$ recording sessions.
-Each session starts with an independent time counter, so the CPG produces different trajectories due to different network states, measurement masks, and stimulation patterns---but the underlying oscillatory function is the same.
+Each session starts with an independent time counter, so the CPG produces different trajectories due to different network states, measurement masks, and stimulation patterns; the underlying oscillatory function is the same across sessions.
 This models the biological reality that intrinsic oscillators are properties of the circuit, not the recording session.
 
 \end{document}
