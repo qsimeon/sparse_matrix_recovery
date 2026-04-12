@@ -1,12 +1,12 @@
 #!/bin/bash
 #==============================================================================
-# launch_E1_scaling.sh — Run E1 baseline scaling experiment
+# launch_E1_scaling.sh — Run E1 baseline scaling experiment on SLURM cluster
 #
-# E1 sweeps N ∈ {15, 30, 159, 300, 1074} × T ∈ {100, 250, 500, 750, 1000}
-# = 25 configs × 10 reps = 250 tasks
+# E1 sweeps N ∈ {15, 159, 300} × T ∈ {100, 350, 1000}
+# = 9 configs × 10 reps = 90 tasks
 #
-# Each task runs ONE config for ONE rep (per-config-per-rep), because
-# large N values (300, 1074) are expensive and need different resources.
+# Each task runs ONE config for ONE rep (per-config-per-rep).
+# N=300 jobs are memory-intensive: ~8GB each.
 #
 # USAGE:
 #   cd ~/sparse_matrix_recovery
@@ -15,14 +15,19 @@
 # MONITOR:
 #   squeue -u $USER -n sparse_E1
 #   sacct -j <JOBID> --format=JobID,State,Elapsed,MaxRSS
+#
+# After all tasks finish, aggregate results:
+#   uv run python experiments/aggregate_results.py \
+#       --experiment E1 --reps-dir experiments/results/reps \
+#       --output experiments/results/E1_baseline.json
 #==============================================================================
 
 #SBATCH --job-name=sparse_E1
 #SBATCH --partition=mit_normal
-#SBATCH --array=0-249            # 25 configs × 10 reps = 250 tasks
+#SBATCH --array=0-89             # 9 configs × 10 reps = 90 tasks
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=16G                # N=1074 needs ~8-12GB; 16GB for safety
-#SBATCH --time=02:00:00          # N=1074 can take ~30min per config
+#SBATCH --mem=8G                 # N=300 needs ~4-6GB; 8GB for safety
+#SBATCH --time=01:00:00          # N=300, T=1000 takes ~15-20 min per rep
 #SBATCH --output=logs/E1_%A_%a.out
 #SBATCH --error=logs/E1_%A_%a.err
 
@@ -35,8 +40,8 @@ export JOBLIB_START_METHOD=fork
 
 TASK_ID=${SLURM_ARRAY_TASK_ID}
 
-# E1 has 25 configs (5 N × 5 T), 10 reps each
-NUM_CONFIGS=25
+# E1 has 9 configs (3 N × 3 T), 10 reps each
+NUM_CONFIGS=9
 NUM_REPS=10
 
 CONFIG_IDX=$((TASK_ID / NUM_REPS))

@@ -1,5 +1,5 @@
 {
-  "iteration": 29,
+  "iteration": 30,
   "max_iterations": 20,
   "phases": {
     "scope": {
@@ -105,10 +105,36 @@
         "Fixed EXPERIMENTS dict cross-wiring: function names now match experiment numbers",
         "Fixed notebook: num_networks -> num_sessions in qsimeon_SparseMatrixRecovery.ipynb",
         "Fixed REVIEW_NOTES.md: stale num_networks=50 reference",
-        "Updated research_prd.json: E7 sweep values [0,5,7,10,15], H6/H7 results, networks/sessions hierarchy",
-        "Updated STATUS.md and progress.json",
+        "Updated research_prd.json: E7 sweep values, H6/H7 results",
         "Verified all paper numbers against fresh JSON data (all match)",
         "Compiled paper and poster PDFs clean"
+      ],
+      "consistency_audit": "PASS"
+    },
+    {
+      "iteration": 30,
+      "timestamp": "2026-04-11",
+      "focus": "Deep critical review v3: paper editing, code walkthrough, figure audit, repo cleanup",
+      "actions": [
+        "Paper §3.2: fixed erroneous two-bullet Granger section (was listing no-autapse as Granger contribution)",
+        "Paper: EM autapse claim reframed as structural hypothesis with citations",
+        "Paper: em dashes reduced 15→2; LLM filler phrases removed",
+        "Paper: N range in Limitations corrected (was '15 to 1074', now N∈{15,159,300})",
+        "Paper: Perron-Frobenius theorem citation added (Horn & Johnson 1985)",
+        "Paper: Figure 1 r=0.96 fallback fixed (now reads from data → r=0.90)",
+        "Paper: Figure 3 panel header clarified (representative vs median)",
+        "Paper: Figure 9 panel (I) caption corrected (r=0.90→0.94 for single topology)",
+        "Paper: CPG architecture figure (fig11_cpg_architecture.pdf) added to Appendix A.8",
+        "Paper: zebrafish neuron count fixed (10^4→10^5 in intro)",
+        "Paper: 66%/67% inconsistency resolved throughout",
+        "DEEP_DIVE.md: comprehensive rewrite with all verified numbers",
+        "Repo cleanup: removed 500KB stale files (tools/, diagrams/, old sweep JSONs)",
+        "core.py: full line-by-line walkthrough with user; abs vs ReLU empirically tested",
+        "Experiments E1-E8: all 8 paper claims cross-referenced vs code and JSON — all verified",
+        "E1-E8: re-run 2026-04-11 seed=42; results bit-for-bit identical to Apr 7",
+        "11 figures regenerated; all 3 PDFs (paper, poster, presentation) compiled clean",
+        "launch_E1_scaling.sh updated to current 3×3 E1 grid (was old 5×5)",
+        "explore_dynamics.ipynb: abs vs ReLU CPG comparison cell added"
       ],
       "consistency_audit": "PASS"
     }
