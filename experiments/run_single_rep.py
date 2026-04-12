@@ -213,10 +213,12 @@ def get_experiment_configs(experiment):
             for sg in [0.0, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
         ]
     elif experiment == "E7":  # Stim fraction (N=30)
+        # Three conditions: none (0%), moderate (33%), full-third (66%).
+        # Performance plateaus above 33% — 50% and 100% add no information.
         return [
             {"num_nodes": 30, "max_timesteps": 1000, "num_cpgs": 10,
              "num_measured": 20, "num_stimulated": ns, "stim_gain": 1.0, "nonlinearity": "tanh"}
-            for ns in [0, 10, 15, 20, 30]
+            for ns in [0, 10, 20]
         ]
     elif experiment == "E8":  # Observation noise robustness
         return [

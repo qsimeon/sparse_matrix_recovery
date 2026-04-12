@@ -22,8 +22,8 @@
 #   sbatch scripts/launch_sweep.sh
 #
 # RESULTS:
-#   experiments/results/sweep/ contains 12,150 JSON files
-#   Run: python experiments/aggregate_sweep.py to combine into one file
+#   experiments/results/sweep/ contains individual JSON files
+#   Run: uv run python experiments/aggregate_results.py --sweep to combine
 #==============================================================================
 
 #SBATCH --job-name=sparse_sweep

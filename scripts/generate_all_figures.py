@@ -24,7 +24,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from experiments.analysis import (
     load_results,
     generate_problem_schematic,
-    generate_cpg_architecture_figure,
     plot_scaling,
     plot_granger_comparison,
     plot_stimulation_tradeoff,
@@ -238,12 +237,11 @@ def main():
     data = load_results(RESULTS_DIR / "E6_oracle_crossover.json")
     plot_oracle_crossover(data, FIGURES_DIR / "fig10_oracle_comparison.pdf")
 
-    # Fig 11: CPG architecture (no data needed — conceptual diagram)
-    print("\nFig 11: CPG architecture diagram (Appendix A.8)")
-    generate_cpg_architecture_figure(FIGURES_DIR / "fig11_cpg_architecture.pdf")
+    # Note: CPG architecture is a TikZ diagram inline in main.tex (Appendix A.8)
+    # — no external figure file needed.
 
     print("\n" + "=" * 60)
-    print("  All 11 figures generated!")
+    print("  All 10 figures generated!")
     print("=" * 60)
     print(f"\n  Output: {FIGURES_DIR}/")
     for f in sorted(FIGURES_DIR.glob("fig*.pdf")):

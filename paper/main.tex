@@ -17,6 +17,8 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{natbib}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
 
 \title{Recovering Sparse Neural Connectivity from Partial Measurements:\\
 A Covariance-Based Approach with Granger-Causality Refinement}
@@ -302,7 +304,7 @@ E3 & Stim gain $\times$ measurement & $\sigma \in [0,2]$, meas $\in \{33,66,100\
 E4 & Measurement fraction & $33$--$100\%$ & How much observation is needed? \\
 E5 & Nonlinearity $\phi$ & tanh, ReLU, identity, sigmoid & How robust to model mismatch? \\
 E6 & Oracle vs.\ approximation & $\sigma \in [0,5]$ & Does the oracle ever win? \\
-E7 & Stimulation fraction & $0$--$100\%$ of $N{=}30$ & How many neurons to stimulate? \\
+E7 & Stimulation fraction & $\{0\%, 33\%, 66\%\}$ of $N{=}30$ & How many neurons to stimulate? \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -424,19 +426,25 @@ This confirms that the linear approximation provides implicit regularization ana
 
 \subsection{Stimulation Coverage (E7)}
 
-The experiments above hold the number of stimulated neurons (\emph{stimulation fraction}) fixed at $33\%$.
-The number of neurons receiving stimulation is a distinct experimental knob from how intensely they are stimulated; stimulation fraction controls the \emph{rank} of the stimulation covariance, while gain controls its \emph{magnitude}.
-In practice, stimulation fraction is determined by the choice of optogenetic tool (e.g., the number of neurons expressing a light-sensitive opsin).
+Experiments E3 and E7 together characterize two orthogonal axes of stimulation design.
+E3 (Section~\ref{sec:experiments}) held stimulation \emph{fraction} fixed at $33\%$ and varied stimulation \emph{intensity} (gain $\sigma$).
+E7 holds gain fixed at $\sigma=1.0$ and varies the \emph{fraction} of neurons receiving stimulation.
 
-We vary the number of stimulated neurons at fractions $\{0\%, 33\%, 50\%, 67\%, 100\%\}$ of $N=30$ (i.e., $n_s \in \{0, 10, 15, 20, 30\}$) at fixed $\sigma=1.0$ and $66\%$ measurement.
-With zero stimulation ($0\%$), the network relies entirely on CPG-driven dynamics, yielding substantially degraded recovery, as the covariance matrix $\Sigma_{x,x}$ is ill-conditioned without independent noise input.
-At $33\%$ stimulation ($10$ neurons), error drops dramatically, matching the baseline performance.
-Beyond $33\%$, performance plateaus, indicating that moderate stimulation coverage suffices when stimulation gain is adequate (Figure~\ref{fig:sensors}).
+These axes are mechanistically distinct: gain controls the \emph{magnitude} of each neuron's input covariance, while fraction controls the \emph{rank} of the aggregate stimulation covariance $\Sigma_{b^{\mathrm{stim}},b^{\mathrm{stim}}}$.
+With $n_s$ stimulated neurons receiving independent i.i.d.\ noise, the stimulation covariance has rank exactly $n_s$.
+When $n_s = 0$, the rank is zero: all input directions in state space depend entirely on the CPG, leaving $\Sigma_{x,x}$ ill-conditioned and the estimator unreliable.
+Targeting more neurons raises the rank, injecting independent excitation into more directions of state space and improving the conditioning of $\Sigma_{x,x}$.
+In practice, stimulation fraction is controlled by the number of neurons expressing a light-sensitive opsin in an optogenetic experiment.
+
+We compare three conditions: no stimulation ($0\%$), moderate coverage ($33\%$, $n_s = 10$ of $N=30$), and broader coverage ($66\%$, $n_s = 20$), at fixed $\sigma=1.0$ and $66\%$ measurement.
+With zero stimulation, recovery is substantially degraded (error $\approx 0.83$), as the covariance matrix $\Sigma_{x,x}$ has near-zero rank in the stimulation directions.
+At $33\%$ coverage, error drops dramatically (to $\approx 0.05$), matching baseline performance.
+At $66\%$ coverage, performance is unchanged from $33\%$, confirming that the benefit saturates quickly (Figure~\ref{fig:sensors}).
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\linewidth]{figures/fig9_stim_fraction.pdf}
-\caption{\textbf{Effect of stimulation coverage} on connectivity recovery for $N=30$, $T=1000$, $66\%$ measured, $\sigma=1.0$. Median recovery error vs.\ fraction of neurons receiving extrinsic stimulation. Zero stimulation ($0\%$, pure CPG dynamics) yields substantially degraded recovery; moderate stimulation ($33\%$) drops error dramatically; beyond $33\%$, performance plateaus. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n=10$). Stimulation coverage controls the \emph{rank} of the input covariance, distinct from stimulation intensity (E3).}
+\caption{\textbf{Effect of stimulation coverage} on connectivity recovery ($N=30$, $T=1000$, $66\%$ measured, $\sigma=1.0$). Three conditions: no stimulation ($0\%$, pure CPG dynamics), moderate coverage ($33\%$, $n_s{=}10$), and broader coverage ($66\%$, $n_s{=}20$). Zero stimulation yields substantially degraded recovery (error ${\approx}0.83$) because $\Sigma_{x,x}$ has zero rank in the stimulation directions; $33\%$ coverage drops error to ${\approx}0.05$, matching baseline performance; $66\%$ shows no further improvement, confirming rapid saturation. Shaded: 95\% bootstrap CI. Dots: individual topologies ($n{=}10$). Stimulation fraction controls the \emph{rank} of the input covariance, independently of stimulation intensity (E3).}
 \label{fig:sensors}
 \end{figure}
 
@@ -745,7 +753,7 @@ The CPG is a frozen (non-trainable) deep neural network $f_{\text{CPG}}: \mathbb
 
 \paragraph{State dependence.}
 The CPG output $b_{\text{CPG}}(t) = f_{\text{CPG}}(x_t)$ depends on the current state, making $\text{Cov}(b_{\text{CPG}}, x_t) \neq 0$.
-This state dependence is the source of the $E_2$ error term in the estimation error decomposition (Section~\ref{sec:discussion_error}), which dominates the model mismatch $E_1$ by a factor of $\sim 2\times$.
+This state dependence is the source of the $E_2$ error term in the estimation error decomposition (Section~\ref{sec:discussion}), which dominates the model mismatch $E_1$ by a factor of $\sim 2\times$.
 
 \paragraph{Topology invariance.}
 The CPG function is constructed once per network topology and shared across all $K$ recording sessions.
@@ -756,12 +764,55 @@ Figure~\ref{fig:cpg_architecture} summarizes the CPG's role in the simulation.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\linewidth]{figures/fig11_cpg_architecture.pdf}
-\caption{\textbf{Central Pattern Generator (CPG) architecture and role.}
-The CPG maps the current network state $x_t$ to an intrinsic drive signal $b^{\mathrm{CPG}}_t$, which is added to the extrinsic stimulation $b^{\mathrm{stim}}_t$ to form the total input to the network.
-The CPG is a frozen (non-trainable) function combining a circularly-shifted state input, a random deep network, and a chaotic reservoir drive.
-It is constructed once per network topology and shared (with independent time counters) across all $K$ recording sessions.
-The state-dependence $\mathrm{Cov}(b^{\mathrm{CPG}}_t, x_t) \neq 0$ is the source of the $E_2$ estimation error, which dominates model mismatch $E_1$ by ${\sim}2\times$ (median across topologies).}
+\begin{tikzpicture}[
+    node distance=1.8cm and 2.2cm,
+    box/.style={
+        draw, rounded corners=4pt, minimum width=2.6cm, minimum height=1.1cm,
+        align=center, font=\small, inner sep=6pt
+    },
+    statebox/.style={box, fill=blue!8, draw=blue!40!black},
+    cpgbox/.style={box, fill=orange!10, draw=orange!60!black,
+                   minimum width=3.4cm, minimum height=1.4cm},
+    dynbox/.style={box, fill=red!8, draw=red!40!black, minimum width=3.8cm},
+    sumnode/.style={circle, draw, minimum size=0.7cm, font=\large, inner sep=0pt},
+    >=stealth, thick
+]
+
+%% Nodes
+\node[statebox] (state) {$x_t$\\[2pt]{\footnotesize network state}};
+
+\node[cpgbox, right=of state] (cpg)
+    {\textbf{CPG}\\[3pt]
+     {\footnotesize frozen $\cdot$ constructed once per topology}\\
+     {\footnotesize shared across $K$ sessions}};
+
+\node[sumnode, right=2.4cm of cpg] (plus) {$+$};
+
+\node[statebox, above=1.3cm of plus] (bstim)
+    {$b_t^{\mathrm{stim}}$\\[2pt]{\footnotesize i.i.d.\ noise}};
+
+\node[dynbox, right=1.6cm of plus] (dyn)
+    {$x_{t+1} = W\phi(x_t)+b_t$\\[3pt]{\footnotesize network dynamics}};
+
+%% Forward arrows
+\draw[->] (state) -- (cpg);
+\draw[->] (cpg)   -- node[above, font=\small]{$b_t^{\mathrm{CPG}}$} (plus);
+\draw[->] (bstim) -- (plus);
+\draw[->] (plus)  -- (dyn);
+
+%% State-dependence feedback (the E2 error source)
+\draw[->, dashed, draw=red!70!black, line width=0.8pt]
+    (dyn.south) -- ++(0,-0.9)
+    -- node[below, font=\scriptsize, text=red!70!black]
+       {$\mathrm{Cov}(b^{\mathrm{CPG}}_t,\, x_t)\neq 0\;\Rightarrow\;E_2\text{ error}$}
+    (cpg.south |- dyn.south)
+    -- (cpg.south);
+
+\end{tikzpicture}
+\caption{\textbf{Central Pattern Generator (CPG) role.}
+The CPG maps the current network state $x_t$ to an intrinsic drive $b^{\mathrm{CPG}}_t$, which is summed with extrinsic stimulation $b^{\mathrm{stim}}_t$ to form the total network input $b_t$.
+The CPG is frozen (non-trainable), constructed once per network topology, and shared across all $K$ recording sessions (each with an independent time counter).
+Because its output depends on $x_t$, the CPG violates the independence assumption $\mathrm{Cov}(b_t,x_t)\approx 0$, producing the $E_2$ error term that dominates model mismatch $E_1$ by ${\sim}2\times$.}
 \label{fig:cpg_architecture}
 \end{figure}
 

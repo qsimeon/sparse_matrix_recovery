@@ -314,8 +314,9 @@ def run_E7_stim_fraction(seed=42, output_dir=None):
 
     results = []
     num_nodes = 30
-    # Sweep: 0%, 33%, 50%, 66%, 100% of N=30
-    for num_stimulated in [0, 10, 15, 20, 30]:
+    # Three conditions: none (rank-0 input), moderate (33%), full-third (66%).
+    # Performance plateaus above 33%, so 50% and 100% add no information.
+    for num_stimulated in [0, 10, 20]:
         stim_frac = num_stimulated / num_nodes
         print(f"\n  num_stimulated={num_stimulated} ({stim_frac:.0%} of N={num_nodes})")
         r = run_experiment(
