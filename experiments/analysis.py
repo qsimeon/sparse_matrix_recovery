@@ -260,19 +260,20 @@ def plot_stimulation_tradeoff(results, output_path):
 # ============================================================================
 
 def plot_granger_comparison(results, output_path):
-    """Composite: W heatmaps (top) + violin plots (bottom).
+    """Composite: heatmaps (top) + heteroskedasticity analysis (middle) + violins (bottom).
 
-    Top row: True W, Covariance estimate, Granger-refined, Absolute error.
-    Uses good simulation config (N=15, 50 instances, stim=1.0, 66% measured).
-    Bottom row: violin plots for distance, precision, recall from experiment data.
+    Row 0 (A-D): True W, raw estimate, Granger-refined, absolute error.
+    Row 1 (E-H): Error-weight scatter (heteroskedasticity), E1 component, E2 component, ablation.
+    Row 2 (I-K): Violin plots for error, precision, recall.
     """
     r = results[0]
     df = r["distances"]
 
-    fig = plt.figure(figsize=(14, 8))
-    gs = gridspec.GridSpec(2, 4, height_ratios=[1, 1], hspace=0.4, wspace=0.4)
+    fig = plt.figure(figsize=(14, 12))
+    gs = gridspec.GridSpec(3, 4, height_ratios=[1, 1, 0.85], hspace=0.48, wspace=0.4)
 
-    # --- Top row: 4 heatmaps from a GOOD simulation ---
+    # ── Row 0: 4 heatmaps from a representative simulation ───────────────────
+    true_W = approx_W = W_granger = cov_x = cov_dtx = cov_bx = cov_phix = None
     try:
         from experiments.core import (create_multinetwork_dataset,
                                       estimate_connectivity_weights, projected_gradient_causal,
@@ -280,7 +281,6 @@ def plot_granger_comparison(results, output_path):
         import torch
         np.random.seed(42); torch.manual_seed(42)
         phi = get_nonlinearity("tanh")
-        # Use the GOOD config: 50 instances, stim=1.0, 66% measured
         dataset = create_multinetwork_dataset(
             num_sessions=50, max_timesteps=1000, num_nodes=15, num_cpgs=5,
             num_measured=10, num_stimulated=5, fixed_stim=False, stim_gain=1.0,
@@ -289,21 +289,24 @@ def plot_granger_comparison(results, output_path):
         _, W_granger = projected_gradient_causal(est["cov_x"], est["cov_dtx"])
         true_W = est["true_W"]
         approx_W = est["approx_W"]
+        cov_x = est["cov_x"]
+        cov_dtx = est["cov_dtx"]
+        cov_bx = est["cov_bx"]
+        cov_phix = est["cov_phix"]
 
         panels = [
             (true_W, "True $W$", "Reds"),
-            (approx_W, "Covariance est. $\\hat{W}$", "RdBu_r"),
+            (approx_W, r"Covariance est.\ $\hat{W}$", "RdBu_r"),
             (W_granger, "Granger-refined $\\hat{W}$", "Reds"),
             (np.abs(true_W - W_granger), "Error $|W - \\hat{W}|$", "Reds"),
         ]
         vmax = true_W.max()
-
         for col, (mat, title, cmap) in enumerate(panels):
             ax = fig.add_subplot(gs[0, col])
-            if col == 1:  # approx can have negative values
+            if col == 1:
                 im = ax.imshow(mat, cmap=cmap, vmin=-vmax, vmax=vmax,
                                aspect="equal", interpolation="nearest")
-            elif col == 3:  # error
+            elif col == 3:
                 im = ax.imshow(mat, cmap=cmap, vmin=0, vmax=vmax * 0.3,
                                aspect="equal", interpolation="nearest")
             else:
@@ -319,54 +322,75 @@ def plot_granger_comparison(results, output_path):
         N = len(true_W)
         err_a = np.linalg.norm(true_W - approx_W, "fro") / N
         err_g = np.linalg.norm(true_W - W_granger, "fro") / N
-        fig.text(0.5, 0.48,
-                 f"(A\u2013D) representative topology: Covariance\u202f=\u202f{err_a:.3f}, "
-                 f"Granger\u202f=\u202f{err_g:.3f}  \u2014  (E\u2013G) all 10 topologies",
+        fig.text(0.5, 0.665,
+                 f"(A\u2013D) representative topology: Covariance\u202f=\u202f{err_a:.3f},"
+                 f" Granger\u202f=\u202f{err_g:.3f}",
                  ha="center", fontsize=9, fontstyle="italic")
     except Exception as e:
         print(f"  Warning: could not generate heatmaps: {e}")
 
-    # --- Bottom row: violin plots ---
-    plot_data = [
-        ("estimate_distance", "optimized_distance", "Recovery Error\n(Frobenius / N)",
-         "Distance from True $W$"),
-        ("estimate_precision", "optimized_precision", "Precision", "Edge Detection Precision"),
-        ("estimate_recall", "optimized_recall", "Recall", "Edge Detection Recall"),
-    ]
+    # ── Row 1: Heteroskedasticity analysis ────────────────────────────────────
+    if true_W is not None:
+        # Panel E: Error-weight scatter with OLS regression
+        ax = fig.add_subplot(gs[1, 0])
+        _add_panel_label(ax, "E")
+        # Off-diagonal entries only (diagonal is zeroed by construction)
+        mask = ~np.eye(len(true_W), dtype=bool)
+        w_flat = true_W[mask].ravel()
+        err_flat = np.abs((W_granger - true_W)[mask].ravel())
 
-    for col, (before_col, after_col, ylabel, title) in enumerate(plot_data):
-        ax = fig.add_subplot(gs[1, col])
-        _add_panel_label(ax, chr(69 + col))
+        # OLS regression
+        A = np.column_stack([w_flat, np.ones_like(w_flat)])
+        slope, intercept = np.linalg.lstsq(A, err_flat, rcond=None)[0]
+        corr = np.corrcoef(w_flat, err_flat)[0, 1]
 
-        before = df[before_col].values
-        after = df[after_col].values
+        ax.scatter(w_flat, err_flat, alpha=0.35, s=18, color=PALETTE["blue"],
+                   edgecolors="none", label="Off-diag entries")
+        x_line = np.linspace(0, w_flat.max(), 50)
+        ax.plot(x_line, slope * x_line + intercept, color=PALETTE["red"],
+                lw=2, label=f"OLS: slope={slope:.2f}\n$r={corr:.2f}$")
+        ax.set_xlabel("True weight $W_{ij}$")
+        ax.set_ylabel("Absolute error $|\\hat{W}_{ij} - W_{ij}|$")
+        ax.set_title("Error vs. weight magnitude\n(heteroskedasticity)", fontsize=9)
+        ax.legend(fontsize=8, loc="upper left")
+        ax.annotate(f"Slope $\\approx 1 - \\bar{{d}} = {slope:.2f}$",
+                    xy=(0.98, 0.02), xycoords="axes fraction",
+                    fontsize=8, ha="right", va="bottom",
+                    color=PALETTE["red"], fontstyle="italic")
 
-        parts_b = ax.violinplot([before], positions=[0], showmedians=True, widths=0.6)
-        parts_a = ax.violinplot([after], positions=[1], showmedians=True, widths=0.6)
+        # Panel F: E1 heatmap (model mismatch per entry)
+        ax = fig.add_subplot(gs[1, 1])
+        _add_panel_label(ax, "F")
+        pinv_x = np.linalg.pinv(cov_x)
+        E1 = true_W @ (cov_phix - cov_x) @ pinv_x
+        np.fill_diagonal(E1, 0)
+        e1_max = max(np.abs(E1).max(), 1e-6)
+        im = ax.imshow(E1, cmap="RdBu_r", vmin=-e1_max, vmax=e1_max,
+                       aspect="equal", interpolation="nearest")
+        ax.set_title(f"$E_1$ (model mismatch)\n$\\|E_1\\|_F/N={np.linalg.norm(E1,'fro')/len(true_W):.3f}$",
+                     fontsize=9)
+        ax.set_xlabel("Neuron $j$"); ax.set_ylabel("Neuron $i$")
+        plt.colorbar(im, ax=ax, shrink=0.7, pad=0.02)
 
-        for pc in parts_b["bodies"]:
-            pc.set_facecolor(C_EST)
-            pc.set_alpha(0.4)
-        for pc in parts_a["bodies"]:
-            pc.set_facecolor(C_GRN)
-            pc.set_alpha(0.4)
-        for key in ["cmins", "cmaxes", "cmedians", "cbars"]:
-            if key in parts_b:
-                parts_b[key].set_color(C_EST)
-            if key in parts_a:
-                parts_a[key].set_color(C_GRN)
+        # Panel G: E2 heatmap (CPG correlation per entry)
+        ax = fig.add_subplot(gs[1, 2])
+        _add_panel_label(ax, "G")
+        E2 = cov_bx @ pinv_x
+        np.fill_diagonal(E2, 0)
+        e2_max = max(np.abs(E2).max(), 1e-6)
+        im = ax.imshow(E2, cmap="RdBu_r", vmin=-e2_max, vmax=e2_max,
+                       aspect="equal", interpolation="nearest")
+        ax.set_title(f"$E_2$ (CPG correlation)\n$\\|E_2\\|_F/N={np.linalg.norm(E2,'fro')/len(true_W):.3f}$",
+                     fontsize=9)
+        ax.set_xlabel("Neuron $j$")
+        plt.colorbar(im, ax=ax, shrink=0.7, pad=0.02)
 
-        jitter_b = np.random.RandomState(0).normal(0, 0.05, len(before))
-        jitter_a = np.random.RandomState(1).normal(0, 0.05, len(after))
-        ax.scatter(jitter_b, before, color=C_EST, alpha=0.6, s=20, zorder=3)
-        ax.scatter(1 + jitter_a, after, color=C_GRN, alpha=0.6, s=20, zorder=3)
+        fig.text(0.5, 0.36,
+                 "(E) error proportional to weight magnitude (slope $\\approx 1-\\bar{d}$); "
+                 "(F,G) per-entry error components $E_1$ and $E_2$",
+                 ha="center", fontsize=9, fontstyle="italic")
 
-        ax.set_xticks([0, 1])
-        ax.set_xticklabels(["Before\n(Covariance)", "After\n(Granger)"], fontsize=9)
-        ax.set_ylabel(ylabel)
-        ax.set_title(title, fontsize=10)
-
-    # Use remaining bottom-right cell for the ablation mini-bar
+    # Panel H: Ablation bar
     ax = fig.add_subplot(gs[1, 3])
     _add_panel_label(ax, "H")
     names = ["Chance", "Adj", "Spec", "Est", "Grn"]
@@ -380,7 +404,47 @@ def plot_granger_comparison(results, output_path):
     for i, v in enumerate(vals):
         ax.text(i, v + 0.005, f"{v:.3f}", ha="center", fontsize=7, fontweight="bold")
     ax.set_ylabel("Error")
-    ax.set_title("Ablation", fontsize=10)
+    ax.set_title("Recovery with\nincreasing prior", fontsize=9)
+
+    # ── Row 2: Violin plots ───────────────────────────────────────────────────
+    plot_data = [
+        ("estimate_distance", "optimized_distance", "Recovery Error\n(Frobenius / N)",
+         "Distance from True $W$"),
+        ("estimate_precision", "optimized_precision", "Precision", "Edge Detection Precision"),
+        ("estimate_recall", "optimized_recall", "Recall", "Edge Detection Recall"),
+    ]
+
+    for col, (before_col, after_col, ylabel, title) in enumerate(plot_data):
+        ax = fig.add_subplot(gs[2, col])
+        _add_panel_label(ax, chr(73 + col))   # I, J, K
+
+        before = df[before_col].values
+        after = df[after_col].values
+
+        parts_b = ax.violinplot([before], positions=[0], showmedians=True, widths=0.6)
+        parts_a = ax.violinplot([after], positions=[1], showmedians=True, widths=0.6)
+
+        for pc in parts_b["bodies"]:
+            pc.set_facecolor(C_EST); pc.set_alpha(0.4)
+        for pc in parts_a["bodies"]:
+            pc.set_facecolor(C_GRN); pc.set_alpha(0.4)
+        for key in ["cmins", "cmaxes", "cmedians", "cbars"]:
+            if key in parts_b: parts_b[key].set_color(C_EST)
+            if key in parts_a: parts_a[key].set_color(C_GRN)
+
+        jitter_b = np.random.RandomState(0).normal(0, 0.05, len(before))
+        jitter_a = np.random.RandomState(1).normal(0, 0.05, len(after))
+        ax.scatter(jitter_b, before, color=C_EST, alpha=0.6, s=20, zorder=3)
+        ax.scatter(1 + jitter_a, after, color=C_GRN, alpha=0.6, s=20, zorder=3)
+
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels(["Before\n(Covariance)", "After\n(Granger)"], fontsize=9)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, fontsize=10)
+
+    fig.text(0.5, 0.005,
+             "(I\u2013K) distribution across 10 topologies (50 sessions each)",
+             ha="center", fontsize=9, fontstyle="italic")
 
     plt.suptitle("Effect of Granger-Causality Refinement (N=15, 66% measured, stim=1.0)",
                  fontsize=13, fontweight="bold", y=1.0)

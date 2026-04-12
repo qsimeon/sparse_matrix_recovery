@@ -17,11 +17,10 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{natbib}
-\usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta}
 
 \title{Recovering Sparse Neural Connectivity from Partial Measurements:\\
-A Covariance-Based Approach with Granger-Causality Refinement}
+A Covariance-Based Approach with Granger-Causality Refinement%
+\thanks{Code available at \url{https://github.com/qsimeon/sparse\_matrix\_recovery}}}
 
 \author{
   Quilee Simeon \\
@@ -354,7 +353,11 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement} ($N=15$, $66\%$ measured, $\sigma=1.0$, 50 instances). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error. The covariance estimate captures the overall structure; Granger refinement sharpens it by enforcing Granger non-causality zeros. \textbf{(E--G)} Quantitative evaluation over 10 random topologies (50 sessions each): (E)~Frobenius error (estimate already has diagonal zeroed and non-negativity applied) reduced from $0.086$ to $0.083$ with Granger, (F)~edge detection precision improves from $0.30$ to $0.40$, (G)~recall remains high at median $0.97$. Violin plots with individual topologies overlaid. \textbf{(H)} Recovery error with increasing prior knowledge of the ground truth: Chance (no knowledge), Adj (know sparsity pattern), Spec (know sparsity + spectral radius), Est (covariance-based, no oracle knowledge), Grn (Granger-refined with biological constraints). From the same-prior baseline (Spec, $0.120$) to Granger-refined ($0.083$): $31\%$ improvement attributable to data-driven estimation.}
+\caption{\textbf{Effect of Granger-causality refinement and error structure} ($N=15$, $66\%$ measured, $\sigma=1.0$). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error $|W-\hat{W}|$. \textbf{(E)} Error-weight scatter: each off-diagonal entry's absolute error $|\hat{W}_{ij}-W_{ij}|$ vs.\ true weight $W_{ij}$.
+The positive correlation ($r\approx0.83$, OLS slope $\approx 1-\bar{d}$) reflects the heteroskedastic structure of $E_1=W(D-I)$: the estimator systematically shrinks larger weights more (see Appendix~\ref{sec:app_hetero}).
+\textbf{(F)}~Per-entry $E_1$ (model mismatch) and \textbf{(G)}~$E_2$ (CPG correlation) heatmaps for the same topology; $E_2$ is ${\sim}2.8\times$ larger in Frobenius norm.
+\textbf{(H)} Recovery error with increasing prior knowledge: Chance $\to$ Adj $\to$ Spec $\to$ Est $\to$ Grn; $31\%$ improvement from Spec ($0.120$) to Granger ($0.083$).
+\textbf{(I--K)} Violin plots over 10 topologies: Frobenius error (I), edge precision (J, $0.30\to0.40$), edge recall (K, maintained at $0.97$).}
 \label{fig:granger}
 \end{figure}
 
@@ -597,6 +600,10 @@ Finally, jointly estimating connectivity $W$ and CPG parameters from data, lever
 % References
 % ============================================================================
 
+% ============================================================================
+\paragraph{Code availability.}
+All code, experiment configurations, and data are available at \url{https://github.com/qsimeon/sparse\_matrix\_recovery}.
+
 \bibliographystyle{plainnat}
 \bibliography{references}
 
@@ -736,6 +743,31 @@ At $N{=}300$, $T{=}100$, $\kappa \approx 40{,}000$ makes the inversion catastrop
 When the DOF ratio falls below 1, the sample covariance is rank-deficient, and the pseudoinverse amplifies noise in the null space.
 This is a fundamental limitation of covariance-based methods in high dimensions~\citep{ledoit2004well}.
 
+\subsection{Heteroskedastic Error Structure}
+\label{sec:app_hetero}
+
+\paragraph{The error is proportional to the weight magnitude.}
+From the error decomposition (Eq.~\eqref{eq:error}), the model mismatch term is $E_1 = W(D-I)$ where $D = \mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$ with $0 < d_i < 1$.
+For a sparse weight matrix $W$ where the dominant contribution to entry $(i,j)$ comes from the direct weight $W_{ij}$, the per-entry error is approximately:
+\begin{equation}
+    E_1[i,j] \approx -W_{ij}(1 - d_j) = -W_{ij} \cdot \Delta_j, \qquad \Delta_j = 1 - \mathbb{E}[\mathrm{sech}^2(x_j)] \in (0,1).
+    \label{eq:hetero}
+\end{equation}
+This is a \emph{multiplicative} bias: the estimator shrinks each weight toward zero by a factor $(1-\Delta_j)$, with larger weights incurring larger absolute errors.
+The coefficient $\Delta_j$ depends on the state variance $\sigma_j^2$: for small variance, $\Delta_j \approx \sigma_j^2$ (leading order from the Taylor expansion of $\mathrm{sech}^2$); for large variance (saturating $\tanh$), $\Delta_j \to 1$ (complete shrinkage).
+
+\paragraph{Implication: heteroskedastic residuals.}
+Let $\varepsilon_{ij} = \hat{W}_{ij} - W_{ij}$ denote the estimation residual at entry $(i,j)$.
+Equation~\eqref{eq:hetero} predicts $\mathbb{E}[|\varepsilon_{ij}|] \approx \bar{\Delta} \cdot W_{ij}$ where $\bar{\Delta} = N^{-1}\sum_j \Delta_j$ is the average compression factor.
+This is \emph{heteroskedasticity} in the classical sense: the error variance is not constant but scales with the signal magnitude.
+Empirically, we observe a linear relationship between $W_{ij}$ and $|\varepsilon_{ij}|$ across all off-diagonal entries of the representative topology in Figure~\ref{fig:granger}E, with Pearson $r \approx 0.83$ and OLS slope $\approx 1-\bar{d}$, consistent with Eq.~\eqref{eq:hetero}.
+
+\paragraph{Connection to the James--Stein effect.}
+The same shrinkage that produces heteroskedastic errors also explains why the approximation outperforms the oracle (Section~\ref{sec:discussion}, Appendix~\ref{sec:app_oracle}).
+The oracle corrects for the $D$-compression by inverting $\Sigma_{\phi(x),x} = D\Sigma_{x,x}$ instead of $\Sigma_{x,x}$, eliminating the multiplicative bias but worsening the condition number by $d_{\max}/d_{\min}$.
+The linear approximation accepts the bias (heteroskedastic shrinkage) in exchange for better-conditioned inversion, reducing total squared error in the finite-sample regime.
+The proportional bias implies that the $\ell_2$ (Frobenius) error metric disproportionately penalizes errors on large weights; practitioners who care more about edge detection (binary connectivity) than weight magnitude may find the method more accurate than the Frobenius error suggests.
+
 \subsection{Central Pattern Generator Model}
 \label{sec:app_cpg}
 
@@ -760,63 +792,6 @@ The CPG function is constructed once per network topology and shared across all 
 Each session starts with an independent time counter, so the CPG produces different trajectories due to different network states, measurement masks, and stimulation patterns; the underlying oscillatory function is the same across sessions.
 This models the biological reality that intrinsic oscillators are properties of the circuit, not the recording session.
 
-Figure~\ref{fig:cpg_architecture} summarizes the CPG's role in the simulation.
-
-\begin{figure}[ht]
-\centering
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[
-    node distance=1.2cm and 1.6cm,
-    box/.style={
-        draw, rounded corners=4pt, minimum width=2.0cm, minimum height=0.9cm,
-        align=center, font=\small, inner sep=5pt
-    },
-    statebox/.style={box, fill=blue!8, draw=blue!40!black},
-    cpgbox/.style={box, fill=orange!10, draw=orange!60!black,
-                   minimum width=2.8cm, minimum height=1.1cm},
-    dynbox/.style={box, fill=red!8, draw=red!40!black,
-                   minimum width=3.0cm, minimum height=0.9cm},
-    sumnode/.style={circle, draw, minimum size=0.6cm, font=\normalsize, inner sep=0pt},
-    >=stealth, thick
-]
-
-%% Nodes
-\node[statebox] (state) {$x_t$\\[1pt]{\small network state}};
-
-\node[cpgbox, right=of state] (cpg)
-    {\textbf{CPG}\\[2pt]
-     {\small frozen $\cdot$ one per topology}\\
-     {\small shared $K$ sessions}};
-
-\node[sumnode, right=1.8cm of cpg] (plus) {$+$};
-
-\node[statebox, above=1.0cm of plus] (bstim)
-    {$b_t^{\mathrm{stim}}$\\[1pt]{\small i.i.d.\ noise}};
-
-\node[dynbox, right=1.4cm of plus] (dyn)
-    {$x_{t+1} = W\phi(x_t)+b_t$\\[2pt]{\small network dynamics}};
-
-%% Forward arrows
-\draw[->] (state) -- (cpg);
-\draw[->] (cpg)   -- node[above, font=\small]{$b_t^{\mathrm{CPG}}$} (plus);
-\draw[->] (bstim) -- (plus);
-\draw[->] (plus)  -- (dyn);
-
-%% State-dependence feedback (the E2 error source)
-\draw[->, dashed, draw=red!70!black, line width=0.8pt]
-    (dyn.south) -- ++(0,-0.75)
-    -- node[below, font=\small, text=red!70!black]
-       {$\mathrm{Cov}(b^{\mathrm{CPG}}_t,\, x_t)\neq 0\;\Rightarrow\;E_2\text{ error}$}
-    (cpg.south |- dyn.south)
-    -- (cpg.south);
-
-\end{tikzpicture}%
-}
-\caption{\textbf{Central Pattern Generator (CPG) role.}
-The CPG maps the current network state $x_t$ to an intrinsic drive $b^{\mathrm{CPG}}_t$, which is summed with extrinsic stimulation $b^{\mathrm{stim}}_t$ to form the total network input $b_t$.
-The CPG is frozen (non-trainable), constructed once per network topology, and shared across all $K$ recording sessions (each with an independent time counter).
-Because its output depends on $x_t$, the CPG violates the independence assumption $\mathrm{Cov}(b_t,x_t)\approx 0$, producing the $E_2$ error term that dominates model mismatch $E_1$ by ${\sim}2\times$.}
-\label{fig:cpg_architecture}
-\end{figure}
+The CPG's state-dependence ($b^{\mathrm{CPG}}_t = f_{\mathrm{CPG}}(x_t)$) violates the independence assumption $\mathrm{Cov}(b_t,x_t)\approx 0$, producing the $E_2$ error term discussed in Section~\ref{sec:discussion}.
 
 \end{document}
