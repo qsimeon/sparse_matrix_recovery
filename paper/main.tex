@@ -354,7 +354,7 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
 \caption{\textbf{Effect of Granger-causality refinement and error structure} ($N=15$, $66\%$ measured, $\sigma=1.0$). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error $|W-\hat{W}|$. \textbf{(E)} Error-weight scatter: each off-diagonal entry's absolute error $|\hat{W}_{ij}-W_{ij}|$ vs.\ true weight $W_{ij}$.
-The positive correlation ($r\approx0.83$, OLS slope $\approx 1-\bar{d}$) reflects the heteroskedastic structure of $E_1=W(D-I)$: the estimator systematically shrinks larger weights more (see Appendix~\ref{sec:app_hetero}).
+The positive correlation ($r\approx0.91$, OLS slope $\approx 1-\bar{d}$) reflects the heteroskedastic structure of $E_1=W(D-I)$: the estimator systematically shrinks larger weights more (see Appendix~\ref{sec:app_hetero}).
 \textbf{(F)}~Per-entry $E_1$ (model mismatch) and \textbf{(G)}~$E_2$ (CPG correlation) heatmaps for the same topology; $E_2$ is ${\sim}2.8\times$ larger in Frobenius norm.
 \textbf{(H)} Recovery error with increasing prior knowledge: Chance $\to$ Adj $\to$ Spec $\to$ Est $\to$ Grn; $31\%$ improvement from Spec ($0.120$) to Granger ($0.083$).
 \textbf{(I--K)} Violin plots over 10 topologies: Frobenius error (I), edge precision (J, $0.30\to0.40$), edge recall (K, maintained at $0.97$).}
@@ -760,7 +760,7 @@ The coefficient $\Delta_j$ depends on the state variance $\sigma_j^2$: for small
 Let $\varepsilon_{ij} = \hat{W}_{ij} - W_{ij}$ denote the estimation residual at entry $(i,j)$.
 Equation~\eqref{eq:hetero} predicts $\mathbb{E}[|\varepsilon_{ij}|] \approx \bar{\Delta} \cdot W_{ij}$ where $\bar{\Delta} = N^{-1}\sum_j \Delta_j$ is the average compression factor.
 This is \emph{heteroskedasticity} in the classical sense: the error variance is not constant but scales with the signal magnitude.
-Empirically, we observe a linear relationship between $W_{ij}$ and $|\varepsilon_{ij}|$ across all off-diagonal entries of the representative topology in Figure~\ref{fig:granger}E, with Pearson $r \approx 0.83$ and OLS slope $\approx 1-\bar{d}$, consistent with Eq.~\eqref{eq:hetero}.
+Empirically, we observe a linear relationship between $W_{ij}$ and $|\varepsilon_{ij}|$ across all off-diagonal entries of the representative topology in Figure~\ref{fig:granger}E, with Pearson $r \approx 0.91$ and OLS slope $\approx 1-\bar{d}$, consistent with Eq.~\eqref{eq:hetero}.
 
 \paragraph{Connection to the James--Stein effect.}
 The same shrinkage that produces heteroskedastic errors also explains why the approximation outperforms the oracle (Section~\ref{sec:discussion}, Appendix~\ref{sec:app_oracle}).
