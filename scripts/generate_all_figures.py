@@ -188,6 +188,11 @@ def generate_fig9_dynamics(output_path):
 
 
 def main():
+    """Generate all paper figures from experiment results.
+
+    Loads results from experiments/results/ and generates figures in paper/figures/.
+    Requires experiment results to be run first.
+    """
     print("=" * 60)
     print("  Generating ALL paper figures")
     print("=" * 60)

@@ -1,10 +1,12 @@
 """Verify citation integrity between main.tex and references.bib."""
 import re
+from pathlib import Path
 
-with open("paper/main.tex") as f:
+paper_dir = Path(__file__).parent.parent / "paper"
+with open(paper_dir / "main.tex") as f:
     tex = f.read()
 
-with open("paper/references.bib") as f:
+with open(paper_dir / "references.bib") as f:
     bib = f.read()
 
 # Extract cited keys from LaTeX

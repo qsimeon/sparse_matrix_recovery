@@ -82,7 +82,10 @@ def get_nonlinearity(name: str):
 # ============================================================================
 
 class AbsoluteActivation(torch.nn.Module):
+    """Absolute value activation function for PyTorch models."""
+
     def forward(self, x):
+        """Apply absolute value activation."""
         return torch.abs(x)
 
 
