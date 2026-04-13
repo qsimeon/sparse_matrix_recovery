@@ -17,6 +17,7 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{natbib}
+\usepackage{placeins}  % \FloatBarrier — keeps floats within their section
 
 \title{Recovering Sparse Neural Connectivity from Partial Measurements:\\
 A Covariance-Based Approach with Granger-Causality Refinement%
@@ -359,7 +360,7 @@ The Granger refinement improves precision to $0.40$ while maintaining recall at 
 The estimator achieves a $31\%$ improvement over an independent draw from the same generative prior ($0.083$ vs.\ $0.120$), demonstrating that the covariance accumulation framework extracts genuine connectivity information beyond what structural knowledge alone provides.
 The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
 
-\begin{figure}[ht]
+\begin{figure}[p!]
 \centering
 \includegraphics[width=\linewidth]{figures/fig4_granger_refinement.pdf}
 \caption{\textbf{Effect of Granger-causality refinement and error structure} ($N=15$, $66\%$ measured, $\sigma=1.0$). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error $|W-\hat{W}|$. \textbf{(E)} Error-weight scatter: each off-diagonal entry's absolute error $|\hat{W}_{ij}-W_{ij}|$ vs.\ true weight $W_{ij}$.
@@ -370,6 +371,7 @@ The positive correlation ($r\approx0.91$, OLS slope $\approx 1-\bar{d}$) reflect
 \label{fig:granger}
 \end{figure}
 
+\FloatBarrier
 \subsection{Stimulation-Dynamics Tradeoff (E3)}
 
 We examine the interaction between stimulation gain $\sigma$ and measurement fraction for $N=15$, $T=1000$.
