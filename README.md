@@ -14,7 +14,7 @@ uv sync
 # Run all 8 experiments
 uv run python experiments/run_experiments.py --experiment all --seed 42
 
-# Generate all 10 paper figures
+# Generate all 9 paper figures
 uv run python scripts/generate_all_figures.py
 
 # Run the primary walkthrough notebook
@@ -58,14 +58,14 @@ experiments/
   core.py              # Network generation, CPG dynamics, estimation, Granger refinement
   run_experiments.py   # CLI runner for E1-E8
   run_single_rep.py    # Atomic SLURM-compatible single-repetition runner
-  analysis.py          # Publication figure generation (all 10 figures)
+  analysis.py          # Publication figure generation (all 9 figures)
   aggregate_results.py # Combine per-rep JSONs from cluster runs
   results/             # Experiment data (E1-E8 JSON files)
   sweep_config.yaml    # WandB sweep configuration
 paper/
   main.tex             # LaTeX paper (21 pages, NeurIPS preprint format)
   references.bib       # 23 references
-  figures/             # 10 paper figures (PDF)
+  figures/             # 9 paper figures (PDF, fig1–fig9)
   poster.tex           # 36"×24" conference poster
   presentation.tex     # SDSCon 2026 lightning talk (8 slides)
   math_walkthrough.md  # Mathematical companion document
@@ -74,7 +74,7 @@ notebooks/
   complete_analysis.ipynb             # Teaching notebook with ablation and oracle analysis
   explore_dynamics.ipynb              # CPG dynamics + abs vs ReLU comparison
 scripts/
-  generate_all_figures.py  # Regenerate all 10 figures from experiment JSONs
+  generate_all_figures.py  # Regenerate all 9 figures from experiment JSONs
   verify_citations.py      # Check citation integrity (23/23)
   launch_experiments.sh    # SLURM launcher for E2-E7 (engaging cluster)
   launch_E1_scaling.sh     # SLURM launcher for E1 (90 tasks: 3N×3T×10 reps)

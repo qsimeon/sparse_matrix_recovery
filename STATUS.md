@@ -1,6 +1,6 @@
 # Project Status — Sparse Matrix Recovery
 
-> Last reviewed: 2026-04-12 (deep scan + resituate post-session)
+> Last reviewed: 2026-04-13 (notebook execution + README/STATUS audit)
 > Reviewed by: Claude Sonnet 4.6
 
 ---
@@ -24,14 +24,14 @@ at all tested regimes — a concrete James–Stein shrinkage instance.
 |-----------|--------|-------|
 | Core algorithms (`core.py`) | ✅ | Reviewed line-by-line; all design choices documented |
 | Experiments E1–E8 | ✅ | Re-run 2026-04-12 seed=42; deterministic; all 8 paper claims verified |
-| Figures (10 PDFs) | ✅ | All regenerated; fig4 redesigned as 3-row with heteroskedasticity row |
+| Figures (9 PDFs) | ✅ | All regenerated; sequential fig1–fig9; fig3 is 3-row with heteroskedasticity row |
 | Paper (`main.tex`, 21 pp) | ✅ | All known issues fixed; GitHub link added; new appendix A.8 |
 | Poster | ✅ | Numbers current; GitHub URL added; compiled |
 | Presentation (8 slides) | ✅ | Numbers current; GitHub URL added; compiled |
 | Citations | ✅ | 23/23 verified; all used, all have bib entries |
-| Notebooks | 🔧 | Imports/warmup fixed; NOT executed end-to-end post-fix |
+| Notebooks | ✅ | All 3 executed end-to-end (2026-04-13); all cells pass |
 | DEEP_DIVE.md | ✅ | Comprehensive rewrite 2026-04-11 |
-| README.md | ❓ | Not reviewed this session — may have stale references |
+| README.md | ✅ | Audited 2026-04-13; figure count corrected to 9, all references current |
 | STATUS.md / tracking | ✅ | This file |
 
 ---
@@ -93,15 +93,14 @@ at all tested regimes — a concrete James–Stein shrinkage instance.
 
 ## What's Left
 
-### Before arXiv Submission (human needed for some)
+### Before arXiv Submission (human needed)
 - [ ] **Final human read-through** of compiled 21-page PDF — catch any remaining prose issues
-- [ ] **Run notebooks end-to-end** — verify all cells execute cleanly after fixes
-- [ ] **Visual inspection** of all 10 figures at print resolution
+- [x] **Run notebooks end-to-end** — all 3 executed cleanly 2026-04-13
+- [ ] **Visual inspection** of all 9 figures at print resolution
 
-### Claude Can Handle
-- [ ] README.md audit — check for stale references (7 experiments→8, old numbers)
-- [ ] `progress.json` iteration counter — currently at 30, could increment
-- [ ] GLM/VAR baseline comparison — would strengthen E2; reviewer will likely request
+### Completed by Agent (2026-04-13)
+- [x] README.md audit — figure count corrected (10→9), all stale "10 figures" references fixed
+- [x] STATUS.md updated — fig names corrected to sequential fig1–fig9, notebooks marked done
 
 ### Deferred (post-submission)
 - GLM/VAR baseline comparison
@@ -114,17 +113,19 @@ at all tested regimes — a concrete James–Stein shrinkage instance.
 
 ## Figures Directory (CLEAN — only used files)
 
-| File | Size | Used in | Last updated |
-|------|------|---------|-------------|
-| fig1_problem_schematic.pdf | 40KB | paper, poster, presentation | Apr 11 |
-| fig3_scaling.pdf | 34KB | paper, poster, presentation | Apr 11 |
-| fig4_granger_refinement.pdf | 87KB | paper | Apr 12 (redesigned 3-row) |
-| fig5_stimulation.pdf | 24KB | paper, poster, presentation | Apr 11 |
-| fig6_sparsity.pdf | 23KB | paper | Apr 11 |
-| fig7_nonlinearity.pdf | 27KB | paper | Apr 11 |
-| fig8_dynamics.pdf | 144KB | paper | Apr 11 |
-| fig9_stim_fraction.pdf | 23KB | paper | Apr 12 (3-condition E7) |
-| fig10_oracle_comparison.pdf | 28KB | paper, poster, presentation | Apr 11 |
+Renamed to sequential fig1–fig9 in commit f676e12 (2026-04-12).
+
+| File | Used in | Notes |
+|------|---------|-------|
+| fig1_problem_schematic.pdf | paper, poster, presentation | Problem setup schematic |
+| fig2_scaling.pdf | paper, poster, presentation | E1 scaling (N, T) |
+| fig3_granger_refinement.pdf | paper | E2 3-row: heatmaps + error + violins |
+| fig4_stimulation.pdf | paper, poster, presentation | E3 stimulation sweep |
+| fig5_sparsity.pdf | paper | E4 measurement coverage |
+| fig6_nonlinearity.pdf | paper | E5 nonlinearity mismatch |
+| fig7_oracle_comparison.pdf | paper, poster, presentation | E6 oracle crossover |
+| fig8_stim_fraction.pdf | paper | E7 stimulation fraction (3-condition) |
+| fig9_dynamics.pdf | paper | E8 + CPG dynamics |
 
 **No orphaned files.** Every PDF in figures/ is referenced by at least one document.
 
