@@ -584,6 +584,76 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset, non_negative_weig
 
 
 # ============================================================================
+# VAR Baseline: per-session inversion then element-wise average
+# ============================================================================
+
+def per_session_var_estimate(num_nodes, multinet_dataset, non_negative_weights=True):
+    """
+    Per-session VAR(1) baseline: invert each session's m×m covariance, then
+    average element-wise — the "invert-then-accumulate" strategy.
+
+    Contrast with estimate_connectivity_weights() ("accumulate-then-invert"):
+      OUR METHOD:  pool Σ₁ and Σ₀ across sessions → ONE N×N inversion.
+                   Leverages full N×N structure; entry Ŵ[i,j] depends on all
+                   other pairs through the global matrix inverse.
+      THIS METHOD: per-session m×m inversion → element-wise average.
+                   Each Ŵ_VAR[i,j] uses only sessions where both i,j observed;
+                   no cross-session pooling in the inversion step.
+
+    In the large-K,T limit both converge to the true W. Finite-sample behaviour
+    depends on whether pooling the covariances before inversion (ours) or
+    averaging post-inversion (VAR) is more efficient — an empirical question
+    answered in E2 (ablation study).
+
+    Note: for linear Gaussian data, the per-neuron GLM (OLS) is row-equivalent
+    to this VAR, so a single implementation covers both.
+    """
+    weight_sum = np.zeros((num_nodes, num_nodes))
+    weight_count = np.zeros((num_nodes, num_nodes))
+
+    num_sessions = len(multinet_dataset)
+    for session_idx in range(num_sessions):
+        session = f"session{session_idx}"
+        data = multinet_dataset[session]
+
+        measured = np.where(data["measured_nodes_mask"])[0]
+        m = len(measured)
+        if m < 2:
+            continue
+
+        X = data["activity_data"]          # T × N, already warmup-discarded
+        X_obs = X[:, measured]             # T × m (observed neurons only)
+        n = X_obs.shape[0] - 1
+
+        # Per-session cross and auto covariance on observed neurons
+        cov1_k = X_obs[1:].T @ X_obs[:-1] / n   # m×m: Σ̂_{x_{t+1},x_t} for M_k
+        cov0_k = X_obs[:-1].T @ X_obs[:-1] / n  # m×m: Σ̂_{x_t,x_t} for M_k
+
+        # Per-session VAR(1) estimate: Â_k = Σ̂₁_k · Σ̂₀_k^{-1}   (m×m inversion)
+        try:
+            A_k = cov1_k @ np.linalg.pinv(cov0_k)
+        except np.linalg.LinAlgError:
+            continue
+        np.fill_diagonal(A_k, 0)           # no autapses (structural prior)
+
+        # Accumulate into N×N weight grid
+        for ii, i in enumerate(measured):
+            for jj, j in enumerate(measured):
+                if i != j:
+                    weight_sum[i, j] += A_k[ii, jj]
+                    weight_count[i, j] += 1
+
+    # Element-wise average
+    count_safe = np.clip(weight_count, 1, None)
+    var_W = weight_sum / count_safe
+    np.fill_diagonal(var_W, 0)
+    if non_negative_weights:
+        var_W = np.maximum(var_W, 0.0)
+
+    return var_W
+
+
+# ============================================================================
 # Projected Gradient Optimization (Granger-causality refinement)
 # ============================================================================
 

@@ -34,6 +34,7 @@ from experiments.core import (
     get_nonlinearity,
     create_multinetwork_dataset,
     estimate_connectivity_weights,
+    per_session_var_estimate,
     projected_gradient_causal,
     calculate_spectral_radius,
     adjust_spectral_radius,
@@ -86,6 +87,9 @@ def one_repetition(rep_idx, seed, num_sessions, max_timesteps, num_nodes,
         cov_x, cov_dtx, non_negative_weights=non_negative_weights,
     )
 
+    # Per-session VAR baseline (invert-then-accumulate, contrast with our accumulate-then-invert)
+    var_W = per_session_var_estimate(num_nodes, dataset, non_negative_weights)
+
     # Baselines
     eps = np.finfo(float).eps
     if non_negative_weights:
@@ -113,6 +117,7 @@ def one_repetition(rep_idx, seed, num_sessions, max_timesteps, num_nodes,
         "spectral_distance": float(np.linalg.norm(true_W - spec_adj_sample_W, "fro") / num_nodes),
         "correlation_distance": float(np.linalg.norm(true_W - corr_W, "fro") / num_nodes),
         "oracle_distance": float(np.linalg.norm(true_W - oracle_W, "fro") / num_nodes),
+        "var_distance": float(np.linalg.norm(true_W - var_W, "fro") / num_nodes),
         "estimate_distance": float(np.linalg.norm(true_W - approx_W, "fro") / num_nodes),
         "optimized_distance": float(np.linalg.norm(true_W - optim_W, "fro") / num_nodes),
         # Diagnostics for sampling sufficiency analysis

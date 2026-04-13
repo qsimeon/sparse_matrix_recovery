@@ -390,19 +390,35 @@ def plot_granger_comparison(results, output_path):
                  "(F,G) per-entry error components $E_1$ and $E_2$",
                  ha="center", fontsize=9, fontstyle="italic")
 
-    # Panel H: Ablation bar
+    # Panel H: Ablation bar — now includes VAR baseline between Spec and Est
     ax = fig.add_subplot(gs[1, 3])
     _add_panel_label(ax, "H")
-    names = ["Chance", "Adj", "Spec", "Est", "Grn"]
-    if all(k in df.columns for k in ["chance_distance", "adjacency_distance", "spectral_distance"]):
-        vals = [df[c].median() for c in ["chance_distance", "adjacency_distance",
-                "spectral_distance", "estimate_distance", "optimized_distance"]]
+    has_var = "var_distance" in df.columns
+    if has_var:
+        names = ["Chance", "Adj", "Spec", "VAR", "Est", "Grn"]
+        cols   = ["chance_distance", "adjacency_distance", "spectral_distance",
+                  "var_distance", "estimate_distance", "optimized_distance"]
+        bar_colors = [PALETTE["red"], PALETTE["yellow"], PALETTE["cyan"],
+                      PALETTE["purple"], C_EST, C_GRN]
+    else:
+        names = ["Chance", "Adj", "Spec", "Est", "Grn"]
+        cols  = ["chance_distance", "adjacency_distance", "spectral_distance",
+                 "estimate_distance", "optimized_distance"]
+        bar_colors = [PALETTE["red"], PALETTE["yellow"], PALETTE["cyan"], C_EST, C_GRN]
+
+    if all(c in df.columns for c in cols):
+        vals = [df[c].median() for c in cols]
     else:
         vals = [0.54, 0.21, 0.13, df["estimate_distance"].median(), df["optimized_distance"].median()]
-    bar_colors = [PALETTE["red"], PALETTE["yellow"], PALETTE["cyan"], C_EST, C_GRN]
+        names = ["Chance", "Adj", "Spec", "Est", "Grn"]
+        bar_colors = [PALETTE["red"], PALETTE["yellow"], PALETTE["cyan"], C_EST, C_GRN]
+
     ax.bar(names, vals, color=bar_colors, alpha=0.85, edgecolor="#333333", linewidth=0.5)
     for i, v in enumerate(vals):
-        ax.text(i, v + 0.005, f"{v:.3f}", ha="center", fontsize=7, fontweight="bold")
+        ax.text(i, v + 0.005, f"{v:.3f}", ha="center",
+                fontsize=6 if has_var else 7, fontweight="bold")
+    ax.set_xticks(range(len(names)))
+    ax.set_xticklabels(names, fontsize=7, rotation=30 if has_var else 0, ha="right" if has_var else "center")
     ax.set_ylabel("Error")
     ax.set_title("Recovery with\nincreasing prior", fontsize=9)
 

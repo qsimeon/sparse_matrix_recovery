@@ -284,9 +284,18 @@ Recovery error is evaluated against a hierarchy of reference estimates, each inc
 \emph{Chance}: a dense random non-negative matrix $W_{\mathrm{rand}} \sim U(0,1)^{N \times N}$ (no structural knowledge);
 \emph{Adjacency}: random $U(0,1)$ weights placed on the true sparsity pattern (knows which edges exist, but not their weights);
 \emph{Spectral}: an independent draw from the same generative distribution as $W$ (true sparsity pattern, random weights, scaled to the true spectral radius $\rho(W)$); this is the fairest ``chance'' comparison, representing what an experimenter could achieve by guessing from the prior;
+\emph{VAR}: a per-session vector autoregressive baseline (described below);
 \emph{Estimate}: our covariance-based method (no oracle knowledge);
 \emph{Granger}: estimate refined with Granger non-causality zeros.
 The primary comparison is against the \emph{Spectral} baseline: improvement from $0.120$ to $0.083$ ($31\%$), which isolates the contribution of the data-driven estimation beyond what the generative prior alone provides.
+
+\paragraph{VAR baseline.}
+A natural comparison is to a standard single-lag vector autoregressive (VAR) model.
+For each session $k$ with $m$ observed neurons, we fit a VAR(1) on the observed submatrix:
+$\hat{A}_k = \hat{\Sigma}^{(k)}_{y_{t+1},y_t}[\mathcal{M}_k] \cdot \left(\hat{\Sigma}^{(k)}_{y_t,y_t}[\mathcal{M}_k]\right)^{-1}$, then average element-wise over sessions where each pair is co-observed.
+This ``invert-then-accumulate'' strategy contrasts with our ``accumulate-then-invert'' approach (Eq.~\eqref{eq:estimator}).
+The key difference: our method pools the full $N\times N$ covariance structure before the single global inversion, leveraging indirect paths through the joint covariance matrix; the VAR inverts a separate $m\times m$ matrix per session, which discards the global covariance structure.
+As shown in Figure~\ref{fig:granger}H, the VAR achieves error $0.136$, \emph{worse} than the Spectral prior ($0.120$), and $37\%$ worse than our accumulate-then-invert estimator ($0.086$), empirically confirming that pooling before inversion is the critical design choice.
 
 \begin{table}[ht]
 \centering
@@ -298,7 +307,7 @@ The primary comparison is against the \emph{Spectral} baseline: improvement from
 Exp & Parameter swept & Values & Question \\
 \midrule
 E1 & Network size $N$, duration $T$ & $N \in \{15,159,300\}$, $T \in \{100,350,1000\}$ & How does recovery scale? \\
-E2 & Method ablation & Chance $\to$ Estimate $\to$ Granger & What does each step add? \\
+E2 & Method ablation & Chance $\to$ VAR $\to$ Est $\to$ Granger & What does each step add? \\
 E3 & Stim gain $\times$ measurement & $\sigma \in [0,2]$, meas $\in \{33,66,100\%\}$ & Is there a stim-measurement interaction? \\
 E4 & Measurement fraction & $33$--$100\%$ & How much observation is needed? \\
 E5 & Nonlinearity $\phi$ & tanh, ReLU, identity, sigmoid & How robust to model mismatch? \\
@@ -356,7 +365,7 @@ The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}
 \caption{\textbf{Effect of Granger-causality refinement and error structure} ($N=15$, $66\%$ measured, $\sigma=1.0$). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error $|W-\hat{W}|$. \textbf{(E)} Error-weight scatter: each off-diagonal entry's absolute error $|\hat{W}_{ij}-W_{ij}|$ vs.\ true weight $W_{ij}$.
 The positive correlation ($r\approx0.91$, OLS slope $\approx 1-\bar{d}$) reflects the heteroskedastic structure of $E_1=W(D-I)$: the estimator systematically shrinks larger weights more (see Appendix~\ref{sec:app_hetero}).
 \textbf{(F)}~Per-entry $E_1$ (model mismatch) and \textbf{(G)}~$E_2$ (CPG correlation) heatmaps for the same topology; $E_2$ is ${\sim}2.8\times$ larger in Frobenius norm.
-\textbf{(H)} Recovery error with increasing prior knowledge: Chance $\to$ Adj $\to$ Spec $\to$ Est $\to$ Grn; $31\%$ improvement from Spec ($0.120$) to Granger ($0.083$).
+\textbf{(H)} Recovery error with increasing prior knowledge: Chance $\to$ Adj $\to$ Spec $\to$ VAR $\to$ Est $\to$ Grn. The VAR baseline ($0.136$, per-session invert-then-accumulate) is $37\%$ worse than our accumulate-then-invert estimate ($0.086$), confirming that pooling before global inversion is the key design choice. $31\%$ improvement from Spec ($0.120$) to Granger ($0.083$).
 \textbf{(I--K)} Violin plots over 10 topologies: Frobenius error (I), edge precision (J, $0.30\to0.40$), edge recall (K, maintained at $0.97$).}
 \label{fig:granger}
 \end{figure}
@@ -571,7 +580,7 @@ Several limitations should be noted.
 (2)~Our experiments use excitatory networks ($W_{ij} \geq 0$), where the Perron--Frobenius theorem \citep{horn1985matrix} guarantees a unique real dominant eigenvalue and simplifies spectral radius control.
 Real circuits include inhibitory connections (mixed-sign $W$); extending the method requires relaxing the non-negativity modeling prior.
 Preliminary tests with mixed-sign weights yield qualitatively similar recovery accuracy for the covariance estimator itself, since the estimator $\hat{W} = \Sigma_{y_{t+1},y_t}\Sigma_{y_t,y_t}^{-1}$ does not assume sign constraints.
-(3)~We compare against a chance baseline but not against established methods such as GLMs \citep{pillow2008spatio} or vector autoregressive models; such comparisons are needed for a stronger empirical evaluation.
+(3)~We compare against a per-session VAR baseline (E2), which is $37\%$ worse than our accumulate-then-invert estimator, confirming the key design choice. Comparison against other established methods such as Ridge-GLMs \citep{pillow2008spatio} or penalized VAR models would further strengthen the empirical evaluation.
 (4)~Our experiments span $N \in \{15, 159, 300\}$, motivated by biologically relevant circuit scales: from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) to \textit{C.~elegans} (302 neurons; \citep{white1986structure}). The method itself places no upper bound on $N$; the computational bottleneck is the $O(N^3)$ covariance inversion, for which efficient iterative and sparse solvers exist.
 (5)~Our primary results assume noiseless observations; noise robustness tests (E8) show graceful degradation ($1\%$ at $\sigma_\epsilon = 0.1$, $33\%$ at $\sigma_\epsilon = 0.5$).
 
@@ -778,7 +787,7 @@ We designed the CPG to produce rich, nonstationary, state-dependent spatiotempor
 The CPG is a frozen (non-trainable) deep neural network $f_{\text{CPG}}: \mathbb{R}^N \to \mathbb{R}^N$ that maps the current network state $x_t$ to a drive signal $b_{\text{CPG}}(t)$:
 \begin{enumerate}
     \item \textbf{Input permutation}: The state vector is circularly shifted by $t$ positions, introducing time-dependence without learnable parameters.
-    \item \textbf{Random deep network}: A 3-layer network with ReLU activations, RMS normalization, and absolute-value nonlinearities, with randomly initialized (frozen) weights. Xavier-style initialization with $\sigma = 1/\sqrt{d}$ prevents vanishing/exploding activations.
+    \item \textbf{Random deep network}: A 3-layer network with absolute-value nonlinearities ($|\cdot|$) and RMS normalization at each layer, with randomly initialized (frozen) weights. Xavier-style initialization with $\sigma = 1/\sqrt{d}$ prevents vanishing/exploding activations. Absolute-value (rather than ReLU) is used because it preserves both positive and negative magnitude, producing richer frequency content in the CPG output.
     \item \textbf{Chaotic reservoir drive}: A Sussillo-style chaotic recurrent network~\citep{sussillo2009generating} with gain $g = 1.3$ (edge of chaos) generates a 2500-step trajectory that is added to the network output, providing broad-spectrum temporal structure.
     \item \textbf{Bounded output}: A final $\tanh$ layer bounds the CPG output to $[-1, 1]$, scaled by a gain parameter.
 \end{enumerate}
