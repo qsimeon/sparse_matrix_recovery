@@ -84,13 +84,18 @@ scripts/
 
 ## Citation
 
+**Preprint**: https://arxiv.org/abs/2603.18497
+
 ```bibtex
-@article{simeon2026sparse,
+@misc{simeon2026recoveringsparseneuralconnectivity,
   title={Recovering Sparse Neural Connectivity from Partial Measurements:
          A Covariance-Based Approach with Granger-Causality Refinement},
-  author={Simeon, Quilee},
+  author={Quilee Simeon},
   year={2026},
-  note={Preprint. \url{https://github.com/qsimeon/sparse_matrix_recovery}}
+  eprint={2603.18497},
+  archivePrefix={arXiv},
+  primaryClass={q-bio.QM},
+  url={https://arxiv.org/abs/2603.18497},
 }
 ```
 

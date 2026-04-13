@@ -46,7 +46,7 @@ FIGURES_DIR = Path("paper/figures")
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def generate_fig8_dynamics(output_path):
+def generate_fig9_dynamics(output_path):
     """Figure 8: Network dynamics (phase portraits), power spectrum, and recovery.
 
     Phase portraits use PCA-projected trajectories colored by time (plasma cmap).
@@ -196,46 +196,44 @@ def main():
     print("\nFig 1: Problem schematic")
     generate_problem_schematic(FIGURES_DIR / "fig1_problem_schematic.pdf")
 
-    # Fig 2: (merged into Fig 1 — pipeline is now part of the problem schematic)
-
-    # Fig 3: Scaling (E1 data)
-    print("\nFig 3: Scaling (E1)")
+    # Fig 2: Scaling (E1 data)
+    print("\nFig 2: Scaling (E1)")
     data = load_results(RESULTS_DIR / "E1_baseline.json")
-    plot_scaling(data, FIGURES_DIR / "fig3_scaling.pdf")
+    plot_scaling(data, FIGURES_DIR / "fig2_scaling.pdf")
 
-    # Fig 4: Granger refinement (E2 data — was E4, now presented 2nd)
-    print("\nFig 4: Granger refinement (E2)")
+    # Fig 3: Granger refinement + heteroskedasticity + ablation (E2)
+    print("\nFig 3: Granger refinement (E2)")
     data = load_results(RESULTS_DIR / "E2_granger.json")
-    plot_granger_comparison(data, FIGURES_DIR / "fig4_granger_refinement.pdf")
+    plot_granger_comparison(data, FIGURES_DIR / "fig3_granger_refinement.pdf")
 
-    # Fig 5: Stimulation tradeoff (E3 data)
-    print("\nFig 5: Stimulation tradeoff (E3)")
+    # Fig 4: Stimulation-dynamics tradeoff (E3)
+    print("\nFig 4: Stimulation tradeoff (E3)")
     data = load_results(RESULTS_DIR / "E3_stimulation.json")
-    plot_stimulation_tradeoff(data, FIGURES_DIR / "fig5_stimulation.pdf")
+    plot_stimulation_tradeoff(data, FIGURES_DIR / "fig4_stimulation.pdf")
 
-    # Fig 6: Measurement sparsity (E4 data — was E2, now presented 4th)
-    print("\nFig 6: Measurement sparsity (E4)")
+    # Fig 5: Measurement density (E4)
+    print("\nFig 5: Measurement sparsity (E4)")
     data = load_results(RESULTS_DIR / "E4_sparsity.json")
-    plot_sparsity_effect(data, FIGURES_DIR / "fig6_sparsity.pdf")
+    plot_sparsity_effect(data, FIGURES_DIR / "fig5_sparsity.pdf")
 
-    # Fig 7: Nonlinearity robustness (E5 data)
-    print("\nFig 7: Nonlinearity robustness (E5)")
+    # Fig 6: Nonlinearity robustness (E5)
+    print("\nFig 6: Nonlinearity robustness (E5)")
     data = load_results(RESULTS_DIR / "E5_nonlinearity.json")
-    plot_nonlinearity_robustness(data, FIGURES_DIR / "fig7_nonlinearity.pdf")
+    plot_nonlinearity_robustness(data, FIGURES_DIR / "fig6_nonlinearity.pdf")
 
-    # Fig 8: Dynamics analysis (runs its own simulation)
-    print("\nFig 8: Dynamics analysis")
-    generate_fig8_dynamics(FIGURES_DIR / "fig8_dynamics.pdf")
-
-    # Fig 9: Stimulation fraction (E7 data)
-    print("\nFig 9: Stimulation fraction (E7)")
-    data = load_results(RESULTS_DIR / "E7_stim_fraction.json")
-    plot_stim_fraction(data, FIGURES_DIR / "fig9_stim_fraction.pdf")
-
-    # Fig 10: Oracle vs Approximation crossover (E6 data)
-    print("\nFig 10: Oracle vs Approximation (E6)")
+    # Fig 7: Oracle vs. approximation (E6)
+    print("\nFig 7: Oracle vs Approximation (E6)")
     data = load_results(RESULTS_DIR / "E6_oracle_crossover.json")
-    plot_oracle_crossover(data, FIGURES_DIR / "fig10_oracle_comparison.pdf")
+    plot_oracle_crossover(data, FIGURES_DIR / "fig7_oracle_comparison.pdf")
+
+    # Fig 8: Stimulation coverage (E7)
+    print("\nFig 8: Stimulation fraction (E7)")
+    data = load_results(RESULTS_DIR / "E7_stim_fraction.json")
+    plot_stim_fraction(data, FIGURES_DIR / "fig8_stim_fraction.pdf")
+
+    # Fig 9: Network dynamics, CPG detection, error decomposition (simulation)
+    print("\nFig 9: Network dynamics")
+    generate_fig9_dynamics(FIGURES_DIR / "fig9_dynamics.pdf")
 
     # Note: CPG architecture is a TikZ diagram inline in main.tex (Appendix A.8)
     # — no external figure file needed.

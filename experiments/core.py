@@ -587,6 +587,67 @@ def estimate_connectivity_weights(num_nodes, multinet_dataset, non_negative_weig
 # VAR Baseline: per-session inversion then element-wise average
 # ============================================================================
 
+def per_session_ridge_glm_estimate(num_nodes, multinet_dataset, alpha=1.0, non_negative_weights=True):
+    """
+    Per-neuron Ridge-regularized GLM (L2 penalty), accumulated element-wise.
+
+    For each neuron i and session k where i is measured:
+      w_i^(k) = argmin_w ||x_{i,t+1} - X_{t,M_k} w||^2 + alpha * ||w||^2
+
+    This is the (Sigma_0 + alpha*I)^{-1} Sigma_1 estimate per session,
+    genuinely different from both:
+      - Our method (pooled covariance, single global inversion)
+      - VAR (per-session OLS, no regularization)
+
+    Note: OLS per-neuron (alpha=0) = per-session VAR row-by-row.
+    The Ridge penalty (alpha>0) introduces a bias toward zero, analogous
+    to our method's implicit regularization but at the per-session level.
+    """
+    weight_sum = np.zeros((num_nodes, num_nodes))
+    weight_count = np.zeros((num_nodes, num_nodes))
+
+    num_sessions = len(multinet_dataset)
+    for session_idx in range(num_sessions):
+        session = f"session{session_idx}"
+        data = multinet_dataset[session]
+
+        measured = np.where(data["measured_nodes_mask"])[0]
+        m = len(measured)
+        if m < 2:
+            continue
+
+        X = data["activity_data"]
+        X_obs = X[:, measured]        # T × m
+        n = X_obs.shape[0] - 1
+
+        # Ridge normal equations: (X^T X + alpha*I) w = X^T y
+        # cov0_k = X^T X / n,  cov1_k_row_i = X^T y_i / n
+        cov0_k = X_obs[:-1].T @ X_obs[:-1] / n   # m×m
+        cov1_k = X_obs[1:].T @ X_obs[:-1] / n    # m×m
+
+        # Ridge estimate: A_k = cov1_k @ (cov0_k + alpha/n * I)^{-1}
+        # (alpha/n because cov0 is already normalized)
+        reg = alpha / n
+        try:
+            A_k = cov1_k @ np.linalg.solve(cov0_k + reg * np.eye(m), np.eye(m))
+        except np.linalg.LinAlgError:
+            continue
+        np.fill_diagonal(A_k, 0)
+
+        for ii, i in enumerate(measured):
+            for jj, j in enumerate(measured):
+                if i != j:
+                    weight_sum[i, j] += A_k[ii, jj]
+                    weight_count[i, j] += 1
+
+    count_safe = np.clip(weight_count, 1, None)
+    glm_W = weight_sum / count_safe
+    np.fill_diagonal(glm_W, 0)
+    if non_negative_weights:
+        glm_W = np.maximum(glm_W, 0.0)
+    return glm_W
+
+
 def per_session_var_estimate(num_nodes, multinet_dataset, non_negative_weights=True):
     """
     Per-session VAR(1) baseline: invert each session's m×m covariance, then

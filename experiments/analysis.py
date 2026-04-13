@@ -394,7 +394,14 @@ def plot_granger_comparison(results, output_path):
     ax = fig.add_subplot(gs[1, 3])
     _add_panel_label(ax, "H")
     has_var = "var_distance" in df.columns
-    if has_var:
+    has_glm = "glm_distance" in df.columns
+    if has_var and has_glm:
+        names = ["Chance", "Adj", "Spec", "VAR", "GLM", "Est", "Grn"]
+        cols   = ["chance_distance", "adjacency_distance", "spectral_distance",
+                  "var_distance", "glm_distance", "estimate_distance", "optimized_distance"]
+        bar_colors = [PALETTE["red"], PALETTE["yellow"], PALETTE["cyan"],
+                      PALETTE["purple"], "#AA5577", C_EST, C_GRN]
+    elif has_var:
         names = ["Chance", "Adj", "Spec", "VAR", "Est", "Grn"]
         cols   = ["chance_distance", "adjacency_distance", "spectral_distance",
                   "var_distance", "estimate_distance", "optimized_distance"]
@@ -406,7 +413,8 @@ def plot_granger_comparison(results, output_path):
                  "estimate_distance", "optimized_distance"]
         bar_colors = [PALETTE["red"], PALETTE["yellow"], PALETTE["cyan"], C_EST, C_GRN]
 
-    if all(c in df.columns for c in cols):
+    has_all = all(c in df.columns for c in cols)
+    if has_all:
         vals = [df[c].median() for c in cols]
     else:
         vals = [0.54, 0.21, 0.13, df["estimate_distance"].median(), df["optimized_distance"].median()]
