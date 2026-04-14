@@ -2,7 +2,68 @@
 > Reviewer: Claude Opus 4.6
 > Date: 2026-03-23
 
-## New Session — RALPH Paper Loop (fresh)
+---
+
+## 2026-04-14 — Full Vision-Based Page-by-Page Review (v7 plan, Phase E6)
+
+Rendered `main.pdf` with `pdftoppm -r 130 -png` → 24 PNGs in `/tmp/paper_pages/`.
+Read every page as an image. Findings below are scoped to **layout, figure legibility, narrative flow, and numerical consistency** — not fresh writing errors (those would already have been caught in the Phase A narrative pass).
+
+### 🔴 CRITICAL — blank-page float placement
+
+- **Page 9 (~95% whitespace)**. Only 3 lines of text at top: "together, the VAR and Ridge-GLM baselines (Appendix A.10) confirm that the global accumulate-then-invert design—not the Granger refinement alone—is the essential ingredient: local per-session inversions, even when regularized, trail our global estimator by 26–37%." Then the rest is blank because Figure 3 is a full-page figure starting on page 10. **Effectively one wasted page.**
+- **Page 23 (~95% whitespace)**. Only 3 lines of text at top: "covariance statistics *before* the global inversion is the critical design choice: local per-session inversions—even when regularized—cannot recover information that only emerges from the joint structure of accumulated covariances." Then blank because Figure 9 is a full-page figure starting on page 24. **Another wasted page.**
+- **Root cause**: Both figures use default placement (probably `[tb]` or `[htbp]`) and are forced to the next available page when there's insufficient column space. LaTeX breaks the page early and strands the short follow-up paragraph.
+- **Fixes to try** (in order of invasiveness):
+  1. Change Figure 3 and Figure 9 placement to `[!p]` (dedicated float page) — but this may actually make it worse; they already effectively get a float page.
+  2. Change placement to `[!t]` + `\FloatBarrier` — ensures figure lands at top of a page and body text flows around it before next section.
+  3. Add `\vspace*{\fill}` trickery.
+  4. **Best option**: move Figure 3 placement hint so it lands on the same page as the §4.3 Granger section start, or reduce figure height slightly so the 3-line paragraph + figure both fit on one page.
+  5. Alternatively, rephrase the 3-line paragraphs so they fit on the preceding page, letting the figure take a clean float page.
+
+### 🟡 Numerical mismatch — §4.3 body prose vs Figure 3 caption
+
+- **Body text (page 8, §4.3)**: "...local per-session inversions, even when regularized, trail our global estimator by **26–37%**." (This is stale — matches the old E2 JSON.)
+- **Figure 3 caption (page 10)**: "The VAR (per-session OLS, **0.136**) is worse than even the oracle Spectral prior (0.129); the Ridge-GLM (per-session ℓ₂-regularized, **0.117**) is slightly better, yet both are far worse than our accumulate-then-invert estimate (**0.086**), **31% (worse Spec)**." The raw values 0.136, 0.117, 0.086 ARE the fresh E2 numbers. Computing: VAR 58% worse, GLM 36% worse. So the caption is internally inconsistent (values fresh, percentage stale) AND the caption percentage "31%" doesn't obviously map to anything.
+- **§6 Discussion Limitations item (3)**: "underperform our accumulate-then-invert estimator (37% and 26% worse, respectively)". Stale.
+- **Fix**: after cluster reruns (Phase E3), regenerate figures and update all three sites to match fresh data. For now, since the figure is ALREADY fresh, update the body prose to "**36–58%**" and update item (3) to "**58% and 36% worse, respectively**" (note: the order in the text has VAR first then GLM, so VAR=58 / GLM=36).
+
+### 🟡 Potential layout nits
+
+- **Page 12** has both Figure 5 and Figure 6 stacked with a 6-line paragraph between them and the §4.6/§4.7 headings squeezed in. Dense but legible — not a fix target unless other rearrangements free space.
+- **Page 6** has Figure 1 spanning ~55% of the page plus two text paragraphs. Clean.
+- **Page 8** Table 2 + Figure 2 share the page. Clean.
+- **Page 10** Figure 3 has 11 subpanels (A–K). Panel labels are legible at 130dpi render but will be **tight** at NeurIPS print size. Verify panel text is ≥6pt after scaling.
+- **Page 24** Figure 9 has 9 subpanels (A–I) with plasma colormap phase portraits. Legible at screen size, but the per-panel axis tick labels are small. Borderline for print.
+
+### 🟢 Narrative / throughline — positive observations
+
+- **§1 Introduction** (pp. 1–2) motivates the problem well: sets up "control-estimation tradeoff" in italics as the thematic anchor. Contributions bullet list is clean.
+- **§2 Problem Formulation** (pp. 2–3) develops dynamics model, observation model, estimation goal in that order. Transitions cleanly into §3 Methods.
+- **§3 Methods** (pp. 4–5) covariance estimator → Granger refinement → full pipeline with Algorithm 1 box. Clear escalation.
+- **§4 Experiments** intro (p. 5) lists all 7 experiments with one-line goals. Good roadmap.
+- **Figure 1** (p. 6) is a strong orienting figure — shows network + method pipeline side by side.
+- **§5 Related Work** (pp. 14–15) now has 5 named paragraphs (Neural connectivity inference, Granger, Compressed sensing, Matrix completion, Systems identification). Reads well.
+- **§6 Discussion** (pp. 15–17) follows the new A8 ordering. Error decomposition moved up works — discussing WHY the estimator succeeds before WHY Granger helps makes sense.
+- **§7 Conclusion** (p. 17) has the E3/E6/E7/E2 cross-refs inline.
+
+### 🟢 Appendices (pp. 19–22)
+
+- A.1 Stein-Price derivation, A.2 Identifiability, A.3 Oracle bias-variance — all compact and readable.
+- A.4 Strong connectivity (p. 20), A.5 Spectral radius, A.6 Frobenius norm, A.7 Sampling sufficiency — each gets a short subsection. Good.
+- A.8 Heteroskedastic error structure (p. 21) has Eq. (17) with $\Delta_j$ heteroskedasticity definition. Clean.
+- A.9 CPG model (pp. 21–22) has Architecture + State dependence + Topology invariance. Complete.
+- A.10 VAR and GLM detailed definitions (p. 22) has Eqs. (18) and (19) with full per-session formulas. Good.
+
+### Action items from this review (routed to task list + todo.md)
+
+1. **Fix blank pages 9 & 23** — float placement or paragraph rephrasing (new task).
+2. **Update stale "26–37%" → "36–58%" in §4.3 body prose + §6 Limitations item (3)** — this is the E5 task; can do NOW since Figure 3 already shows fresh numerals, OR wait until cluster reruns to decide final numbers from a rerun of E2 with more seeds. **Decision**: do it now with the values already in Figure 3 (0.136, 0.117, 0.086), since those are the current ground truth on disk.
+3. **Sanity-check panel text legibility** in Figure 3 and Figure 9 at print size — not blocking.
+
+---
+
+
 
 ### Removed second undefined SPARC reference in E7 (line 414)
 

@@ -1,5 +1,19 @@
 # Project Roadmap — Sparse Matrix Recovery
-> Updated: 2026-04-11 (deep critical review v3 — comprehensive session)
+> Updated: 2026-04-14 (v7 plan — Phase E critical review + reruns)
+
+## 2026-04-14 session (v7 Phase E)
+- [x] E1: Added `fawzi2022discovering` (AlphaTensor) citation to A9 scalability note
+- [x] E2: Added synaptic plasticity caveat as new Limitations item (6)
+- [x] E5 (round 1): Reconciled VAR/GLM stale numbers in §4.3, §5, §6, Appendix A.10 (26%→36%, 37%→58%)
+- [x] E6: Full vision-based page-by-page review via pdftoppm; findings logged in REVIEW_NOTES.md
+- [x] Fixed blank pages 9 & 23: float placement `[p!]`→`[!tbp]` (fig 3), `[ht]`→`[!tbp]` (fig 9) + compact A.10 Summary. Paper: 24→22 pages.
+- [x] E3 (partial): Archived 2026-04-11 JSONs; reran E2 on 2026-04-13; started local reruns of E1+E3-E8 on 2026-04-14
+- [x] E10: Verified poster.tex + presentation.tex compile clean; no body-number edits needed (they don't reference VAR/GLM)
+- [ ] E3 (continuing): Local reruns for E5, E6, E7, E8 still running in background
+- [ ] E4: Regenerate 9 PDF figures once all fresh JSONs land (`uv run python scripts/generate_all_figures.py`)
+- [ ] E5 (round 2): Final numerical reconciliation — check if fresh numbers shift `r=0.90`, `0.083`, `0.014`, E1/E2 error decomp, VAR/GLM percentages
+- [ ] SSH cluster reruns (deferred, user requested "later"): need to `git clone`/`git pull` on engaging first; ControlMaster tunnel via `!ssh -M -N engaging` in parent shell
+- [ ] Phase D: Final compile (24±2 pages), 3 clean commits (Phase A / Phase B / Phase E), push after user sign-off
 
 ## Completed (2026-04-11 session)
 - [x] Paper §3.2: Remove erroneous "No self-connections" bullet (not Granger-specific); fold into preamble
