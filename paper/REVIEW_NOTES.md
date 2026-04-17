@@ -4,6 +4,206 @@
 
 ---
 
+## 2026-04-14 — Post-Commit Deep-Dive Review (v7 plan, code cross-reference)
+
+Interactive review after Phase E commits landed (dd171e1 notebooks, 8dd2d06 paper).
+Goal: verify every paper claim is grounded in code I have read and explained.
+Chunked into 5 logical sections, pause + user reaction between each.
+**All 5 chunks completed 2026-04-15.** All findings applied. Paper compiles clean at 24 pages.
+
+### Chunk 1 — §1 Intro + §2 Framework + §3 Method (pages 1–5) ↔ `experiments/core.py`
+
+**Code ↔ paper cross-reference — fully verified:**
+- Paper eq. (1) `x_{t+1} = W φ(x_t) + b_t` ↔ `core.py:393` `state = connection_weights @ nonlinearity(state) + total_input`
+- Paper priors (no autapse / strong connectivity / non-negativity) ↔ `core.py:282 / :287 / :291`
+- Per-session random measurement/stim masks ↔ `core.py:350-371`
+- CPG is per-topology, deterministic (serialized once, deserialized per session) ↔ `core.py:458, 181-218` (matches Appendix A.8 claim exactly)
+- Estimator eq. (6) `Ŵ = Σ_{x_{t+1},x_t} Σ_{x,x}^{-1}` ↔ `core.py:550` `approx_W = cov_dtx @ np.linalg.pinv(cov_x)`
+- Error decomposition eq. (8) (E_1 model mismatch + E_2 input correlation) ↔ `core.py:563-574` comment block + `model_mismatch_norm`, `input_correlation_norm`
+- Oracle estimator (knows b and φ) ↔ `core.py:558` `oracle_W = (cov_dtx - cov_bx) @ pinv(cov_phix)`
+- Algorithm 1 accumulation loop ↔ `core.py:515-548`
+- Diagonal zeroing + ReLU projection (structural priors applied uniformly to ALL methods) ↔ `core.py:554-556`
+
+**🟢 Cosmetic nits:**
+1. **"Ridge-regularized estimator" label in Alg. 1 line 9**: paper eq. (7) derives the ridge form `Σ_xx(Σ_xx + σ²I)^{-1}` assuming observation noise σ_ε > 0. In the default experimental regime σ_ε = 0 and the implementation uses `np.linalg.pinv` (SVD-truncated), which is a *different* flavor of regularization. Consider relabeling to "pseudo-inverse estimator" in the algorithm comment. Non-blocking.
+2. **Spectral radius target = 1.0 − ε**: code sets `adjust_spectral_radius(..., target_radius=1.0)` with `eps = np.finfo(float).eps ≈ 2e-16`, so ρ(W) = 1 − 2e-16 exactly. Paper's stability bullet is "ρ(W) ≤ 1" which is literally what the code enforces, but it's marginal. Tanh saturation prevents blow-up empirically. No action.
+3. **Figure 1 schematic caption reports `r = 0.90`**: an experimental-result quantity living in a §3 methods figure. Mild narrative mismatch but not worth changing for one number.
+
+**🟡 Worth discussing:**
+1. **Granger non-causality rule in §3.2** is "$W_{ij} = 0$ when $\Sigma_{x_t,x_t}(i,j) > \Sigma_{x_{t+1},x_t}(i,j)$" — a deterministic pooled-covariance *heuristic*, not a classical F-test-based Granger test. Justification currently lives in the body without deep derivation. A reviewer may ask "why is this Granger causality and not just a lagged-covariance thresholding rule?" To check in Chunk 5: does any appendix (A.3?) derive why this rule is equivalent to, or a relaxation of, standard Granger causality? If not, consider either (a) adding a short justification or (b) retitling §3.2 as "lagged-covariance sparsity refinement".
+
+### Chunk 2 — §3 Method internals + baselines + projected gradient ↔ `experiments/core.py` + `run_single_rep.py`
+
+Focus: optimization, VAR, Ridge-GLM, projection step, metric plumbing.
+
+**Code ↔ paper cross-reference — fully verified:**
+- Appendix A.10 VAR per-session formula `A_k = Σ_{x_{t+1},x_t}^{(k)} (Σ_{x_t,x_t}^{(k)})^{-1}` ↔ `core.py:698` `A_k = cov1_k @ np.linalg.pinv(cov0_k)` — pinv handles rank-deficient single-session covariances; element-wise average across co-observed pairs at `core.py:710-715`.
+- Appendix A.10 Ridge-GLM per-session formula `A_k = Σ_{x_{t+1},x_t}^{(k)} (Σ_{x_t,x_t}^{(k)} + (α/T)I)^{-1}` ↔ `core.py:635` `A_k = cov1_k @ solve(cov0_k + (alpha/n)*I)`. Paper writes `α/T`, code writes `α/n` with `n` = session length — semantically identical (T = timesteps used per session).
+- Both baselines share the per-session → element-wise averaging pattern (paper A.10 "element-wise mean over sessions that observed the pair (i,j)") ↔ loops at `core.py:700-715` and `:637-648`.
+- Both baselines pass through the same structural-prior projection (`clamp_W_constraints`) ↔ `core.py:724-732`, so the comparison against our estimator is apples-to-apples (same zero-diag, same non-negativity clip).
+- Projected gradient descent in §3.2 ("alternating gradient step + Granger projection") ↔ `projected_gradient_causal` at `core.py:746-785`:
+  - init with `A = approx_W`, compute zero-positions via `np.argwhere(cov_x > cov_dtx)` (line 767)
+  - 200 outer iterations, `lr = 1e-3`
+  - each iter: `A -= lr * (A - A_init)` (trust-region pull toward raw estimate), then `W = A @ B` where `B = pinv(cov_x)` (least-squares backsolve), then `clamp_W_constraints` applies zero-diag + zero-positions + non-neg + spectral-radius clip
+  - returns final `(A, W)` → paper reports `W` as the "Granger-refined" estimate
+- Figure 9 panel (I) ("representative topology r = 0.94") ↔ `scripts/generate_all_figures.py:174-181`. The script **does** recompute `projected_gradient_causal` on the single topology it plots, so the 0.94 number is genuinely the Granger-refined scatter.
+
+**🟢 Cosmetic nits (Chunk 2):**
+1. **Ridge-GLM α choice not justified**: `alpha=1.0` default in `per_session_ridge_glm_estimate` is used for all paper baselines. Paper A.10 doesn't mention the specific α. Tiny sentence in A.10 would close the loop ("we fix α = 1 without cross-validation since GLM is a reference baseline, not a tuned competitor"). Non-blocking.
+2. **Projected-gradient hyperparams** (`lr = 1e-3`, `steps = 200`, trust-region form `A -= lr*(A - A_init)`) not mentioned in the paper body. That's fine — A.10 lists 200 steps in passing, and the projection does most of the work. Non-blocking.
+3. **`approx_W = cov_dtx @ pinv(cov_x)` uses `pinv`**, so the implementation is robust to rank-deficient `cov_x` when T is small. Paper writes `Σ_{x_t,x_t}^{-1}`. Literal inverse only exists when `cov_x` is full rank; pinv is the safe numerical choice. Not worth a footnote.
+
+**🟡 Worth discussing — primary Chunk 2 finding:**
+1. **`weight_correlation` in E2 JSON is the *raw* estimator correlation, but Fig 9 caption attributes "median r = 0.90 across 10 topologies" to *Granger-refined estimates***.
+   - Evidence: `run_single_rep.py:138` computes `"weight_correlation": float(np.corrcoef(true_W.ravel(), approx_W.ravel())[0, 1])` — uses `approx_W` (raw covariance estimator), **not** `optim_W` (Granger-refined).
+   - Paper line 540 says: "Scatter plot of true off-diagonal weights $W_{ij}$ vs.\ Granger-refined estimates $\hat{W}_{ij}$ for this representative topology. Pearson $r = 0.94$; ... Median across all 10 topologies: $r = 0.90$."
+   - The 0.94 is legit (figure script recomputes Granger for its one topology). The 0.90 median comes from the JSON field which is raw-estimator, so the caption is implicitly attributing it to Granger when it's really raw.
+   - **In practice this is a tiny discrepancy** — Granger zeros only a small number of positions (since cov_x is close to cov_dtx for most off-diagonal pairs in this regime), so the two correlations are within ~0.01 of each other. But for strict correctness:
+     - **Option A**: Reword caption to "Median raw-estimator correlation across all 10 topologies: $r = 0.90$; Granger refinement on the representative topology gives $r = 0.94$."
+     - **Option B**: Add a one-line change to `run_single_rep.py` to also store `"granger_weight_correlation": corrcoef(true_W.ravel(), optim_W.ravel())`, rerun E2 only (1 minute), recompute the median, and put that number in the caption.
+     - **Option C**: Drop the "Median across all 10 topologies" clause entirely and just report the single-topology 0.94.
+   - Recommend: **Option A** (no rerun, truthful caption). Tiny edit.
+
+### Chunk 3 — §4 Experiments E1–E8 ↔ `run_experiments.py` + `analysis.py`
+
+Focus: every experiment's code path (runner → JSON → plot) and every numerical claim in §4.2–§4.8 cross-checked against fresh 2026-04-14 JSONs.
+
+**Code ↔ paper cross-reference — runner + plot pairings verified:**
+| Experiment | Runner | Figure | Numbers match? |
+|---|---|---|---|
+| E1 baseline | `run_experiments.py:126-160` | `plot_scaling` | Table 1 = `optimized_distance` ✓ |
+| E2 Granger ablation | `:220-243` | `plot_granger_comparison` | Panel H uses all 7 columns ✓ |
+| E3 stim tradeoff | `:189-217` | `plot_stimulation_tradeoff` (uses `optimized_distance`) | Numbers ✓ |
+| E4 sparsity | `:163-186` | `plot_sparsity_effect` (raw + Granger both shown) | 0.083/0.105/0.110 ✓ |
+| E5 nonlinearity | `:246-267` | `plot_nonlinearity_robustness` (raw + Granger both shown) | tanh 0.083, identity/ReLU ~0.17, sigmoid 0.132 ✓ |
+| E6 oracle crossover | `:270-297` | `plot_oracle_crossover` | see 🟡 finding below |
+| E7 stim coverage | `:300-334` | `plot_stim_fraction` (raw + Granger both shown) | 0.83/0.05/0.05 ✓ |
+| E8 noise robustness | `:337-366` | not its own figure (quoted in text) | 1.6% at σ_ε=0.1, 32.3% at σ_ε=0.5 ✓ |
+
+**🟢 Cosmetic notes (Chunk 3):**
+1. E8 "~1%" at σ_ε=0.1 is actually 1.6% (Granger opt 0.0832 → 0.0845). "~1%" is a generous round-down; "~2%" would be stricter. Non-blocking.
+2. `save_matrices=True` in E1 is gated on `num_nodes <= 30` — fine since only the N=15 case is used for downstream heatmaps in Fig 3/9; the larger networks aren't needed for visualization.
+3. Experiment statistics (Mann-Whitney U) are computed but not currently surfaced in paper body. Could be added to Table 1 caption ("p < 0.001 for all size/duration combinations") but not blocking.
+
+**🟡 Primary Chunk 3 findings (two discrepancies in same family as Fig 9):**
+
+1. **Fig 2 (`plot_scaling`) plots raw `estimate_distance`, but Table 1 and both paper captions cite Granger-refined (`optimized_distance`) numbers.**
+   - Evidence: `analysis.py:495, 516, 532, 552` all pull `r["distances"]["estimate_distance"]`.
+   - Table 1 caption: "Median **Granger-refined** recovery error" — I verified the Table 1 values exactly match `optimized_distance` medians (N=300 T=1000: 0.0142 → 0.014 ✓, N=159 T=1000: 0.0187 → 0.019 ✓).
+   - Fig 2 caption: "Best results: $N{=}300$ ($0.014$)" — but the plotted line at N=300, T=1000 draws 0.0154 (raw), not 0.0142 (Granger). Visually indistinguishable on a log scale but strictly incoherent.
+   - **Fix**: one-line change — replace `"estimate_distance"` → `"optimized_distance"` in 4 places in `plot_scaling` (lines 495, 516, 532, 552), regenerate fig2, recompile.
+
+2. **Fig 7 (`plot_oracle_crossover`) computes oracle/raw ratios in panel B, but paper §4.6 + §6 quote oracle/Granger ratios.**
+   - Evidence: `analysis.py:795` `ratios = oracle_med / approx_med` where `approx_med` is `estimate_distance` (raw).
+   - Actual ratios from fresh E6 JSON:
+     ```
+     σ     oracle   raw     granger  o/raw  o/grn
+     0.0   4.2472   2.7328  1.5609   1.55x  2.72x
+     0.1   0.2584   0.1180  0.1182   2.19x  2.19x
+     0.25  0.1459   0.0885  0.0840   1.65x  1.74x
+     0.5   0.1283   0.0787  0.0760   1.63x  1.69x
+     1.0   0.1272   0.0859  0.0832   1.48x  1.53x
+     2.0   0.1564   0.1095  0.1076   1.43x  1.45x
+     5.0   0.2316   0.1420  0.1429   1.63x  1.62x
+     ```
+   - Paper claim (main.tex:440, :556): "largest gap (${\sim}2.7\times$) at $\sigma = 0$" — matches **oracle/Granger** (2.72) but **not** oracle/raw (1.55).
+   - Paper claim: "narrows to $1.5$--$1.6\times$ for $\sigma \geq 1$" — matches both o/raw (1.43–1.48 for σ=1, 2) and o/Granger (1.45–1.53) close enough.
+   - Paper §3/§4.6 formally defines "approximation" as the raw $\hat{W} = \Sigma_{x_{t+1},x_t}\Sigma_{x_t,x_t}^{-1}$ (not Granger-refined). So the 2.7× number, while true for Granger, doesn't match "the approximation" as defined.
+   - Extra subtlety: σ=0 is a pathological regime (all three estimators catastrophically bad; o=4.25, raw=2.73, granger=1.56). The 2.7× Granger gap there reflects Granger recovering half of a broken signal, not genuine estimator quality.
+   - **Fix options:**
+     - **A** — Change the text in main.tex:440 and :556 to say "${\sim}1.55\times$ at $\sigma=0$" (matching o/raw, matching "the approximation" definition). Also change panel B title nothing. Caveat: "1.55×" is a less impressive headline number.
+     - **B** — Keep "2.7×" in the text but change the definition: add a parenthetical "(Granger-refined)" to the specific "2.7×" claim. And change panel B in `plot_oracle_crossover` to plot `oracle/granger` ratios. Keeps the impressive number but adds one clarification word.
+     - **C** — Drop σ=0 from the "largest gap" claim entirely (since it's pathological) and say "at $\sigma=0.1$ the oracle is ${\sim}2.2\times$ worse than the approximation." This is honest about o/raw (2.19) and avoids the σ=0 interpretation trap.
+   - **Recommendation: Option B** — one word added ("Granger-refined") in two lines of main.tex + one-line code change in `plot_oracle_crossover` (use `granger_med` for ratio). Preserves the 2.7× figure but makes it strictly correct.
+
+**All other numerical claims in §4 verified against fresh JSONs** (E3 interaction pattern, E4 0.083/0.105/0.110, E5 all four nonlinearities, E7 0.83/0.05/0.05, E8 1.6%/32.3%). No hidden drift.
+
+**Fixes applied (2026-04-15):**
+1. `analysis.py:plot_scaling` — 6 occurrences of `estimate_distance` → `optimized_distance`, y-axis relabeled "Granger-refined Recovery Error". Fig 2 now matches Table 1 values exactly.
+2. `analysis.py:plot_oracle_crossover:795` — `ratios = oracle_med / approx_med` → `oracle_med / granger_med`. Panel B y-axis relabeled "Error ratio (oracle / Granger-refined approximation)".
+3. `main.tex:440` (§4.6 text) — rewritten to skip the pathological σ=0 regime, cite "$\sim 2.2\times$ at $\sigma{=}0.1$", clarify ratios are vs Granger-refined.
+4. `main.tex:447` (Fig 7 caption) — "largest gap at zero stimulation ($\sim 2.7\times$)" → "largest non-pathological gap ($\sim 2.2\times$) at $\sigma{=}0.1$"; Panel B description updated to specify "oracle error to Granger-refined approximation error".
+5. `main.tex:556` (§6 Discussion) — "largest gap ($\sim 2.7\times$) at $\sigma = 0$" → "largest non-pathological gap ($\sim 2.2\times$ in the Granger-refined approximation) at $\sigma = 0.1$".
+6. Figures regenerated via `generate_all_figures.py`; paper recompiled clean (22 pages).
+
+### Chunk 4 — §5 Related Work + §6 Discussion + §7 Conclusion ↔ code + JSON cross-reference
+
+Focus: every numerical claim in the back-half of the paper, cross-checked against fresh data.
+
+**Code ↔ paper cross-reference — fully verified:**
+- Precision 0.30 → 0.40, recall 0.97 (§6): matches `E2_granger.json` estimate_precision/recall ✓
+- 31% error reduction vs Spec baseline (§6): (0.125 − 0.086)/0.125 = 31.2% ✓
+- VAR 58% / GLM 36% worse (§4.3, §6 Limitations item 3): (0.136 − 0.086)/0.086 = 58.1%; (0.117 − 0.086)/0.086 = 36.0% ✓
+- CPG detection F1 ~0.8 (§6, A.9): reproduced F1 = 0.83 median across 10 topologies with variance-threshold detector ✓
+- E8 noise robustness (1.6% at σ_ε=0.1, 32.3% at σ_ε=0.5) (§6): matches E8_noise.json ✓
+- All 23 citations resolve in references.bib ✓
+
+**🟡 Primary Chunk 4 finding — E2/E1 ratio was stated as "${\sim}2\times$" in four places, actually ${\sim}3\times$:**
+
+Recomputed propagated error norms across 10 topologies using `generate_all_figures.py`'s exact code path (`E1 = W(cov_phix·cov_x⁻¹ - I)`, `E2 = cov_bx·cov_x⁻¹`, Frobenius-divided-by-N):
+
+```
+seed=0:  E2/E1=3.33x      seed=5:  E2/E1=2.05x
+seed=1:  E2/E1=3.08x      seed=6:  E2/E1=3.62x
+seed=2:  E2/E1=2.45x      seed=7:  E2/E1=4.33x
+seed=3:  E2/E1=2.68x      seed=8:  E2/E1=3.28x
+seed=4:  E2/E1=2.09x      seed=9:  E2/E1=3.19x
+```
+- Median across 10 topologies: **3.14×**
+- Mean: **3.01×**
+- Representative (seed=42): **2.86×**
+
+**Root cause**: The JSON fields `model_mismatch_norm` and `input_correlation_norm` stored by `core.py:572-574` are the *covariance-space inputs* to the error bound inequality (`||cov_x - cov_phix||_F` and `||cov_bx||_F`), **not** the propagated error matrices. Those scalar norms give median ratio ~1.7× — which is likely where an earlier draft's "~2×" came from. But Fig 9 panel H plots the propagated `||E_i||_F/N` values (which round to ~3×), so the figure was correct all along; the prose claim was anchored to the wrong quantity.
+
+**Extra subtlety — internal contradiction in Fig 9 caption (main.tex:539)**: caption said "representative topology ~3× (median across topologies: ~2×)" — logically inconsistent (the representative cannot be larger than the median if the median is ~2× and seed=42 is ~3×). Resolved by both numbers rounding to ~3×.
+
+**Fixes applied (2026-04-15, Chunk 4):**
+1. `main.tex:524` (§6) — "$\|E_2\|_F$ ... ${\sim}2\times$ larger than $\|E_1\|_F$" → "${\sim}3\times$ larger"
+2. `main.tex:539` (Fig 9 caption) — "(median across topologies: ${\sim}2\times$)" → "(median across topologies: ${\sim}3\times$)"
+3. `main.tex:612` (§7 Conclusion) — "CPG--state correlation (${\sim}2\times$ larger than model mismatch)" → "${\sim}3\times$ larger"
+4. `main.tex:809` (Appendix A.9) — "dominates the model mismatch $E_1$ by a factor of $\sim 2\times$" → "$\sim 3\times$"
+5. Paper recompiled clean (22 pages, zero warnings/undefined). No figure regeneration needed — Fig 9 panel H was already correct.
+
+**False alarm retracted**: Earlier sub-scan flagged `complete_analysis.ipynb` cells 1+9 as containing dead `adjust_spectral_radius` references. Verified: `adjust_spectral_radius` is a live function (`core.py:248`) used by the Spectral baseline computation at cell ~585. The Phase B cleanup targeted a *different* notebook (`qsimeon_SparseMatrixRecovery.ipynb` Cell 2, per prior session notes). No action needed.
+
+### Chunk 5 — Appendices A.1–A.10 + Granger reframing + ship-ready punch list
+
+Focus: (a) spot-check every appendix claim against code/data, (b) reframe "Granger-causality" → "Granger-inspired" throughout the paper per user intent, (c) add new appendix with full derivation.
+
+**Appendix spot-checks — all verified:**
+| Appendix | Key claim | Verified against |
+|---|---|---|
+| A.1 Stein-Price | E₁ = W(D−I), D = diag(E[sech²(xᵢ)]) | Standard Wick/Price theorem |
+| A.2 Identifiability | nᵢⱼ ≥ 1 necessary+sufficient | K=50 at p=2/3 gives ~0 missing pairs |
+| A.3 Oracle bias-variance | Crossover Eq. (16) with Δ = D−I | Symbolically sound; matches E6 data |
+| A.4-new Granger rule | Derivation + scope + caveats | **New appendix added** |
+| A.5 Strong connectivity | Path existence + sink-rank-deficiency | Graph-theory |
+| A.6 Spectral radius + PF | ρ(W) ≤ 1 stability | Matches `core.py:248` |
+| A.7 Frobenius norm | ||A||_F/N definition | Trivial |
+| A.8 Sampling sufficiency | P_pair ≈ 0.44, DOF table 222/1.98/0.56 | Arithmetic exact ✓; κ≈26 (paper ~30) ✓ |
+| A.9 Heteroskedasticity | r ≈ 0.91 error-weight correlation | Recomputed: raw r=0.888, Granger r=0.921 ✓ |
+| A.10 CPG model | ~3× E2/E1 | Fixed in Chunk 4 ✓ |
+| A.11 VAR/GLM baselines | VAR=0.136, GLM=0.117 (36% worse) | Fresh E2_granger.json ✓ |
+
+**"Granger-inspired" reframing applied (2026-04-15, Chunk 5):**
+1. Paper title: "Granger-Causality Refinement" → "Granger-Inspired Refinement"
+2. Abstract: "Granger-causality refinement step" → "Granger-inspired refinement step"
+3. Contributions bullet: "Granger-causality-inspired" → "Granger-inspired"
+4. §3.2 title: "Granger-Causality Refinement" → "Granger-Inspired Sparsity Refinement"
+5. §3.2 body: full rewrite — adds motivation (future vs present informativeness), caveats (necessary not sufficient; one-sided; used as projection not standalone test), pointer to new appendix
+6. Algorithm 1 caption + comment: "Granger Refinement" → "Granger-Inspired Refinement"
+7. §4.3 title + body (5 occurrences): all "Granger refinement" → "Granger-inspired refinement"
+8. Fig 1 caption: "Granger non-causality sparsity" → "Granger-inspired lagged-covariance sparsity constraint"
+9. Fig 3 caption: "Granger-causality refinement" → "Granger-inspired refinement"
+10. Baselines bullet: "Granger non-causality zero constraints" → "Granger-inspired lagged-covariance zero constraints"
+11. §6 Discussion paragraph header: "Granger refinement" → "Granger-inspired refinement"
+12. New Appendix A.4 "Granger-Inspired Non-Causality Rule: Derivation and Scope": population-level derivation, relationship to classical Granger, three explicit caveats (non-negativity, necessary-not-sufficient, projection-not-test)
+13. All remaining "Granger causality" references are to the *literature/concept*, not our method ✓
+14. DEEP_DIVE.md: full Granger pedagogical walkthrough appended
+15. Paper recompiled clean: 24 pages, zero warnings, zero undefined refs
+
+---
+
 ## 2026-04-14 — Full Vision-Based Page-by-Page Review (v7 plan, Phase E6)
 
 Rendered `main.pdf` with `pdftoppm -r 130 -png` → 24 PNGs in `/tmp/paper_pages/`.

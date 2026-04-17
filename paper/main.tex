@@ -20,7 +20,7 @@
 \usepackage{placeins}  % \FloatBarrier — keeps floats within their section
 
 \title{Recovering Sparse Neural Connectivity from Partial Measurements:\\
-A Covariance-Based Approach with Granger-Causality Refinement}
+A Covariance-Based Approach with Granger-Inspired Refinement}
 
 \author{
   Quilee Simeon \\
@@ -35,7 +35,7 @@ A Covariance-Based Approach with Granger-Causality Refinement}
 \begin{abstract}
 Inferring the connectivity of neural circuits from incomplete observations is a fundamental challenge in neuroscience.
 We present a covariance-based method for recovering the weight matrix of a recurrent neural network from partial measurements across multiple recording sessions, accumulating pairwise covariance estimates from sessions with overlapping neuron subsets.
-A Granger-causality refinement step enforces biological constraints via projected gradient descent, achieving strong correlation with true connectivity and substantial improvement over established baselines, by pooling covariance statistics globally before inversion rather than fitting per session.
+A Granger-inspired refinement step enforces biological constraints via projected gradient descent, achieving strong correlation with true connectivity and substantial improvement over established baselines, by pooling covariance statistics globally before inversion rather than fitting per session.
 Through systematic experiments on synthetic networks, motivated by small neural circuits where complete simultaneous recording still remains evasive, we characterize a fundamental \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
 We further show that the ``incorrect'' linear approximation outperforms the oracle estimator with known nonlinearity at all tested regimes, a concrete instance of James--Stein shrinkage.
 Error decomposition reveals that drive from intrinsic circuit oscillators (central pattern generators, CPGs), not model mismatch, is the dominant bottleneck, identifying autonomous dynamics modeling as the primary target for further improvement.
@@ -64,7 +64,7 @@ Our key insight is that pairwise covariance statistics can be accumulated across
 Our method is general, applying to any network where the same connectivity is measured across multiple partial-observation sessions.
 \begin{itemize}
     \item We derive a covariance-based estimator $\hat{W} = \Sigma_{x_{t+1},x_t} \Sigma_{x_t,x_t}^{-1}$ for connectivity recovery from partial measurements and provide identifiability conditions.
-    \item We introduce a Granger-causality-inspired \citep{granger1969investigating} refinement via projected gradient descent that enforces Granger non-causality sparsity, complementing structural priors (no autapses, non-negativity) applied uniformly to all estimates.
+    \item We introduce a Granger-inspired \citep{granger1969investigating} sparsity refinement via projected gradient descent that enforces a lagged-covariance non-causality criterion, complementing structural priors (no autapses, non-negativity) applied uniformly to all estimates.
     \item We discover an \emph{implicit regularization} effect: the ``incorrect'' linear approximation yields a better-conditioned estimator than the oracle with known nonlinearity, analogous to James--Stein shrinkage \citep{james1961estimation}.
     \item We systematically characterize the tradeoff between stimulation strength and measurement density, revealing that optimal stimulation depends on the fraction of observed neurons.
 \end{itemize}
@@ -209,27 +209,37 @@ Since $E_1 = W(D - I)\Sigma_{x,x}\Sigma_{x,x}^{-1} = W(D - I)$, the mismatch err
 For small state variance, $1 - \mathbb{E}[\mathrm{sech}^2(x_i)] \approx \sigma_i^2$, so the error is $O(\max_i \sigma_i^2)$, substantially tighter than generic Lipschitz bounds.
 Note that $\|\Sigma_{x,x}^{-1}\|_2$ amplifies both error sources: ill-conditioned covariance (from sparse measurement) degrades recovery even with perfect model knowledge.
 
-\subsection{Granger-Causality Refinement}
+\subsection{Granger-Inspired Sparsity Refinement}
 \label{sec:granger}
 
 The raw estimator $\hat{W}$ already enforces the structural priors from Section~\ref{sec:formulation}: no autapses ($\hat{W}_{ii} = 0$) and non-negativity ($W_{ij} \geq 0$).
-The Granger refinement adds one additional constraint via projected gradient descent.
-\textbf{Granger non-causality}: $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$, indicating that the lagged covariance does not exceed the contemporaneous covariance. This sparsity pattern is the unique contribution of the Granger step.
+We add one further sparsity constraint, inspired by the intuition behind Granger causality~\citep{granger1969investigating}: if neuron $j$'s present value is \emph{more} correlated with neuron $i$'s present than with $i$'s future, then $j$ carries no additional predictive signal about $i$'s next state beyond what their shared context already explains, so the directed edge $j \to i$ can be zeroed.
 
-The optimization solves:
+\textbf{Granger non-causality rule}: set $W_{ij} = 0$ wherever
+\begin{equation}
+    \hat{\Sigma}_{x_t, x_t}(i,j) \;>\; \hat{\Sigma}_{x_{t+1}, x_t}(i,j),
+    \label{eq:granger_rule}
+\end{equation}
+i.e., wherever the lag-0 (contemporaneous) covariance exceeds the lag-1 (future-on-past) covariance.
+This captures the core intuition of Granger causality---``future informativeness beyond present informativeness''---applied as a deterministic threshold on pooled covariance entries rather than as a classical F-test on residual variances.
+Two caveats: (i)~the rule is a \emph{necessary} (not sufficient) condition for $W_{ij} = 0$, and (ii)~it is one-sided and therefore relies on the non-negativity prior $W_{ij} \geq 0$; a negative edge could reduce the lag-1 covariance relative to the lag-0 and satisfy the inequality falsely.
+We formalize the derivation and discuss failure modes in Appendix~\ref{sec:app_granger_rule}.
+
+The rule is enforced as a projection inside a least-squares refinement, rather than as a standalone edge-selection test.
+We solve
 \begin{equation}
     \min_A \|A - \hat{\Sigma}_{x_{t+1}, x_t}\|_F^2 \quad \text{s.t.} \quad A \hat{\Sigma}_{x_t, x_t}^{-1} \in \mathcal{C}
     \label{eq:optimization}
 \end{equation}
-where $\mathcal{C}$ is the constraint set.
-We alternate between gradient steps on $A$ and projection of $W = A \hat{\Sigma}_{x_t, x_t}^{-1}$ onto $\mathcal{C}$.
+where $\mathcal{C}$ is the intersection of four constraint sets: zero diagonal, non-negativity, spectral-radius bound, and the Granger-inspired zero-mask from Eq.~\eqref{eq:granger_rule}.
+Iterating a trust-region step on $A$ with projection of $W = A \hat{\Sigma}_{x_t, x_t}^{-1}$ onto $\mathcal{C}$ yields a refined estimator that is the Frobenius-closest feasible point to the raw covariance-based solution.
 
 \subsection{Full Pipeline}
 
 The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrated in Figure~\ref{fig:schematic}.
 
 \begin{algorithm}[ht]
-\caption{Covariance Accumulation + Granger Refinement}
+\caption{Covariance Accumulation + Granger-Inspired Refinement}
 \label{alg:pipeline}
 \begin{algorithmic}[1]
 \REQUIRE Sessions $\{(y_t^{(k)}, \mathcal{M}_k)\}_{k=1}^K$
@@ -244,7 +254,7 @@ The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrate
 \STATE $\hat{\Sigma}_{y_{t+1},y_t} \leftarrow \hat{\Sigma}_{y_{t+1},y_t} \oslash C$; \quad $\hat{\Sigma}_{y_t,y_t} \leftarrow \hat{\Sigma}_{y_t,y_t} \oslash C$ \COMMENT{average}
 \STATE $\hat{W}_{\text{approx}} \leftarrow \hat{\Sigma}_{y_{t+1},y_t} \cdot \hat{\Sigma}_{y_t,y_t}^{\dagger}$ \COMMENT{ridge-regularized estimator, Eq.~\eqref{eq:estimator}}
 \STATE $\text{diag}(\hat{W}_{\text{approx}}) \leftarrow 0$; \quad $\hat{W}_{\text{approx}} \leftarrow \max(\hat{W}_{\text{approx}}, 0)$ \COMMENT{structural priors: no autapses, non-negativity}
-\STATE $\hat{W} \leftarrow \text{GrangerRefine}(\hat{W}_{\text{approx}}, \hat{\Sigma}_{y_t,y_t}, \hat{\Sigma}_{y_{t+1},y_t}, \mathcal{C})$ \COMMENT{Granger sparsity, Eq.~\eqref{eq:optimization}}
+\STATE $\hat{W} \leftarrow \text{GrangerRefine}(\hat{W}_{\text{approx}}, \hat{\Sigma}_{y_t,y_t}, \hat{\Sigma}_{y_{t+1},y_t}, \mathcal{C})$ \COMMENT{Granger-inspired sparsity, Eq.~\eqref{eq:optimization}}
 \RETURN $\hat{W}$
 \end{algorithmic}
 \end{algorithm}
@@ -252,7 +262,7 @@ The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrate
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig1_problem_schematic.pdf}
-\caption{\textbf{Problem setup and estimation pipeline.} \textbf{(Left)} A network of $N=15$ neurons with directed weighted connectivity $W$. In a given session, a subset of neurons (green) is measured while the rest (gray) are unobserved. Red-bordered nodes are CPG drivers (intrinsic oscillatory input); triangle nodes receive extrinsic stimulation (orange arrows ``S''). \textbf{(Right)} The method pipeline: each of $K$ sessions yields a partial covariance matrix $\hat{\Sigma}_k$ covering only co-observed neuron pairs. These are accumulated element-wise into $\hat{\Sigma}$, from which $W$ is estimated via least-squares inversion, the diagonal is zeroed (no-autapse prior), and the result is refined by projected gradient descent enforcing Granger non-causality sparsity.}
+\caption{\textbf{Problem setup and estimation pipeline.} \textbf{(Left)} A network of $N=15$ neurons with directed weighted connectivity $W$. In a given session, a subset of neurons (green) is measured while the rest (gray) are unobserved. Red-bordered nodes are CPG drivers (intrinsic oscillatory input); triangle nodes receive extrinsic stimulation (orange arrows ``S''). \textbf{(Right)} The method pipeline: each of $K$ sessions yields a partial covariance matrix $\hat{\Sigma}_k$ covering only co-observed neuron pairs. These are accumulated element-wise into $\hat{\Sigma}$, from which $W$ is estimated via least-squares inversion, the diagonal is zeroed (no-autapse prior), and the result is refined by projected gradient descent enforcing a Granger-inspired lagged-covariance sparsity constraint.}
 \label{fig:schematic}
 \end{figure}
 
@@ -295,7 +305,7 @@ We compare recovery error against a hierarchy of reference estimates, each incor
     \item \emph{VAR}: per-session vector autoregressive baseline (single-lag OLS on each session's observed sub-network, averaged element-wise across co-observed sessions). Represents the ``invert-then-accumulate'' alternative to our global design; full definition in Appendix~\ref{sec:app_baselines}.
     \item \emph{GLM}: per-neuron ridge-regularized linear model ($\alpha=1$), fit per-session and averaged; full definition in Appendix~\ref{sec:app_baselines}. Tests whether local L2 regularization recovers the same bias-variance sweet spot as our global estimator.
     \item \emph{Estimate}: our covariance-based method (Algorithm~\ref{alg:pipeline}) with no oracle knowledge of the generative parameters.
-    \item \emph{Granger}: \emph{Estimate} refined with Granger non-causality zero constraints (Section~\ref{sec:granger}).
+    \item \emph{Granger}: \emph{Estimate} refined with the Granger-inspired lagged-covariance zero constraints (Section~\ref{sec:granger}).
 \end{itemize}
 For compactness we abbreviate these as Chance, Adj, Spec, VAR, GLM, Est, and Grn in figure panels and captions.
 The primary comparison is against the \emph{Spectral} baseline: improvement from $0.120$ to $0.083$ ($31\%$), which isolates the contribution of data-driven estimation beyond what the generative prior alone provides.
@@ -354,22 +364,22 @@ $N$ & $T{=}100$ & $T{=}350$ & $T{=}1000$ \\
 \label{fig:scaling}
 \end{figure}
 
-\subsection{Granger Refinement (E2)}
+\subsection{Granger-Inspired Refinement (E2)}
 
-E2 asks what each component of the pipeline contributes and whether a simpler baseline could achieve the same recovery: can we recover well without the Granger refinement? Would a per-session VAR or Ridge-GLM be enough?
+E2 asks what each component of the pipeline contributes and whether a simpler baseline could achieve the same recovery: can we recover well without the Granger-inspired refinement? Would a per-session VAR or Ridge-GLM be enough?
 We evaluate on $N=15$ networks with $T=1000$, $66\%$ measurement, and 10 random topologies.
-After enforcing the no-autapse prior ($W_{ii} = 0$) and non-negativity ($W_{ij} \geq 0$) on the raw estimate, the Granger refinement further reduces error by an additional $\sim 4\%$ through its non-causality sparsity pattern.
+After enforcing the no-autapse prior ($W_{ii} = 0$) and non-negativity ($W_{ij} \geq 0$) on the raw estimate, the Granger-inspired refinement further reduces error by an additional $\sim 4\%$ through its non-causality sparsity pattern.
 
 The raw estimate is dense (nearly all off-diagonal entries positive), yielding high recall (median $0.97$) but low precision (median $0.30$).
-The Granger refinement improves precision to $0.40$ while maintaining recall at $0.97$, eliminating spurious edges without sacrificing true connectivity.
+The Granger-inspired refinement improves precision to $0.40$ while maintaining recall at $0.97$, eliminating spurious edges without sacrificing true connectivity.
 The estimator achieves a $31\%$ improvement over an independent draw from the same generative prior ($0.083$ vs.\ $0.120$), demonstrating that the covariance accumulation framework extracts genuine connectivity information beyond what structural knowledge alone provides.
-The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$ effectively identifies Granger-non-causal pairs (Figure~\ref{fig:granger}).
-Taken together, the VAR and Ridge-GLM baselines (Appendix~\ref{sec:app_baselines}) confirm that the global accumulate-then-invert design---not the Granger refinement alone---is the essential ingredient: local per-session inversions, even when regularized, trail our global estimator by $36$--$58\%$.
+The constraint that $W_{ij} = 0$ where $\Sigma_{x_t, x_t}(i,j) > \Sigma_{x_{t+1}, x_t}(i,j)$ effectively identifies non-causal pairs via the lagged-covariance criterion (Figure~\ref{fig:granger}).
+Taken together, the VAR and Ridge-GLM baselines (Appendix~\ref{sec:app_baselines}) confirm that the global accumulate-then-invert design---not the Granger-inspired refinement alone---is the essential ingredient: local per-session inversions, even when regularized, trail our global estimator by $36$--$58\%$.
 
 \begin{figure}[!tbp]
 \centering
 \includegraphics[width=\linewidth]{figures/fig3_granger_refinement.pdf}
-\caption{\textbf{Effect of Granger-causality refinement and error structure} ($N=15$, $66\%$ measured, $\sigma=1.0$). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error $|W-\hat{W}|$. \textbf{(E)} Error-weight scatter: each off-diagonal entry's absolute error $|\hat{W}_{ij}-W_{ij}|$ vs.\ true weight $W_{ij}$.
+\caption{\textbf{Effect of Granger-inspired refinement and error structure} ($N=15$, $66\%$ measured, $\sigma=1.0$). \textbf{(A--D)} Weight matrix heatmaps from a representative topology: (A)~true $W$, (B)~raw covariance estimate $\hat{W}$, (C)~Granger-refined $\hat{W}$, (D)~absolute error $|W-\hat{W}|$. \textbf{(E)} Error-weight scatter: each off-diagonal entry's absolute error $|\hat{W}_{ij}-W_{ij}|$ vs.\ true weight $W_{ij}$.
 The positive correlation ($r\approx0.91$, OLS slope $\approx 1-\bar{d}$) reflects the heteroskedastic structure of $E_1=W(D-I)$: the estimator systematically shrinks larger weights more (see Appendix~\ref{sec:app_hetero}).
 \textbf{(F)}~Per-entry $E_1$ (model mismatch) and \textbf{(G)}~$E_2$ (CPG correlation) heatmaps for the same topology; $E_2$ is ${\sim}2.8\times$ larger in Frobenius norm.
 \textbf{(H)} Ablation: Chance $\to$ Adj $\to$ Spec $\to$ VAR $\to$ GLM $\to$ Est $\to$ Grn. The VAR (per-session OLS, $0.136$) is worse than even the oracle Spectral prior ($0.120$); the Ridge-GLM (per-session $\ell_2$-regularized, $0.117$) is slightly better, yet both are far worse than our accumulate-then-invert estimate ($0.086$). Granger refines further to $0.083$ ($31\%$ over Spec).
@@ -404,7 +414,7 @@ This confirms the control-estimation tradeoff: experimentalists must balance sti
 We isolate the effect of measurement density, holding all other factors at baseline, to quantify how much recovery degrades when only a fraction of neurons can be observed in each session.
 We vary the fraction of neurons observed per session from $33\%$ to $100\%$ for $N=15$, $T=1000$.
 Full observability ($100\%$) yields error of $0.083$ compared to $0.105$ at $33\%$ measurement (Granger-refined), confirming that measurement sparsity is a significant challenge.
-At $33\%$ measurement, the raw estimate ($0.110$) is modestly improved by the Granger refinement to $0.105$.
+At $33\%$ measurement, the raw estimate ($0.110$) is modestly improved by the Granger-inspired refinement to $0.105$.
 The improvement plateaus above $\sim50\%$ measurement fraction (Figure~\ref{fig:sparsity}).
 
 \begin{figure}[ht]
@@ -421,7 +431,7 @@ We test four nonlinearities at $N=15$ with $66\%$ measurement and $\sigma=1.0$.
 $\tanh$ yields the \emph{best} recovery (Granger error $0.083$), while identity and ReLU (for which the linear approximation is exact) perform worse (error $\sim 0.17$).
 This occurs because $\tanh$ \emph{bounds} the state values, improving $\kappa(\Sigma_{x,x})$, while unbounded nonlinearities allow state drift, severely degrading the conditioning of $\Sigma_{x,x}$.
 Sigmoid achieves intermediate error ($0.132$): its boundedness helps conditioning relative to identity and ReLU, but its non-zero mean ($\phi(0) = 0.5$) biases the covariance estimate.
-The Granger refinement is beneficial across all nonlinearities (Figure~\ref{fig:nonlinearity}).
+The Granger-inspired refinement is beneficial across all nonlinearities (Figure~\ref{fig:nonlinearity}).
 
 \begin{figure}[ht]
 \centering
@@ -437,14 +447,14 @@ A central theoretical prediction of our framework (Section~\ref{sec:app_oracle})
 We test this by comparing both estimators across stimulation intensities $\sigma \in \{0, 0.1, 0.25, 0.5, 1, 2, 5\}$ for $N=15$, $T=1000$ with $\tanh$ nonlinearity, $66\%$ measurement, and 10 topologies.
 
 The approximation outperforms or matches the oracle at every tested stimulation level (Figure~\ref{fig:oracle}).
-The oracle penalty is largest at low stimulation ($\sim2.7\times$ at $\sigma = 0$, $\sim1.7\times$ at $\sigma = 0.25$--$0.5$) and narrows to $1.5$--$1.6\times$ for $\sigma \geq 1$.
+Excluding the pathological $\sigma{=}0$ regime where all three estimators fail, the oracle penalty (ratio of oracle error to Granger-refined approximation error) is largest at low stimulation ($\sim2.2\times$ at $\sigma{=}0.1$, $\sim1.7\times$ at $\sigma = 0.25$--$0.5$) and narrows to $1.5$--$1.6\times$ for $\sigma \geq 1$.
 No crossover point exists: the conditioning penalty from inverting $\Sigma_{\phi(x),x}$ consistently exceeds the bias reduction from using the correct nonlinearity.
 This confirms that the linear approximation provides implicit regularization analogous to ridge regression (see Discussion, Section~\ref{sec:discussion}, and Appendix~\ref{sec:app_oracle} for the bias-variance analysis).
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\linewidth]{figures/fig7_oracle_comparison.pdf}
-\caption{\textbf{Oracle vs.\ approximation comparison} across stimulation intensities ($N=15$, $T=1000$, $66\%$ measured, $\tanh$, 10 topologies $\times$ 50 instances). \textbf{(A)} Median recovery error (log scale) for the oracle estimator using the true nonlinearity (red), the linear approximation (blue), and the Granger-refined approximation (green). Shaded: 95\% bootstrap CI. Dots: individual topologies. The approximation matches or outperforms the oracle at every $\sigma$, with the largest gap at zero stimulation ($\sim2.7\times$). \textbf{(B)} Oracle penalty factor (ratio of oracle to approximation error). The oracle never achieves lower error than the approximation, confirming the implicit regularization effect predicted by the bias-variance analysis (Appendix~\ref{sec:app_oracle}).}
+\caption{\textbf{Oracle vs.\ approximation comparison} across stimulation intensities ($N=15$, $T=1000$, $66\%$ measured, $\tanh$, 10 topologies $\times$ 50 instances). \textbf{(A)} Median recovery error (log scale) for the oracle estimator using the true nonlinearity (red), the linear approximation (blue), and the Granger-refined approximation (green). Shaded: 95\% bootstrap CI. Dots: individual topologies. The approximation matches or outperforms the oracle at every $\sigma$, with the largest non-pathological gap ($\sim 2.2\times$) at $\sigma{=}0.1$. \textbf{(B)} Oracle penalty factor: ratio of oracle error to Granger-refined approximation error. The oracle never achieves lower error than the Granger-refined approximation, confirming the implicit regularization effect predicted by the bias-variance analysis (Appendix~\ref{sec:app_oracle}).}
 \label{fig:oracle}
 \end{figure}
 
@@ -521,7 +531,7 @@ This suggests that increasing the measurement fraction or the number of recordin
 \paragraph{Error decomposition: CPG correlation dominates.}
 Before dissecting individual pipeline components, it helps to understand \emph{why} the estimator works and where its residual error comes from.
 The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ is only partially justified: the extrinsic stimulation is truly independent ($\text{Cov}(\text{stim}_t, x_t) = 0$ by construction), but the CPG drive depends on the current state through $\text{cpg}(x_t)$, so $\text{Cov}(\text{cpg}_t, x_t) \neq 0$.
-Quantitatively, $\|E_2\|_F$ (input correlation) is ${\sim}2\times$ larger than $\|E_1\|_F$ (model mismatch), making CPG correlation the \emph{dominant} error source, not the linear approximation (Figure~\ref{fig:dynamics}H).
+Quantitatively, $\|E_2\|_F$ (input correlation) is ${\sim}3\times$ larger than $\|E_1\|_F$ (model mismatch), making CPG correlation the \emph{dominant} error source, not the linear approximation (Figure~\ref{fig:dynamics}H).
 CPG nodes can be partially identified from data: they exhibit higher activity variance than non-CPG nodes, enabling detection via a simple variance threshold (F1 score $\sim 0.8$).
 This suggests a natural extension: downweighting detected CPG nodes during covariance accumulation could mitigate the dominant error source, a direction we leave to future work.
 
@@ -536,16 +546,16 @@ This suggests a natural extension: downweighting detected CPG nodes during covar
 \textbf{(E)} PCA phase portrait under stimulation: the trajectory fills a larger volume in PC space, indicating that stochastic input excites network modes beyond those driven by CPGs, and this expanded coverage is what enables covariance-based estimation.
 \textbf{(F)} Power spectral density (Welch's method) of neural activity, averaged across neurons. Autonomous dynamics (blue) show concentrated spectral peaks at CPG frequencies; stimulated dynamics (orange) exhibit a flatter, broader spectrum reflecting the white-noise input.
 \textbf{(G)} Per-node activity variance (bar chart, sorted). CPG nodes (red) have systematically higher variance than non-CPG nodes (blue), enabling detection via a variance threshold (F1$\sim$0.8).
-\textbf{(H)} Error decomposition: $\|E_1\|_F/N$ (model mismatch, $0.080$) vs.\ $\|E_2\|_F/N$ (CPG--state correlation, $0.225$) vs.\ total estimation error $\|\hat{W} - W\|_F/N$ ($0.087$). $E_1$ and $E_2$ are Frobenius norms of the \emph{individual error components} (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel in different matrix entries.  For this representative topology, $E_2$ is ${\sim}3\times$ larger than $E_1$ (median across topologies: ${\sim}2\times$), confirming that CPG correlation (not the linear approximation) is the dominant error source.
-\textbf{(I)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical) for this representative topology. Pearson $r = 0.94$; dashed line: $y=x$. Median across all 10 topologies: $r = 0.90$.}
+\textbf{(H)} Error decomposition: $\|E_1\|_F/N$ (model mismatch, $0.080$) vs.\ $\|E_2\|_F/N$ (CPG--state correlation, $0.225$) vs.\ total estimation error $\|\hat{W} - W\|_F/N$ ($0.087$). $E_1$ and $E_2$ are Frobenius norms of the \emph{individual error components} (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel in different matrix entries.  For this representative topology, $E_2$ is ${\sim}3\times$ larger than $E_1$ (median across topologies: ${\sim}3\times$), confirming that CPG correlation (not the linear approximation) is the dominant error source.
+\textbf{(I)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical) for this representative topology. Pearson $r = 0.94$; dashed line: $y=x$. Median raw-estimator correlation across all 10 topologies: $r = 0.90$.}
 \label{fig:dynamics}
 \end{figure}
 
-\paragraph{Granger refinement is consistently beneficial.}
+\paragraph{Granger-inspired refinement is consistently beneficial.}
 The structural priors---no autapses ($W_{ii} = 0$) and non-negativity ($W_{ij} \geq 0$)---are applied to the raw estimate before any refinement.
 The no-autapse constraint accounts for the majority of the improvement over the unprocessed estimate (the diagonal is dominated by autocorrelation, $3$--$4\times$ larger than off-diagonal entries).
-The Granger refinement's unique contribution is the non-causality sparsity pattern ($W_{ij} = 0$ where contemporaneous covariance exceeds lagged), improving precision from $0.30$ to $0.40$ while maintaining high recall ($0.97$).
-This indicates that the Granger non-causality criterion effectively removes spurious edges without discarding true connections.
+The Granger-inspired refinement's unique contribution is the lagged-covariance sparsity pattern ($W_{ij} = 0$ where contemporaneous covariance exceeds lagged; see Appendix~\ref{sec:app_granger_rule}), improving precision from $0.30$ to $0.40$ while maintaining high recall ($0.97$).
+This indicates that the non-causality criterion effectively removes spurious edges without discarding true connections.
 
 \paragraph{The linear approximation provides implicit regularization.}
 A surprising finding is that the approximate estimator (using $\Sigma_{x,x}$) outperforms the oracle estimator (using $\Sigma_{\phi(x),x}$ with known $\phi$ and $b$).
@@ -553,7 +563,7 @@ The Stein--Price identity (Eq.~\eqref{eq:price}) explains why: $\Sigma_{\phi(x),
 Because $\tanh$ compresses large values, the oracle covariance is a \emph{row-compressed} version of $\Sigma_{x,x}$, making its condition number potentially worse: $\kappa(\Sigma_{\phi(x),x}) \leq \kappa(\Sigma_{x,x}) \cdot d_{\max}/d_{\min}$.
 When state variances are heterogeneous across neurons, this ratio can be large, amplifying noise in the oracle inversion.
 The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditioned, acting as implicit regularization, analogous to how ridge regression (biased) can outperform OLS (unbiased but high-variance), or how James--Stein shrinkage reduces total risk by trading bias for variance.
-The E6 experiment (Section~\ref{sec:experiments}, Figure~\ref{fig:oracle}) confirms this prediction empirically: the approximation matches or outperforms the oracle at all seven stimulation intensities tested, with the largest gap ($\sim2.7\times$) at $\sigma = 0$.
+The E6 experiment (Section~\ref{sec:experiments}, Figure~\ref{fig:oracle}) confirms this prediction empirically: the approximation matches or outperforms the oracle at all seven stimulation intensities tested, with the largest non-pathological gap ($\sim2.2\times$ in the Granger-refined approximation) at $\sigma = 0.1$.
 
 \paragraph{Stimulation coverage: a practical experimental knob.}
 Our experiments reveal two complementary axes of stimulation design: \emph{intensity} (E3) and \emph{coverage} (E7).
@@ -609,7 +619,7 @@ First, a fundamental \emph{control-estimation tradeoff} governs experimental des
 The optimal operating regime---moderate stimulation gain ($\sigma \approx 0.5$--$1.0$) applied to a modest subset of neurons ($\sim 33\%$ stimulation coverage)---defines a practical target for optogenetic experimental protocols.
 Second, the ``incorrect'' linear approximation matches or outperforms the oracle estimator with known nonlinearity at \emph{all} tested regimes (E6), a concrete instance of the James--Stein phenomenon where implicit regularization reduces total risk.
 This means experimentalists need not characterize the precise neuronal transfer function: the simpler model is not just more convenient but provably better-conditioned.
-Third, error decomposition (E2) reveals that CPG--state correlation (${\sim}2\times$ larger than model mismatch) is the dominant bottleneck, suggesting that future gains will come from modeling intrinsic dynamics rather than refining the nonlinear approximation.
+Third, error decomposition (E2) reveals that CPG--state correlation (${\sim}3\times$ larger than model mismatch) is the dominant bottleneck, suggesting that future gains will come from modeling intrinsic dynamics rather than refining the nonlinear approximation.
 
 Several directions merit future investigation.
 Extending the framework to real neural recordings, particularly \textit{C.~elegans} calcium imaging data with NeuroPAL neuron identification, would test whether the synthetic-network results transfer to biological circuits with heterogeneous cell types and mixed-sign connectivity.
@@ -678,6 +688,42 @@ The left side bounds the approximation's total error via submultiplicativity: mo
 The right side captures how the same finite-sample noise $E_{\text{samp}}$ is amplified \emph{more} through the oracle's worse-conditioned $\Sigma_{\phi(x),x}^{-1}$ than through the approximation's $\Sigma_{x,x}^{-1}$.
 When state variances are heterogeneous across neurons (common in biological networks), $d_{\max}/d_{\min}$ can be large, making the oracle unstable.
 This is a concrete instance of the bias-variance tradeoff: like ridge regression or James--Stein shrinkage, a biased estimator with lower variance can achieve better total risk.
+
+\subsection{Granger-Inspired Non-Causality Rule: Derivation and Scope}
+\label{sec:app_granger_rule}
+
+Section~\ref{sec:granger} introduced the sparsity rule $W_{ij} := 0$ wherever $\hat{\Sigma}_{x_t,x_t}(i,j) > \hat{\Sigma}_{x_{t+1},x_t}(i,j)$.
+Here we derive it from the dynamics model and state its scope precisely.
+
+\paragraph{Population-level justification.}
+Under $x_{t+1} = W\phi(x_t) + b_t$ with Gaussian state $x_t \sim \mathcal{N}(0,\Sigma)$ and the Stein--Price identity, the lag-1 cross-covariance decomposes as
+\begin{equation}
+    \Sigma_{x_{t+1},x_t}(i,j) \;=\; \sum_{k} W_{ik} \, D_k \, \Sigma_{kj} \;+\; \mathrm{Cov}(b_{i,t}, x_{j,t}),
+    \label{eq:lag1_expansion}
+\end{equation}
+where $D_k = \mathbb{E}[\mathrm{sech}^2(x_k)] \in (0,1)$.
+The direct contribution of edge $j \to i$ is $W_{ij} D_j \Sigma_{jj}$, which is \emph{positive} whenever $W_{ij} > 0$ (since $D_j > 0$ and $\Sigma_{jj} > 0$).
+If, in the population limit, $\Sigma_{ij} > \Sigma_{x_{t+1},x_t}(i,j)$, then the correlation from $j$ at time $t$ to $i$ at time $t{+}1$ is \emph{weaker} than the contemporaneous correlation---contradicting the existence of a positive direct $j \to i$ edge.
+Hence $W_{ij} > 0 \;\Rightarrow\; \Sigma_{ij} \leq \Sigma_{x_{t+1},x_t}(i,j)$, and by contraposition:
+\[
+    \Sigma_{ij} > \Sigma_{x_{t+1},x_t}(i,j) \;\Rightarrow\; W_{ij} = 0.
+\]
+
+\paragraph{Relationship to classical Granger causality.}
+Classical Granger causality~\citep{granger1969investigating} tests whether including lagged $x_j$ reduces the one-step prediction error for $x_i$ beyond using $x_i$'s own past.
+In a correctly specified VAR(1) with infinite data, this reduces to asking whether $W_{ij} \neq 0$, typically answered with an F-test on nested residual variances.
+Our rule preserves the same intuition---\emph{future informativeness beyond present informativeness}---but replaces the residual-variance test with a direct inequality on pooled lag-0 and lag-1 covariance entries.
+This is cheaper, avoids distributional assumptions about the residuals, and scales naturally to the $K=50$ partially-observed session regime, but it forfeits the statistical interpretability of a p-value.
+We therefore call the refinement \emph{Granger-inspired} rather than Granger causality.
+
+\paragraph{Scope and caveats.}
+The derivation establishes three strict limits on when the rule is safe:
+\begin{enumerate}
+    \item \textbf{Non-negativity prior.} The argument ``$W_{ij} > 0 \Rightarrow$ positive direct contribution to $\Sigma_{x_{t+1},x_t}(i,j)$'' requires $W_{ij} \geq 0$. With mixed-sign weights, a negative edge could reduce the lag-1 covariance relative to the lag-0 and satisfy the inequality falsely, producing a spurious zero. The rule is only safe under the excitatory-network prior (Section~\ref{sec:formulation}).
+    \item \textbf{Necessary, not sufficient.} Eq.~\eqref{eq:lag1_expansion} sums contributions from all length-1 paths and includes $\mathrm{Cov}(b_{i,t}, x_{j,t})$; multi-path confounding or strong CPG--state coupling can cause the rule to miss a true edge. The rule is a conservative screening heuristic, not an identification theorem.
+    \item \textbf{Used as a projection, not a test.} The zero-mask is enforced as one of four constraints inside the least-squares refinement (Eq.~\eqref{eq:optimization}), allowing the $\ell_2$ objective to push back on positions where the rule is noisy.
+\end{enumerate}
+Empirically (Section~\ref{sec:experiments}, E2) the rule improves precision from $0.30$ to $0.40$ while keeping recall at $0.97$---consistent with its interpretation as a conservative, precision-biased screen rather than a complete causal test.
 
 \subsection{Strong Connectivity and Identifiability}
 \label{sec:app_connectivity}
@@ -806,7 +852,7 @@ The CPG is a frozen (non-trainable) deep neural network $f_{\text{CPG}}: \mathbb
 
 \paragraph{State dependence.}
 The CPG output $b_{\text{CPG}}(t) = f_{\text{CPG}}(x_t)$ depends on the current state, making $\text{Cov}(b_{\text{CPG}}, x_t) \neq 0$.
-This state dependence is the source of the $E_2$ error term in the estimation error decomposition (Section~\ref{sec:discussion}), which dominates the model mismatch $E_1$ by a factor of $\sim 2\times$.
+This state dependence is the source of the $E_2$ error term in the estimation error decomposition (Section~\ref{sec:discussion}), which dominates the model mismatch $E_1$ by a factor of $\sim 3\times$.
 
 \paragraph{Topology invariance.}
 The CPG function is constructed once per network topology and shared across all $K$ recording sessions.

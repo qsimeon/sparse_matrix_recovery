@@ -487,13 +487,13 @@ def plot_scaling(results, output_path):
     _add_panel_label(ax_left, "A")
     _add_panel_label(ax_right, "B")
 
-    # Group data
+    # Group data — use Granger-refined (optimized_distance) to match Table 1 and paper captions.
     by_N = {}
     for r in results:
         N = r["config"]["num_nodes"]
         T = r["config"]["max_timesteps"]
-        med = r["distances"]["estimate_distance"].median()
-        ci = r["confidence_intervals"]["estimate_distance"]
+        med = r["distances"]["optimized_distance"].median()
+        ci = r["confidence_intervals"]["optimized_distance"]
         if N not in by_N:
             by_N[N] = {"T": [], "med": [], "lo": [], "hi": []}
         by_N[N]["T"].append(T)
@@ -513,14 +513,14 @@ def plot_scaling(results, output_path):
         # Show individual topology results as scatter
         for r_inner in results:
             if r_inner["config"]["num_nodes"] == N:
-                raw = r_inner["distances"]["estimate_distance"].values
+                raw = r_inner["distances"]["optimized_distance"].values
                 t_val = r_inner["config"]["max_timesteps"]
                 ax_left.scatter([t_val]*len(raw), raw, s=12, alpha=0.3,
                                 color=COLORS[i], zorder=1, edgecolors="none")
 
     ax_left.set_yscale("log")
     ax_left.set_xlabel("Recording Duration ($T$)")
-    ax_left.set_ylabel("Recovery Error (Frobenius / $N$)")
+    ax_left.set_ylabel("Granger-refined Recovery Error (Frobenius / $N$)")
     ax_left.set_title("Error vs. recording duration", fontsize=11, fontweight="bold")
     ax_left.legend(framealpha=0.9)
 
@@ -529,8 +529,8 @@ def plot_scaling(results, output_path):
     for r in results:
         N = r["config"]["num_nodes"]
         T = r["config"]["max_timesteps"]
-        med = r["distances"]["estimate_distance"].median()
-        ci = r["confidence_intervals"]["estimate_distance"]
+        med = r["distances"]["optimized_distance"].median()
+        ci = r["confidence_intervals"]["optimized_distance"]
         if T not in by_T:
             by_T[T] = {"N": [], "med": [], "lo": [], "hi": []}
         by_T[T]["N"].append(N)
@@ -549,14 +549,14 @@ def plot_scaling(results, output_path):
         # Show individual topology results
         for r_inner in results:
             if r_inner["config"]["max_timesteps"] == T:
-                raw = r_inner["distances"]["estimate_distance"].values
+                raw = r_inner["distances"]["optimized_distance"].values
                 n_val = r_inner["config"]["num_nodes"]
                 ax_right.scatter([n_val]*len(raw), raw, s=12, alpha=0.3,
                                  color=COLORS[i], zorder=1, edgecolors="none")
 
     ax_right.set_yscale("log")
     ax_right.set_xlabel("Network Size ($N$)")
-    ax_right.set_ylabel("Recovery Error (Frobenius / $N$)")
+    ax_right.set_ylabel("Granger-refined Recovery Error (Frobenius / $N$)")
     ax_right.set_title("Error vs. network size", fontsize=11, fontweight="bold")
     ax_right.legend(framealpha=0.9)
 
@@ -790,9 +790,11 @@ def plot_oracle_crossover(results, output_path):
                    fontsize=11, fontweight="bold")
     ax1.legend(fontsize=9, loc="upper right")
 
-    # Right panel: ratio (oracle / approximation)
+    # Right panel: ratio (oracle / Granger-refined approximation) — paper text
+    # cites these ratios, so panel B must match. At σ=0 all three estimators
+    # are pathological; we still show the bar for completeness.
     _add_panel_label(ax2, "B")
-    ratios = oracle_med / approx_med
+    ratios = oracle_med / granger_med
     ax2.bar(x_plot, ratios, color=PALETTE["purple"], alpha=0.8,
             edgecolor="#333333", linewidth=0.5)
     for i, r in enumerate(ratios):
@@ -801,7 +803,7 @@ def plot_oracle_crossover(results, output_path):
     ax2.set_xticks(x_plot)
     ax2.set_xticklabels(x_labels)
     ax2.set_xlabel(r"Stimulation gain $\sigma$")
-    ax2.set_ylabel("Error ratio (oracle / approximation)")
+    ax2.set_ylabel("Error ratio (oracle / Granger-refined approximation)")
     ax2.set_title("Oracle penalty factor", fontsize=11, fontweight="bold")
     ax2.legend(fontsize=8)
 

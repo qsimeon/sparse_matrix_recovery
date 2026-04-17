@@ -340,3 +340,131 @@ LEVEL 3: TIMESTEPS (T = max_timesteps = 1000)
 - N=15: DOF=222 → κ≈30 (good)
 - N=159: DOF=1.98 → κ≈500 (degraded at T=100)
 - N=300: DOF=0.56 (at T=100) → catastrophic rank deficiency
+
+---
+
+## The Granger-Inspired Refinement — Full Pedagogical Walkthrough
+> Added 2026-04-15 during the Chunk-5 deep-dive review.
+> This explains what the sparsity rule in §3.2 actually *is*, why we call it
+> Granger-*inspired* rather than Granger causality, and how the projected-gradient
+> step uses it. Use this when teaching the method or defending the choice to a
+> reviewer.
+
+### Why this needs a deep-dive at all
+
+The paper's §3.2 rule — "$W_{ij} = 0$ when $\Sigma_{x_t,x_t}(i,j) > \Sigma_{x_{t+1},x_t}(i,j)$" —
+looks like it should be classical Granger causality but isn't. It's easy to
+over-claim or under-claim. The honest framing: **it captures the same intuition
+as Granger causality ("future informativeness beyond present informativeness")
+but replaces the F-test on residual variances with a deterministic threshold on
+pooled covariance entries, which makes it cheaper, scales to the K=50
+partially-observed regime, and aligns with a projection step — but forfeits the
+statistical interpretability of a p-value.**
+
+### What classical Granger causality says
+
+For a VAR(1) process `x_{t+1} = W x_t + ε_t`, neuron j **Granger-causes** neuron i
+iff including x_j's past lowers the one-step prediction error of x_i beyond using
+only x_i's own past. The classical test compares residual variance of two nested
+regressions via an F-statistic. In the population limit (infinite data) the test
+reduces to: **is W_{ij} ≠ 0?** That is, in a correctly-specified VAR, Granger
+causality ≡ non-zero weight in the transition matrix. Classical Granger is a
+statistical test for that non-zeroness.
+
+### What our rule does, mathematically
+
+The rule is a **deterministic threshold on covariance entries**:
+
+```
+W_{ij} := 0   whenever   Σ_{x_t,x_t}(i,j) > Σ_{x_{t+1},x_t}(i,j)
+```
+
+To see why this flags *something Granger-like*, expand the lag-1 cross-covariance
+under `x_{t+1} = W φ(x_t) + b_t` using Stein-Price (E[φ(x_k) x_j] = D_k Σ_{kj}):
+
+```
+Σ_{x_{t+1},x_t}(i,j) = Σ_k W_{ik} · D_k · Σ_{kj}  +  Cov(b_{i,t}, x_{j,t})
+```
+
+vs. the lag-0 covariance which is just `Σ_{x_t,x_t}(i,j) = Σ_{ij}`.
+
+The **direct** contribution of edge j→i to the lag-1 covariance is `W_{ij} · D_j · Σ_{jj}`,
+which is *positive* whenever W_{ij} > 0 (because D_j ∈ (0,1) and Σ_{jj} > 0).
+So if a real positive edge exists, j at time t should be at least as correlated
+with i at time t+1 as it is with i at time t. The contrapositive:
+
+> If the contemporaneous correlation (lag-0) *exceeds* the predictive correlation
+> (lag-1), there cannot be a positive direct edge j→i, so zero it.
+
+This is the **necessary (not sufficient)** condition. It comes from the intuition
+of Granger causality applied one time-step forward, but it's a test on
+raw covariance entries, not on nested residual variances.
+
+### Three things to know about when the rule is safe
+
+**(1) It's one-sided — relies on the non-negativity prior.**
+The argument "W_{ij} > 0 ⇒ positive direct contribution to Σ_{x_{t+1},x_t}(i,j)"
+only works if W_{ij} ≥ 0. With mixed-sign weights, a negative edge could reduce
+the lag-1 covariance relative to lag-0 and satisfy the inequality falsely,
+producing a spurious zero. This is why the rule is only safe under the
+excitatory-network prior used in the paper (§2 strong-connectivity, non-negative W).
+
+**(2) It's necessary, not sufficient.**
+The lag-1 cross-covariance sums contributions from *all* length-1 paths plus the
+input-correlation term `Cov(b_{i,t}, x_{j,t})`. Multi-path confounding or strong
+CPG-state coupling can cause the rule to miss a real edge. The rule is a
+**screening heuristic** not an identification theorem.
+
+**(3) We use it as a projection, not as an isolated test.**
+Because the rule is deterministic and noisy in finite samples, we don't use it
+to make edge-level accept/reject decisions alone. Instead the zero-mask is
+enforced as *one of four constraints* inside the least-squares refinement in
+`projected_gradient_causal` (core.py:746-785), which lets the L² objective push
+back on positions where the rule is wrong.
+
+### What the projected-gradient step actually does (code walkthrough)
+
+```python
+# from experiments/core.py:746-785
+A = cov_dtx.copy()                              # init at Σ_1
+zero_positions = np.argwhere(cov_x > cov_dtx)   # Granger zero-mask
+for _ in range(200):
+    A -= lr * (A - A_init)                      # trust-region pull toward Σ_1
+    W = A @ pinv(cov_x)                         # least-squares backsolve
+    W = clamp_W_constraints(W, zero_positions)  # zero-diag + Granger mask + non-neg + ρ≤1
+```
+
+The refinement projects the raw estimator `Ŵ = Σ_1 Σ_0⁻¹` onto the intersection
+of four constraint sets: zero diagonal, non-negativity, spectral radius ≤ 1, and
+the Granger zero-mask. The "gradient step" is a trust-region pull toward the
+original Σ_1 to keep A from drifting too far after repeated projections. Over
+200 iterations it converges to the W in that constraint intersection that is
+Frobenius-closest to the raw covariance-based solution.
+
+### Why this works empirically despite the caveats
+
+Three things conspire to make the rule useful in practice:
+
+- **Non-negative weights make the one-sided direction valid** (the paper's
+  entire setup is excitatory; see §2).
+- **Pooling across K=50 sessions reduces the finite-sample noise in Σ_0 and
+  Σ_1** so the inequality is stable.
+- **Using the rule as a projection bounds the damage from false zeros** — a
+  wrongly-zeroed entry can still get non-zero mass from its neighbors via the
+  least-squares backsolve in the next iteration.
+
+**Measured effect (E2)**: precision improves from 0.30 to 0.40 while recall
+stays at 0.97. That's exactly the signature of a conservative, precision-biased
+screen — it removes spurious edges without discarding true ones.
+
+### The honest one-sentence framing
+
+> "Under the non-negative weight prior, a positive edge j→i increases the lag-1
+> cross-covariance relative to the lag-0 contemporaneous covariance, so we refine
+> sparsity by zeroing W_{ij} wherever Σ_{x_t,x_t}(i,j) > Σ_{x_{t+1},x_t}(i,j).
+> This is a necessary condition for W_{ij} = 0 (not a full F-test); we use it as
+> a projection step inside a least-squares refinement rather than as a standalone
+> hypothesis test."
+
+This is the framing that lives in paper/main.tex §3.2 and Appendix A.x (Granger
+Non-Causality Rule: Derivation and Caveats) as of iteration 2026-04-15.
