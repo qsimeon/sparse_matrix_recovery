@@ -470,7 +470,7 @@ def plot_granger_comparison(results, output_path):
              "(I\u2013K) distribution across 10 topologies (50 sessions each)",
              ha="center", fontsize=9, fontstyle="italic")
 
-    plt.suptitle("Effect of Granger-Causality Refinement (N=15, 66% measured, stim=1.0)",
+    plt.suptitle("Effect of Granger-Inspired Refinement (N=15, 66% measured, stim=1.0)",
                  fontsize=13, fontweight="bold", y=1.0)
     plt.savefig(output_path)
     plt.close()
@@ -1025,7 +1025,7 @@ def generate_pipeline_schematic(output_path):
     ax.legend(handles=[mpatches.Patch(fc=c, ec=c_border, label=l)
               for c, l in [(c_data, "Data / Input"), (c_compute, "Computation"), (c_output, "Output")]],
               loc="lower right", fontsize=8, frameon=True, fancybox=True, framealpha=0.9)
-    fig.suptitle("Method Pipeline: Covariance Accumulation + Granger Refinement",
+    fig.suptitle("Method Pipeline: Covariance Accumulation + Granger-Inspired Refinement",
                  fontsize=13, fontweight="bold", y=0.98)
     plt.savefig(output_path, dpi=300); plt.close()
     print(f"  Saved: {output_path}")
