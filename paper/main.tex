@@ -4,7 +4,7 @@
 \usepackage[preprint]{neurips_2024}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{url}
 \usepackage{booktabs}
 \usepackage{amsfonts}
@@ -33,12 +33,12 @@ A Covariance-Based Approach with Granger-Inspired Refinement}
 \maketitle
 
 \begin{abstract}
-Inferring the connectivity of neural circuits from incomplete observations is a fundamental challenge in neuroscience.
-We present a covariance-based method for recovering the weight matrix of a recurrent neural network from partial measurements across multiple recording sessions, accumulating pairwise covariance estimates from sessions with overlapping neuron subsets.
-By pooling covariance statistics globally before inversion rather than fitting per session, our estimator outperforms per-session vector autoregression and ridge-GLM baselines by $36$--$58\%$ in Frobenius error at the $N{=}15$ baseline; a Granger-inspired refinement step then enforces biological constraints (no autapses, non-negativity, lagged-covariance sparsity) via projected gradient descent.
-Our headline result is counterintuitive: the ``incorrect'' linear approximation \emph{outperforms} the oracle estimator that knows the true nonlinearity, at every stimulation level we test---a concrete instance of James--Stein shrinkage where ill-conditioning of the oracle's compressed covariance overwhelms its bias advantage.
-Through systematic experiments on synthetic networks, we further characterize a \emph{control-estimation tradeoff}: stimulation aids identifiability but disrupts intrinsic dynamics, with the optimal level depending on measurement density.
-Error decomposition reveals that drive from intrinsic circuit oscillators (central pattern generators, CPGs), not model mismatch, is the dominant bottleneck, identifying autonomous dynamics modeling as the primary target for further improvement.
+Inferring the connectivity of neural circuits from incomplete observations is a fundamental challenge in neuroscience: imaging field-of-view, sparse indicator expression, and restricted optical access typically limit each recording to a different random subset of neurons, so the experimentalist sees a circuit through many partial windows rather than one complete view.
+We ask whether the connectivity of a recurrent network can nevertheless be recovered by combining these windows.
+Our approach is to accumulate pairwise covariance statistics across sessions wherever two neurons happen to be co-observed, then perform a single global pseudoinverse rather than inverting each session separately---a design choice we show is what makes recovery possible at all.
+A Granger-inspired refinement step enforces biological constraints (no autapses, non-negative weights, lagged-covariance sparsity) by projected gradient descent.
+Our headline finding is counterintuitive: a linear estimator that ignores the network's nonlinearity \emph{outperforms} an oracle estimator that knows it, because the oracle's compressed covariance is worse-conditioned---a concrete biological instance of James--Stein shrinkage.
+Systematic experiments characterize a control--estimation tradeoff (stimulation aids identifiability but disrupts the intrinsic dynamics that make the circuit biologically meaningful) and an error decomposition showing that drive from intrinsic circuit oscillators, not nonlinearity mismatch, is the dominant remaining bottleneck.
 \end{abstract}
 
 % ============================================================================

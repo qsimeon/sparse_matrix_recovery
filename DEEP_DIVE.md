@@ -2,7 +2,7 @@
 
 > A complete technical walkthrough of the project — what it does, how it works,
 > why every design choice was made, and what the surprising findings are.
-> Last updated: 2026-04-11 (comprehensive rewrite — all numbers verified against Apr 7 data).
+> Last updated: 2026-04-27 (numbers re-verified against 2026-04-24 cluster rerun: 520-task SLURM with full VAR/GLM coverage across all 47 configs; every claim in this doc still matches data within rounding).
 
 ---
 
@@ -246,7 +246,7 @@ The estimation error decomposes exactly as:
 Oracle (knows true tanh) is 1.45–2.72× *worse* than the naive linear approximation. Don't bother characterizing the neuronal transfer function.
 
 ### 2. CPG correlation is the real bottleneck
-E₂ is ~2.8× larger than E₁ (representative topology: ~3×). Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear approximation.
+E₂ is ~2.8× larger than E₁ on a representative topology (~3× as the median across 10 topologies). Future improvements should focus on modeling intrinsic dynamics, not refining the nonlinear approximation.
 
 ### 3. The control-estimation tradeoff is quantifiable
 Zero stimulation fails (Σ_{x,x} ill-conditioned, E7: error 0.83 vs 0.05). Sweet spot: σ ≈ 0.5–1.0, ~33% of neurons stimulated.

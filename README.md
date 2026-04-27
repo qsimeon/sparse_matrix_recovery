@@ -2,7 +2,7 @@
 
 A covariance-based method for estimating the weight matrix of a recurrent neural network from sparse, partial measurements across multiple recording sessions, with Granger-causality refinement and heteroskedastic error analysis.
 
-**Paper**: `paper/main.tex` (NeurIPS preprint format, 24 pages)
+**Paper**: `paper/main.tex` (NeurIPS preprint format, 26 pages)
 **Code**: https://github.com/qsimeon/sparse_matrix_recovery
 
 ## Quick Start
@@ -34,7 +34,7 @@ Then: zero diagonal (no autapses) → non-negativity → Granger-causality refin
 
 **Key findings:**
 - The linear approximation beats the oracle with known nonlinearity (James–Stein effect) at all tested regimes
-- CPG–state correlation (E₂) dominates model mismatch (E₁) by ~2× — the main bottleneck
+- CPG–state correlation (E₂) dominates model mismatch (E₁) by ~2.8× (representative topology) / ~3× (median across topologies) — the main bottleneck
 - Error is heteroskedastic: |Ŵᵢⱼ − Wᵢⱼ| ∝ Wᵢⱼ (slope ≈ 1 − d̄)
 - 31% improvement over an independent draw from the same generative prior
 
@@ -63,7 +63,7 @@ experiments/
   results/             # Experiment data (E1-E8 JSON files)
   sweep_config.yaml    # WandB sweep configuration
 paper/
-  main.tex             # LaTeX paper (24 pages, NeurIPS preprint format)
+  main.tex             # LaTeX paper (26 pages, NeurIPS preprint format)
   references.bib       # 23 references
   figures/             # 9 paper figures (PDF)
   poster.tex           # 36"×24" conference poster
@@ -83,20 +83,7 @@ scripts/
 
 ## Citation
 
-**Preprint**: https://arxiv.org/abs/2603.18497
-
-```bibtex
-@misc{simeon2026recoveringsparseneuralconnectivity,
-  title={Recovering Sparse Neural Connectivity from Partial Measurements:
-         A Covariance-Based Approach with Granger-Causality Refinement},
-  author={Quilee Simeon},
-  year={2026},
-  eprint={2603.18497},
-  archivePrefix={arXiv},
-  primaryClass={q-bio.QM},
-  url={https://arxiv.org/abs/2603.18497},
-}
-```
+Preprint not yet posted. Citation will be added once the paper is on arXiv.
 
 ## Author
 

@@ -1,5 +1,25 @@
 # Project Roadmap — Sparse Matrix Recovery
-> Updated: 2026-04-26 (multi-round refinement loop complete — paper at 26 pp, weak-accept verdict, ready for arXiv)
+> Updated: 2026-04-26 (resituate post-commit — staleness audit + strategic review)
+
+## 2026-04-26 (post-commit) resituate findings — actionable
+
+### Immediate Fixes (broken or wrong)
+- [x] README.md: 24 pp -> 26 pp (3 places, just fixed)
+- [x] README.md: removed `2603.18497` arXiv URL + bibtex (just fixed; wasn't valid)
+- [x] README.md: E2/E1 ratio "~2x" -> "~2.8x / ~3x" matching paper (just fixed)
+- [ ] DEEP_DIVE.md: stale ("Last updated: 2026-04-11", numbers verified against Apr 7 data) — needs a sync to the 2026-04-24 fresh rerun results, or a one-line "Numbers verified to current state on YYYY-MM-DD" stamp
+- [ ] paper/REVIEW_NOTES.md: archival document, header dated 2026-03-23 with content through 2026-04-14 — decide whether to retain in repo or move to a `history/` subfolder
+- [ ] origin/ralph/sparse_matrix_recovery: stale remote branch (4 commits diverged, never merged) — `git push origin --delete ralph/sparse_matrix_recovery` after confirming nothing to salvage
+- [ ] pyproject.toml: `[tool.hatch.build.targets.wheel] packages = ["experiments", "tools"]` references nonexistent `tools/` directory (wheel builds OK, but lying manifest) — drop `"tools"` from list
+
+### Pre-arXiv Submission Checklist
+- [ ] Final human read-through of compiled main.pdf (26 pp)
+- [ ] arXiv submit: upload main.tex, references.bib, paper/figures/*.pdf, neurips_2024.sty
+- [ ] Once posted with real arXiv ID, optionally re-add citation block to README + bibtex back-reference in paper
+
+### Cleanup (cosmetic, deferred)
+- [ ] Squash todo.md to a "## Recent" section + archive prior session logs to `tasks/history/2026-04.md`
+- [ ] `.DS_Store` files on disk in 5 dirs — gitignored, harmless, but `find . -name '.DS_Store' -not -path './.venv/*' -delete` is a one-liner for cleanliness
 
 ## 2026-04-26 session (5-round refinement loop, 5 specialist agents)
 - [x] Round 1: Spawned 4 parallel agents (math audit, citation hunt, section flow, code cleanup)
