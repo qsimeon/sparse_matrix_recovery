@@ -161,7 +161,7 @@ Estimation quality depends on the \textbf{DOF ratio} $KT/N^2$: at $N{=}300$, $T{
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig7_oracle_comparison.pdf}
 \\[4mm]
-\large The ``incorrect'' linear approximation \textbf{outperforms the oracle} with known nonlinearity at \emph{all} tested regimes: a James--Stein phenomenon.
+\large The ``incorrect'' linear approximation \textbf{outperforms the natural plug-in oracle} that knows the nonlinearity at \emph{all} tested regimes: a James--Stein phenomenon driven by oracle ill-conditioning.
 
 \vspace{4mm}
 \textbf{Why?}\; $\Sigma_{\phi(x),x} = D\Sigma_{x,x}$ where $\tanh$ compression makes $D$ ill-conditioned, amplifying noise in the oracle inversion.

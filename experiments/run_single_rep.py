@@ -257,7 +257,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run a single experiment repetition (atomic unit for parallel execution)")
     # Experiment mode
-    parser.add_argument("--experiment", type=str, help="Experiment name (E1-E7)")
+    parser.add_argument("--experiment", type=str, help="Experiment name (E1-E8)")
     parser.add_argument("--config-idx", type=int, default=0,
                         help="Which config within the experiment's sweep (0-indexed)")
     # Always required
@@ -309,6 +309,7 @@ def main():
         config["max_timesteps"], config["num_nodes"], config.get("num_cpgs", 5),
         config["num_measured"], config["num_stimulated"],
         config["stim_gain"], config["nonlinearity"],
+        obs_noise_std=config.get("obs_noise_std", 0.0),
         return_matrices=args.wandb,  # return matrices for WandB figure logging
     )
     if args.wandb:

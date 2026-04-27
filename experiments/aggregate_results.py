@@ -52,6 +52,7 @@ def aggregate_experiment_reps(input_dir, output_dir):
         "E5": "E5_nonlinearity.json",
         "E6": "E6_oracle_crossover.json",
         "E7": "E7_stim_fraction.json",
+        "E8": "E8_noise.json",
     }
 
     # Group by experiment (across all configs)

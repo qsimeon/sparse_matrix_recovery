@@ -26,7 +26,7 @@ One REPETITION of an experiment (num_networks, e.g. 20) means:
 The 20 repetitions give error bars over random topologies.
 The 50 sessions per topology are necessary for covariance accumulation.
 
-Experiments E1-E7 each vary ONE OR TWO of these parameters while fixing
+Experiments E1-E8 each vary ONE OR TWO of these parameters while fixing
 the rest at the baseline (N=15, T=1000, meas=66%, sigma=1.0, phi=tanh,
 33% stimulation, K=50).
 

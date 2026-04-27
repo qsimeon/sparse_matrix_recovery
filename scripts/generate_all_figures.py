@@ -5,7 +5,7 @@ Generate ALL paper figures from experiment data.
 Run this single script to regenerate every figure in the paper:
     uv run python scripts/generate_all_figures.py
 
-Figures are saved to paper/figures/fig1_*.pdf through fig10_*.pdf.
+Figures are saved to paper/figures/fig1_*.pdf through fig9_*.pdf.
 Requires experiment results in experiments/results/ (run experiments first).
 """
 
@@ -244,7 +244,7 @@ def main():
     # — no external figure file needed.
 
     print("\n" + "=" * 60)
-    print("  All 10 figures generated!")
+    print("  All 9 figures generated!")
     print("=" * 60)
     print(f"\n  Output: {FIGURES_DIR}/")
     for f in sorted(FIGURES_DIR.glob("fig*.pdf")):
