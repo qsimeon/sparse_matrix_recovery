@@ -1,143 +1,81 @@
 # Project Status — Sparse Matrix Recovery
-
-> Last reviewed: 2026-04-12 (deep scan + resituate post-session)
-> Reviewed by: Claude Sonnet 4.6
-
----
+> Last reviewed: 2026-04-26 (multi-round refinement loop, ready for arXiv)
+> Reviewed by: Claude Opus 4.7
 
 ## Project Overview
+A covariance-based method for recovering sparse neural connectivity matrices from partial multi-session recordings. The method accumulates pairwise covariances across K=50 sessions, inverts via pseudoinverse, applies structural priors (no autapses, non-negativity), and refines via a Granger-inspired projected gradient. Headline finding: the linear approximation beats the natural plug-in oracle estimator (James–Stein effect).
 
-A covariance-based method for recovering sparse neural connectivity matrices from partial
-multi-session recordings. The method accumulates pairwise covariances across K=50 sessions,
-inverts via pseudoinverse, applies structural priors (no autapses, non-negativity), and
-refines with a Granger-causality projected gradient descent. Key finding: the linear
-approximation (treating tanh as identity) outperforms the oracle with known nonlinearity
-at all tested regimes — a concrete James–Stein shrinkage instance.
+**Repo**: https://github.com/qsimeon/sparse_matrix_recovery (public)
+**Paper**: `paper/main.tex` — 26 pages, NeurIPS preprint format. **Ready for arXiv submission.**
 
-**Repo**: https://github.com/qsimeon/sparse_matrix_recovery (PUBLIC as of 2026-04-12)
+## Progress Summary
+| Area | Status | Notes |
+|------|--------|-------|
+| Core algorithms (`experiments/core.py`) | ✅ | 813 lines, line-by-line reviewed |
+| Paper `main.tex` (26 pp) | ✅ | All 5 review rounds applied; weak-accept verdict from 2nd-pass reviewer |
+| Figures (9 PDFs) | ✅ | Regenerated 2026-04-26 from fresh 520-task SLURM rerun |
+| Experiments E1-E8 | ✅ | Full VAR/GLM coverage; numerical claims verified to match data |
+| Experiment code | ✅ | E8 `obs_noise_std` bug fixed; consolidated launcher |
+| Bibliography | ✅ | 26 entries; new: Soudry 2015, Linderman 2014, Janzing 2010 |
+| Notebooks (3) | 🔧 | Aligned with paper baseline; not re-executed since 2026-04-15 |
+| Poster | ✅ | Recompiled 2026-04-26 with "natural plug-in oracle" qualifier |
+| Presentation (8 slides) | ✅ | Recompiled 2026-04-26 |
+| README, STATUS | ✅ | Reflect 26 pages, 9 figures, unified launcher |
+| arXiv submission | ⏳ | URL placeholder cleanly removed; needs user to upload |
 
----
+## Multi-Round Refinement Log (2026-04-26)
 
-## Component Status
+**Round 1** — 4 parallel agents:
+- Math audit (H1 oracle naive vs smart, H2 Granger off-path sign-cancellation)
+- Citation hunt (Soudry et al. 2015, Linderman & Adams 2014, Janzing & Schölkopf 2010)
+- Section flow + global coherence (5 surgical edits)
+- Code/repo cleanup audit (3 SAFE-TO-DELETE, 1 SAFE-TO-FIX, 4 NEEDS-USER-DECISION)
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Core algorithms (`core.py`) | ✅ | Reviewed line-by-line; all design choices documented |
-| Experiments E1–E8 | ✅ | Re-run 2026-04-12 seed=42; deterministic; all 8 paper claims verified |
-| Figures (10 PDFs) | ✅ | All regenerated; fig4 redesigned as 3-row with heteroskedasticity row |
-| Paper (`main.tex`, 21 pp) | ✅ | All known issues fixed; GitHub link added; new appendix A.8 |
-| Poster | ✅ | Numbers current; GitHub URL added; compiled |
-| Presentation (8 slides) | ✅ | Numbers current; GitHub URL added; compiled |
-| Citations | ✅ | 23/23 verified; all used, all have bib entries |
-| Notebooks | 🔧 | Imports/warmup fixed; NOT executed end-to-end post-fix |
-| DEEP_DIVE.md | ✅ | Comprehensive rewrite 2026-04-11 |
-| README.md | ❓ | Not reviewed this session — may have stale references |
-| STATUS.md / tracking | ✅ | This file |
+**Round 2** (math + citations applied):
+- §A.4 oracle clarification: "natural plug-in" vs "split" oracle distinction
+- §A.4 Caveat (2) tightened: bidirectional failure modes (false zero AND false retention) under off-path sign-cancellation
+- 3 new citations inserted in Related Work with comparison framing
 
----
+**Round 3** (5 flow edits applied):
+- Abstract: James-Stein finding promoted to position 2 (was buried)
+- §2: autapse paragraph compressed 6→3 sentences
+- Conclusion: findings reordered to lead with James-Stein
+- Contributions: reframed as consequences of pooling-then-inverting design choice
+- §4 experiment list: E1-E7 → E1-E8 with inline finding hooks
 
-## Verified Key Numbers (locked — do not change without re-running)
+**Round 4** (code cleanup):
+- Deleted 137 lines of dead code: `generate_cpg_architecture_figure()` (analysis.py:1091) and superseded `main()` block (analysis.py:1041-1091)
+- Removed orphaned `argparse` import
+- Fixed docstring: "E1-E7" → "E1-E8" (core.py:29)
+- Fixed print statements: "10 figures" → "9 figures" (generate_all_figures.py)
+- All modules import cleanly; figure pipeline verified end-to-end
 
-| Metric | Value | Source |
-|--------|-------|--------|
-| Weight correlation r | 0.90 median / 0.94 representative topology | E2_granger.json |
-| Improvement over spectral prior | 31% (0.083 vs 0.120) | E2_granger.json |
-| Best recovery | N=300, T=1000 → 0.014 (97.5% over chance) | E1_baseline.json |
-| Precision raw→Granger | 0.30 → 0.40 | E2_granger.json |
-| Recall | 0.97 (maintained) | E2_granger.json |
-| Oracle ratio | 1.45–2.72× worse | E6_oracle_crossover.json |
-| E₂/E₁ ratio | ~2× median, ~2.8× representative | E2_granger.json |
-| Error-weight correlation | r≈0.91, slope≈1-d̄ (heteroskedasticity) | Fig 3 panel E |
-| E7: 0% stim → error | 0.83 (catastrophic) | E7_stim_fraction.json |
-| E7: 33% stim → error | 0.05 (recovers) | E7_stim_fraction.json |
-| E8: σ_ε=0.5 → degradation | +32% error | E8_noise.json |
+**Round 5** (2nd-pass critical reviewer): Weak accept verdict.
+- 1 HIGH: arXiv URL `2603.18497` was a placeholder → removed entirely (and self-citation in references.bib)
+- 3 MEDIUM: linear-identifiability disclaimer added to §A.3; abstract qualifier `at the N=15 baseline`; "natural plug-in oracle" qualifier added to main-text §6
+- 1 nit: Algorithm 1 max() clarified as element-wise
 
----
+**Round 6** (final compile): pdflatex×3 + bibtex; 26 pages, 758KB; zero undefined refs/citations/warnings (other than benign font notices).
 
-## What's Complete (this session 2026-04-11/12)
-
-**Paper edits:**
-- §3.2: Fixed Granger bullet logic (was listing "no self-connections" as Granger contribution)
-- §2: EM autapse claim → structural hypothesis with citations
-- Em dashes: 15 → 2
-- LLM filler removed ("Crucially,", "a striking pattern emerges:", etc.)
-- N range in Limitations: was stale "15 to 1074" → corrected to N∈{15,159,300}
-- Perron-Frobenius citation added (Horn & Johnson 1985)
-- Zebrafish count: 10⁴ → 10⁵ in intro
-- 66%/67% inconsistency resolved
-- E7 §4.8 rewritten: rank-vs-magnitude motivation for stimulation fraction
-- New Appendix A.8: Heteroskedastic Error Structure (E₁[i,j]∝W_{ij}, r≈0.91, James–Stein connection)
-- Figure 3 redesigned as 3-row: heatmaps (A–D) + error analysis (E–H) + violins (I–K)
-- GitHub link in title footnote and code availability paragraph
-- URL escape bug fixed (was rendering as %5C in PDF)
-- CPG TikZ diagram: attempted then removed per user request
-
-**Experiments & code:**
-- E7 simplified from 5 to 3 conditions {0%, 33%, 66%}
-- All E1–E8 re-run seed=42 (deterministic, results confirmed)
-- launch_E1_scaling.sh: 250-task → 90-task (3N×3T)
-- create_notebook.py deleted (was overwriting working notebook with broken one)
-- launch_sweep.sh: fixed broken aggregate_sweep.py reference
-
-**Repo hygiene:**
-- Repo made public
-- Deleted: tools/, paper/figures/diagrams/, old sweep JSONs, fig2_pipeline.pdf, fig_error_analysis.pdf
-- scripts/aggregate_results.py duplicate deleted
-
-**Notebooks:**
-- explore_dynamics.ipynb: abs vs ReLU comparison cell added
-- qsimeon_SparseMatrixRecovery.ipynb: warmup in CPG sim, stale r=0.96/recall=1.0 fixed
-- complete_analysis.ipynb: unused imports removed, stale fig save removed, N=20 notes
-
----
+**Round 7** (poster + presentation sync): Both recompiled with the "natural plug-in oracle" qualifier. Numerical content unchanged.
 
 ## What's Left
 
-### Before arXiv Submission (human needed for some)
-- [ ] **Final human read-through** of compiled 21-page PDF — catch any remaining prose issues
-- [ ] **Run notebooks end-to-end** — verify all cells execute cleanly after fixes
-- [ ] **Visual inspection** of all 10 figures at print resolution
+### Human Action Needed
+- **Final read-through** of compiled `paper/main.pdf` at print resolution.
+- **arXiv submission**: upload `main.tex`, `references.bib`, `paper/figures/*.pdf`, `neurips_2024.sty`. Once posted, optionally re-add the preprint URL to a final published version.
+- **Notebook re-execution**: optional. Notebooks haven't been re-run since 2026-04-15; they may have stale outputs that don't quite match the new figures.
 
-### Claude Can Handle
-- [ ] README.md audit — check for stale references (7 experiments→8, old numbers)
-- [ ] `progress.json` iteration counter — currently at 30, could increment
-- [ ] GLM/VAR baseline comparison — would strengthen E2; reviewer will likely request
+### Cleanup Candidates (left untouched, your call)
+- `progress.json` (last modified Apr 11), `research_prd.json` (last modified Mar 29) — RALPH-loop iteration tracking. Not referenced by any code. Could move to `history/` or delete.
+- `experiments/results/archive_2026_04_11/` and `archive_pre_rerun_2026_04_24/` — old result snapshots. Safe to delete now that fresh rerun is verified.
+- 9 untracked `paper/figures/*.png` files — gitignored going forward; existing copies on disk not needed.
 
-### Deferred (post-submission)
-- GLM/VAR baseline comparison
-- Systematic noise robustness beyond σ_ε=0.5
-- CPG fraction sweep
-- Mixed-sign weight experiments
-- WandB mega sweep
-
----
-
-## Figures Directory (CLEAN — only used files)
-
-| File | Size | Used in | Last updated |
-|------|------|---------|-------------|
-| fig1_problem_schematic.pdf | 40KB | paper, poster, presentation | Apr 11 |
-| fig3_scaling.pdf | 34KB | paper, poster, presentation | Apr 11 |
-| fig4_granger_refinement.pdf | 87KB | paper | Apr 12 (redesigned 3-row) |
-| fig5_stimulation.pdf | 24KB | paper, poster, presentation | Apr 11 |
-| fig6_sparsity.pdf | 23KB | paper | Apr 11 |
-| fig7_nonlinearity.pdf | 27KB | paper | Apr 11 |
-| fig8_dynamics.pdf | 144KB | paper | Apr 11 |
-| fig9_stim_fraction.pdf | 23KB | paper | Apr 12 (3-condition E7) |
-| fig10_oracle_comparison.pdf | 28KB | paper, poster, presentation | Apr 11 |
-
-**No orphaned files.** Every PDF in figures/ is referenced by at least one document.
-
----
+## Cluster State
+- Engaging cluster: synced 2026-04-24, last SLURM jobs 12467081/12467143/12468840 all COMPLETED. Reps directory contains 520 per-rep JSONs.
+- Local: aggregated `experiments/results/E{1..8}_*.json` are the source of truth for paper figures and numbers.
 
 ## Recommendations for Next Session
-
-1. **Run notebooks end-to-end** — execute all 3 notebooks with `jupyter nbconvert --execute` and
-   verify no errors. The warmup and import fixes haven't been execution-tested post-change.
-
-2. **README.md audit** — quick scan for stale references (still says "7 experiments"? wrong figures count?).
-   Take 10 minutes to align it with current state before arXiv.
-
-3. **Human read-through of paper** — the paper is in near-final state. The single most valuable
-   remaining action is a careful human read for scientific clarity, flow, and any edge cases
-   in the experimental descriptions that only the author can judge.
+1. **Read the compiled PDF** end-to-end before submitting.
+2. **arXiv submit** when ready; expected ID format: `2604.XXXXX` (April 2026).
+3. **Commit** the multi-round refinement work as 1-2 logical commits (paper polish + repo cleanup).

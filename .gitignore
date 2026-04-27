@@ -20,6 +20,10 @@ paper/*.nav
 paper/*.snm
 paper/*.toc
 paper/figures/test.pdf
+paper/figures/*.png
+
+# LaTeX emergency crash log (auto-generated in root on failure)
+texput.log
 
 # Individual rep files (large, regenerable from SLURM runs)
 experiments/results/reps/
