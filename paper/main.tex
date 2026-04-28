@@ -37,9 +37,16 @@ Inferring the connectivity of neural circuits from incomplete observations is a 
 We ask whether the connectivity of a recurrent network can nevertheless be recovered by combining these windows.
 Our approach is to accumulate pairwise covariance statistics across sessions wherever two neurons happen to be co-observed, then perform a single global pseudoinverse rather than inverting each session separately---a design choice we show is what makes recovery possible at all.
 A Granger-inspired refinement step enforces biological constraints (no autapses, non-negative weights, lagged-covariance sparsity) by projected gradient descent.
-Our headline finding is counterintuitive: a linear estimator that ignores the network's nonlinearity \emph{outperforms} an oracle estimator that knows it, because the oracle's compressed covariance is worse-conditioned---a concrete biological instance of James--Stein shrinkage.
+A central and counterintuitive finding emerges: a linear estimator that ignores the network's nonlinearity \emph{outperforms} an oracle estimator that knows it, because the oracle's compressed covariance is worse-conditioned---a concrete biological instance of James--Stein shrinkage.
 Systematic experiments characterize a control--estimation tradeoff (stimulation aids identifiability but disrupts the intrinsic dynamics that make the circuit biologically meaningful) and an error decomposition showing that drive from intrinsic circuit oscillators, not nonlinearity mismatch, is the dominant remaining bottleneck.
 \end{abstract}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig1_problem_schematic.pdf}
+\caption{\textbf{Problem setup and estimation pipeline.} \textbf{(Left)} A network of $N=15$ neurons with directed weighted connectivity $W$. In a given session, a subset of neurons (green) is measured while the rest (gray) are unobserved. Red-bordered nodes are CPG drivers (intrinsic oscillatory input); triangle nodes receive extrinsic stimulation (orange arrows ``S''). \textbf{(Right)} The method pipeline: each of $K$ sessions yields a partial covariance matrix $\hat{\Sigma}_k$ covering only co-observed neuron pairs. These are accumulated element-wise into $\hat{\Sigma}$, from which $W$ is estimated via least-squares inversion, the diagonal is zeroed (no-autapse prior), and the result is refined by projected gradient descent enforcing a Granger-inspired lagged-covariance sparsity constraint.}
+\label{fig:schematic}
+\end{figure}
 
 % ============================================================================
 \section{Introduction}
@@ -47,7 +54,7 @@ Systematic experiments characterize a control--estimation tradeoff (stimulation 
 % ============================================================================
 
 A central goal in systems neuroscience is to map the connectivity of neural circuits from functional measurements \citep{power2011functional}.
-Small neural circuits, from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) and \textit{C.~elegans} (302 neurons; \citep{white1986structure, cook2019whole}) to larval zebrafish (${\sim}10^5$ neurons; \citep{ahrens2013whole}) and cortical organoids \citep{quadrato2017cell}, span tens to ${\sim}10^5$ neurons and serve as tractable model systems for studying circuit function. In each case, simultaneously recording the entire circuit remains difficult due to limited imaging field of view, sparse indicator expression, or restricted optical access.
+Small neural circuits, from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) and \textit{C.~elegans} (302 neurons; \citep{white1986structure, cook2019whole}) to larval zebrafish \citep{ahrens2013whole} and cortical organoids \citep{quadrato2017cell}, span tens to thousands of neurons and serve as tractable model systems for studying circuit function. In each case, simultaneously recording the entire circuit remains difficult due to limited imaging field of view, sparse indicator expression, or restricted optical access.
 This creates a fundamental inverse problem: given partial, noisy measurements of neural dynamics across multiple sessions, can we recover the full connectivity matrix?
 
 This problem embodies a \emph{control-estimation tradeoff} related to classical notions of persistent excitation in system identification \citep{ljung1998system}: stimulating neurons with random perturbations aids connectivity estimation by exciting network modes, but disrupts the intrinsic dynamics that make the circuit biologically relevant.
@@ -254,13 +261,6 @@ The complete method is summarized in Algorithm~\ref{alg:pipeline} and illustrate
 \RETURN $\hat{W}$
 \end{algorithmic}
 \end{algorithm}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\linewidth]{figures/fig1_problem_schematic.pdf}
-\caption{\textbf{Problem setup and estimation pipeline.} \textbf{(Left)} A network of $N=15$ neurons with directed weighted connectivity $W$. In a given session, a subset of neurons (green) is measured while the rest (gray) are unobserved. Red-bordered nodes are CPG drivers (intrinsic oscillatory input); triangle nodes receive extrinsic stimulation (orange arrows ``S''). \textbf{(Right)} The method pipeline: each of $K$ sessions yields a partial covariance matrix $\hat{\Sigma}_k$ covering only co-observed neuron pairs. These are accumulated element-wise into $\hat{\Sigma}$, from which $W$ is estimated via least-squares inversion, the diagonal is zeroed (no-autapse prior), and the result is refined by projected gradient descent enforcing a Granger-inspired lagged-covariance sparsity constraint.}
-\label{fig:schematic}
-\end{figure}
 
 We evaluate this pipeline on synthetic networks designed to capture key properties of small biological circuits, varying network size, session duration, stimulation protocol, and nonlinearity.
 Each experiment isolates one factor while holding the others fixed, so that the resulting effects can be attributed unambiguously.
