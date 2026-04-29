@@ -47,10 +47,15 @@ FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def generate_fig9_dynamics(output_path):
-    """Figure 9: Network dynamics, error decomposition, and recovery quality.
+    """Figure 9: Network dynamics, CPG detection, and recovery analysis.
 
-    Five panels: PCA phase portraits (autonomous vs stimulated), power spectrum,
-    error decomposition (e_1 vs e_2), and true-vs-estimated scatter.
+    2x3 grid:
+      Row 1: (A) full-network PCA phase portrait — autonomous
+             (B) full-network PCA phase portrait — stimulated
+             (C) power spectral density (autonomous vs stimulated)
+      Row 2: (D) per-node activity variance (CPG vs non-CPG)
+             (E) error decomposition: ||e_1||_F vs ||e_2||_F vs total
+             (F) true vs Granger-refined estimated weights (Pearson r)
     """
     plt.rcParams.update({
         "font.family": "sans-serif", "font.size": 11,
@@ -60,24 +65,32 @@ def generate_fig9_dynamics(output_path):
     })
     PAL = {"blue": "#4477AA", "cyan": "#66CCEE", "green": "#228833",
            "yellow": "#CCBB44", "red": "#EE6677", "purple": "#AA3377"}
-    CMAP_TIME = "plasma"
+    # Node-type colors
+    C_CPG = "#E76F51"    # warm orange-red for CPG nodes
+    C_NONCPG = "#2A9D8F" # teal for non-CPG nodes
+    CMAP_TIME = "plasma"  # sequential: dark purple → yellow, no white
 
     np.random.seed(42); torch.manual_seed(42)
     phi = get_nonlinearity("tanh"); N = 15
     W, _ = random_network_topology(N, non_negative_weights=True, force_stable=True)
 
+    # Autonomous dynamics (no stim, all measured)
     data_auto = create_network_data(0, 1000, N, 5, N, 0, True, 0.0, phi, W)
+    # Stimulated dynamics (same topology, same CPG if cpg_config provided)
     np.random.seed(42); torch.manual_seed(42)
     data_stim = create_network_data(0, 1000, N, 5, N, 5, False, 1.0, phi, W)
 
     X_auto = data_auto["activity_data"]
     X_stim = data_stim["activity_data"]
+    cpg_mask = data_auto["cpg_nodes_mask"]
     T_plot = len(X_auto)
     t_colors = np.arange(T_plot)
+
+    # Fit PCA on autonomous (full network) — reuse for both projections
     pca_full = PCA(n_components=2).fit(X_auto)
 
-    fig = plt.figure(figsize=(15, 8))
-    gs = GridSpec(2, 6, hspace=0.45, wspace=1.1)
+    fig = plt.figure(figsize=(16, 8.5))
+    gs = GridSpec(2, 3, hspace=0.42, wspace=0.36)
 
     def _phase_plot(ax, X_proj, title, add_cbar=False):
         sc = ax.scatter(X_proj[:, 0], X_proj[:, 1], c=t_colors, cmap=CMAP_TIME,
@@ -87,19 +100,20 @@ def generate_fig9_dynamics(output_path):
             cb = plt.colorbar(sc, ax=ax, shrink=0.8, pad=0.02)
             cb.set_label("Time step", fontsize=9)
 
-    # Row 1: Full network phase portraits + PSD
-    ax = fig.add_subplot(gs[0, 0:2])
+    # Row 1: Full network phase portraits + Power spectrum
+    ax = fig.add_subplot(gs[0, 0])
     Xp_auto = pca_full.transform(X_auto)
-    _phase_plot(ax, Xp_auto, "(A) Network state — autonomous")
+    _phase_plot(ax, Xp_auto, "(A) Full network — autonomous")
     ev = pca_full.explained_variance_ratio_
     ax.set_xlabel(f"PC1 ({ev[0]:.0%})"); ax.set_ylabel(f"PC2 ({ev[1]:.0%})")
 
-    ax = fig.add_subplot(gs[0, 2:4])
+    ax = fig.add_subplot(gs[0, 1])
     Xp_stim = pca_full.transform(X_stim)
-    _phase_plot(ax, Xp_stim, "(B) Network state — stimulated", add_cbar=True)
+    _phase_plot(ax, Xp_stim, "(B) Full network — stimulated", add_cbar=True)
     ax.set_xlabel(f"PC1 ({ev[0]:.0%})"); ax.set_ylabel(f"PC2 ({ev[1]:.0%})")
 
-    ax = fig.add_subplot(gs[0, 4:6])
+    # (C) Power spectrum
+    ax = fig.add_subplot(gs[0, 2])
     for label, X_data, color in [("Autonomous", X_auto, PAL["blue"]),
                                   ("Stimulated", X_stim, PAL["red"])]:
         psds = [welch(X_data[:, i], nperseg=min(128, len(X_data) // 2))[1] for i in range(N)]
@@ -108,35 +122,48 @@ def generate_fig9_dynamics(output_path):
     ax.set_xlabel("Frequency"); ax.set_ylabel("PSD")
     ax.set_title("(C) Power spectrum", fontweight="bold"); ax.legend(fontsize=9)
 
-    # Row 2: Error decomposition (centered, spans 3 cells) + true vs estimated (spans 3 cells)
+    # Row 2: Per-node variance + Error decomposition + True vs estimated
+    ax = fig.add_subplot(gs[1, 0])
+    vars_auto = np.var(X_auto, axis=0)
+    bar_colors = [C_CPG if cpg_mask[i] else C_NONCPG for i in range(N)]
+    ax.bar(range(N), vars_auto, color=bar_colors, alpha=0.85, edgecolor="#333333", linewidth=0.5)
+    ax.axhline(np.median(vars_auto), color="gray", ls="--", lw=1.5, label="Median")
+    from matplotlib.patches import Patch
+    ax.legend(handles=[Patch(facecolor=C_CPG, label="CPG"),
+                       Patch(facecolor=C_NONCPG, label="Non-CPG")],
+              fontsize=8, loc="upper right")
+    ax.set_xlabel("Neuron index"); ax.set_ylabel("Activity variance")
+    ax.set_title("(D) Per-node variance", fontweight="bold")
+
+    # (E) Error decomposition
     np.random.seed(42); torch.manual_seed(42)
     ds = create_multinetwork_dataset(50, 1000, N, 5, 10, 5, False, 1.0, phi, True, True)
     est = estimate_connectivity_weights(N, ds)
     cov_x_inv = np.linalg.pinv(est["cov_x"])
     e1 = est["true_W"] @ (est["cov_phix"] @ cov_x_inv - np.eye(N))
     e2 = est["cov_bx"] @ cov_x_inv
-
-    ax = fig.add_subplot(gs[1, 0:3])
+    ax = fig.add_subplot(gs[1, 1])
     vals = [np.linalg.norm(e1, "fro") / N, np.linalg.norm(e2, "fro") / N,
             np.linalg.norm(est["approx_W"] - est["true_W"], "fro") / N]
-    bars = ax.bar(["$e_1$\n(model mismatch)", "$e_2$\n(unmodeled drive)", "Total"],
-                  vals, color=[PAL["blue"], PAL["red"], PAL["purple"]], alpha=0.85)
+    ax.bar(["$e_1$\n(model)", "$e_2$\n(CPG)", "Total"],
+           vals, color=[PAL["blue"], PAL["red"], PAL["purple"]], alpha=0.85)
     for j, v in enumerate(vals):
-        ax.text(j, v + 0.005, f"{v:.3f}", ha="center", fontsize=10, fontweight="bold")
+        ax.text(j, v + 0.005, f"{v:.3f}", ha="center", fontsize=9, fontweight="bold")
     ax.set_ylabel("$\\|\\cdot\\|_F / N$")
-    ax.set_title("(D) Error decomposition", fontweight="bold")
+    ax.set_title("(E) Error decomposition", fontweight="bold")
 
-    ax = fig.add_subplot(gs[1, 3:6])
+    # (F) True vs estimated weights
+    ax = fig.add_subplot(gs[1, 2])
     _, grn = projected_gradient_causal(est["cov_x"], est["cov_dtx"])
     tf, ef = est["true_W"].flatten(), grn.flatten()
     ax.scatter(tf, ef, s=5, alpha=0.4, color=PAL["green"])
     ax.plot([0, tf.max()], [0, tf.max()], "k--", lw=1)
     r = np.corrcoef(tf, ef)[0, 1]
     ax.set_xlabel("True $W_{ij}$"); ax.set_ylabel("Estimated $\\hat{W}_{ij}$")
-    ax.set_title(f"(E) True vs estimated (r={r:.3f})", fontweight="bold")
+    ax.set_title(f"(F) True vs estimated (r={r:.3f})", fontweight="bold")
 
-    plt.suptitle("Network dynamics, error decomposition, and recovery quality",
-                 fontsize=13, fontweight="bold", y=1.01)
+    plt.suptitle("Network Dynamics, CPG Detection, and Recovery Analysis",
+                 fontsize=14, fontweight="bold", y=1.01)
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"  Saved: {output_path} (r={r:.3f})")

@@ -233,9 +233,9 @@ The estimation error decomposes into two terms:
 \[
   \underbrace{\hat{W} - W}_{\text{total}}
   \;=\;
-  \underbrace{W(D - I)}_{E_1:\;\text{model mismatch}}
+  \underbrace{W(D - I)}_{e_1:\;\text{model mismatch}}
   \;+\;
-  \underbrace{\Sigma_{b,x}\,\Sigma_{x,x}^{-1}}_{E_2:\;\text{CPG correlation}}
+  \underbrace{\Sigma_{b,x}\,\Sigma_{x,x}^{-1}}_{e_2:\;\text{CPG correlation}}
 \]
 
 \vspace{4pt}
@@ -245,9 +245,9 @@ The estimation error decomposes into two terms:
   \toprule
   \textbf{Error Source} & $\|E\|_F / N$ & \textbf{Relative} \\
   \midrule
-  $E_1$: Model mismatch (linear $\approx$ tanh) & $0.080$ & $1\times$ \\
+  $e_1$: Model mismatch (linear $\approx$ tanh) & $0.080$ & $1\times$ \\
   \rowcolor{accentred!15}
-  $E_2$: CPG--state correlation & $0.225$ & $\mathbf{2.8\times}$ \\
+  $e_2$: CPG--state correlation & $0.225$ & $\mathbf{2.8\times}$ \\
   \bottomrule
 \end{tabular}
 \end{center}

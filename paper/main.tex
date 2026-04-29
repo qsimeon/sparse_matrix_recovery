@@ -54,8 +54,8 @@ Systematic experiments characterize a control--estimation tradeoff (stimulation 
 % ============================================================================
 
 A central goal in systems neuroscience is to map the connectivity of neural circuits from functional measurements \citep{power2011functional}.
-Small neural circuits, from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) and \textit{C.~elegans} (302 neurons; \citep{white1986structure, cook2019whole}) to larval zebrafish \citep{ahrens2013whole} and cortical organoids \citep{quadrato2017cell}, span tens to thousands of neurons and serve as tractable model systems for studying circuit function. In each case, even cutting-edge whole-brain functional imaging rarely captures the entire circuit simultaneously: limited field of view, sparse indicator expression, and restricted optical access mean that what one actually accumulates over a campaign is a stack of overlapping but never-complete partial recordings.
-This creates a fundamental inverse problem: given partial, noisy measurements of neural dynamics across multiple sessions---and assuming, as an idealization, that the underlying connectivity does not drift between them---can we recover the full connectivity matrix? More abstractly, this is a partial-window instance of the broader system-identification problem of recovering a recurrent dynamical system from sub-sampled observations, with neuroscience as the most pressing case.
+Small neural circuits, from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) and \textit{C.~elegans} (302 neurons; \citep{white1986structure, cook2019whole}) to larval zebrafish \citep{ahrens2013whole} and cortical organoids \citep{quadrato2017cell}, span tens to thousands of neurons and serve as tractable model systems for studying circuit function. In each case, simultaneously recording the entire circuit remains difficult due to limited imaging field of view, sparse indicator expression, or restricted optical access.
+This creates a fundamental inverse problem: given partial, noisy measurements of neural dynamics across multiple sessions, can we recover the full connectivity matrix?
 
 This problem embodies a \emph{control-estimation tradeoff} related to classical notions of persistent excitation in system identification \citep{ljung1998system}: stimulating neurons with random perturbations aids connectivity estimation by exciting network modes, but disrupts the intrinsic dynamics that make the circuit biologically relevant.
 Experimentalists must balance identifiability against preservation of natural dynamics.
@@ -66,6 +66,15 @@ We formalize this as a matrix recovery problem from partial observations.
 Consider a network of $N$ neurons with connectivity matrix $W \in \mathbb{R}^{N \times N}$, governed by discrete-time recurrent dynamics \citep{sussillo2009generating}, where $W_{ij}$ represents the synaptic weight from neuron $j$ to neuron $i$.
 In each recording session, we observe a subset of neurons and stimulate a (possibly different) subset.
 Our key insight is that pairwise covariance statistics can be accumulated across sessions: whenever neurons $i$ and $j$ are simultaneously observed, their covariance contributes to estimating the $(i,j)$ block of $W$.
+
+\paragraph{Why this matters.}
+Connectomics has historically split along two paths.
+Anatomical connectomes (electron microscopy, expansion microscopy) give a wiring diagram but no synaptic weights and no dynamics.
+Functional connectomes (calcium imaging, voltage imaging) give activity but assume the imaging FOV captures the whole circuit, an assumption that fails in practice for the small invertebrate circuits where causal reconstruction would matter most.
+A third path---reconstructing weighted connectivity directly from \emph{sub-sampled} functional recordings---has been explored only sporadically: most prominently \citet{soudry2015shotgun} introduced the ``shotgun'' multi-session sampling design and inferred connectivity via expectation--maximisation on a generalised linear model.
+We argue this idea is more powerful than its limited adoption suggests, and that the central design lever has been overlooked: \emph{accumulate the second-order statistics first, then invert once globally.}
+The mathematical content of this paper is unusually simple---one pseudoinverse, one projected gradient---but the resulting estimator turns the partial-observation problem from intractable into nearly trivial whenever a coverage condition (every neuron pair co-observed in at least one session) is met.
+Two surprising findings emerge from this simplicity, neither of them about the algorithm itself: a linear approximation outperforms an oracle that knows the true nonlinearity, and the dominant remaining error is not model mismatch but unmodelled intrinsic-circuit dynamics.
 
 \paragraph{Contributions.}
 Our central design choice is to pool pairwise covariances across sessions \emph{before} matrix inversion---a single global solve rather than per-session inversions averaged together. This choice yields four results:
@@ -200,9 +209,12 @@ The estimation error decomposes into two terms:
     \hat{W} - W = \underbrace{W\bigl[\Sigma_{\phi(x),x} - \Sigma_{x,x}\bigr]\Sigma_{x,x}^{-1}}_{e_1:\text{ model mismatch}} + \underbrace{\Sigma_{b,x}\Sigma_{x,x}^{-1}}_{e_2:\text{ input correlation}}
     \label{eq:error}
 \end{equation}
-The first term, $e_1$, captures the price of treating $\phi$ as the identity; the second, $e_2$, captures the violation of the standard input-state independence assumption when the drive $b_t$ is correlated with the state.
-For $\phi = \tanh$ and Gaussian states, both terms admit a closed form via the Stein--Price identity (Appendix~\ref{sec:app_price}): $\Sigma_{\phi(x),x} = D \Sigma_{x,x}$ for a diagonal $D \in (0,1)^{N\times N}$, so $e_1 = W(D-I)$ scales with the state variance and is $O(\sigma^2)$ in the small-noise regime---substantially tighter than generic Lipschitz bounds.
-Both error sources are amplified by $\|\Sigma_{x,x}^{-1}\|_2$, so ill-conditioned covariance (from sparse measurement) degrades recovery even when the model is correct.
+For $\phi = \tanh$ and approximately Gaussian states, the Stein--Price identity \citep{price1958useful, stein1981estimation} reduces $e_1$ to $W(D - I)$ with $D = \mathrm{diag}\!\big(\mathbb{E}[\mathrm{sech}^2(x_i)]\big)$ and $0 < D_{ii} < 1$:
+\begin{equation}
+    \Sigma_{\phi(x),x} = D \, \Sigma_{x,x}.
+    \label{eq:price}
+\end{equation}
+The model-mismatch bound therefore tightens to $\|e_1\|_F \leq \|W\|_F \max_i(1 - D_{ii})$, scaling as $O(\sigma^2)$ for small state variance---substantially tighter than a generic Lipschitz bound (full derivation in Appendix~\ref{sec:app_price}). Both error sources are amplified by $\|\Sigma_{x,x}^{-1}\|_2$, so ill-conditioning from sparse measurement degrades recovery even with perfect model knowledge.
 
 \subsection{Granger-Inspired Sparsity Refinement}
 \label{sec:granger}
@@ -526,18 +538,19 @@ This suggests that increasing the measurement fraction or the number of recordin
 \paragraph{Error decomposition: CPG correlation dominates.}
 Before dissecting individual pipeline components, it helps to understand \emph{why} the estimator works and where its residual error comes from.
 The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ is only partially justified: the extrinsic stimulation is truly independent ($\text{Cov}(\text{stim}_t, x_t) = 0$ by construction), but the CPG drive depends on the current state through $\text{cpg}(x_t)$, so $\text{Cov}(\text{cpg}_t, x_t) \neq 0$.
-Quantitatively, $\|e_2\|_F$ (input correlation) is ${\sim}3\times$ larger than $\|e_1\|_F$ (model mismatch), making the unmodeled state-dependent drive the \emph{dominant} error source, not the linear approximation (Figure~\ref{fig:dynamics}D).
+Quantitatively, $\|e_2\|_F$ (input correlation) is ${\sim}3\times$ larger than $\|e_1\|_F$ (model mismatch), making CPG correlation the \emph{dominant} error source, not the linear approximation (Figure~\ref{fig:dynamics}E).
 CPG nodes can be partially identified from data: they exhibit higher activity variance than non-CPG nodes, enabling detection via a simple variance threshold (F1 score $\sim 0.8$).
 This suggests a natural extension: downweighting detected CPG nodes during covariance accumulation could mitigate the dominant error source, a direction we leave to future work.
 
 \begin{figure}[!tbp]
 \centering
 \includegraphics[width=\linewidth]{figures/fig9_dynamics.pdf}
-\caption{\textbf{Network dynamics, error decomposition, and recovery quality} ($N{=}15$, $\phi{=}\tanh$, $\rho(W){=}1.0$).
-\textbf{(A--B)} PCA phase portraits of network activity ($X \in \mathbb{R}^{T \times N}$ projected onto PC1--PC2, colored by time via plasma colormap: dark purple $\to$ yellow). (A) Under autonomous dynamics ($\sigma=0$), the trajectory is confined to a low-dimensional manifold shaped by intrinsic oscillators. (B) Under stimulation ($\sigma=1.0$), the trajectory fills a larger volume in PC space, reflecting the expanded covariance coverage that enables estimation.
-\textbf{(C)} Power spectral density (Welch's method) averaged across neurons. Autonomous dynamics (blue) show concentrated spectral peaks at intrinsic-oscillator frequencies; stimulated dynamics (red) exhibit a flatter spectrum reflecting white-noise input.
-\textbf{(D)} Error decomposition: $\|e_1\|_F/N$ (model mismatch) vs.\ $\|e_2\|_F/N$ (unmodeled-drive correlation with state) vs.\ total estimation error $\|\hat{W} - W\|_F/N$. $e_1$ and $e_2$ are Frobenius norms of the individual error components (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel across matrix entries. For this representative topology, $e_2$ is ${\sim}2.8\times$ larger than $e_1$ (median across topologies: ${\sim}3\times$), identifying the unmodeled state-dependent drive (here, CPG input) as the dominant error source.
-\textbf{(E)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical) for this representative topology. Pearson $r = 0.94$; dashed line: $y=x$. Median raw-estimator correlation across all 10 topologies: $r = 0.90$.}
+\caption{\textbf{Network dynamics, CPG detection, and error decomposition} ($N{=}15$, $\phi{=}\tanh$, $\rho(W){=}1.0$).
+\textbf{(A--B)} PCA phase portraits of full-network activity ($X \in \mathbb{R}^{T \times N}$ projected onto PC1--PC2, colored by time via plasma colormap: dark purple $\to$ yellow). (A) Under autonomous dynamics ($\sigma=0$), the trajectory is confined to a low-dimensional manifold shaped by CPG oscillations. (B) Under stimulation ($\sigma=1.0$), the trajectory fills a larger volume in PC space, reflecting the expanded covariance coverage that enables estimation.
+\textbf{(C)} Power spectral density (Welch's method) averaged across neurons. Autonomous dynamics (blue) show concentrated spectral peaks at CPG frequencies; stimulated dynamics (red) exhibit a flatter spectrum reflecting white-noise input.
+\textbf{(D)} Per-node activity variance under autonomous dynamics. CPG nodes (orange-red) have systematically higher variance than non-CPG nodes (teal), providing a detection signal.
+\textbf{(E)} Error decomposition: $\|e_1\|_F/N$ (model mismatch) vs.\ $\|e_2\|_F/N$ (CPG--state correlation) vs.\ total estimation error $\|\hat{W} - W\|_F/N$. $e_1$ and $e_2$ are Frobenius norms of the individual error components (Eq.~\ref{eq:error}); the total can be smaller because these components partially cancel across matrix entries. For this representative topology, $e_2$ is ${\sim}2.8\times$ larger than $e_1$ (median across topologies: ${\sim}3\times$), confirming that CPG correlation is the dominant error source.
+\textbf{(F)} Scatter plot of true off-diagonal weights $W_{ij}$ (horizontal) vs.\ Granger-refined estimates $\hat{W}_{ij}$ (vertical) for this representative topology. Pearson $r = 0.94$; dashed line: $y=x$. Median raw-estimator correlation across all 10 topologies: $r = 0.90$.}
 \label{fig:dynamics}
 \end{figure}
 
@@ -548,7 +561,7 @@ For practical circuit mapping, a precision of $0.40$ means roughly $60\%$ of pre
 
 \paragraph{The linear approximation provides implicit regularization.}
 A surprising finding is that the approximate estimator (using $\Sigma_{x,x}$) outperforms the natural plug-in oracle estimator that inverts $\Sigma_{\phi(x),x}$ with known $\phi$ and $b$ (Appendix~\ref{sec:app_oracle} discusses how a hypothetical ``split'' oracle with separately estimated $D$ would close part of this gap).
-The Stein--Price identity (Appendix~\ref{sec:app_price}) explains why: $\Sigma_{\phi(x),x} = D \Sigma_{x,x}$ where $D = \mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$ with $0 < d_i < 1$.
+The Stein--Price identity (Eq.~\eqref{eq:price}) explains why: $\Sigma_{\phi(x),x} = D \Sigma_{x,x}$ where $D = \mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$ with $0 < d_i < 1$.
 Because $\tanh$ compresses large values, the oracle covariance is a \emph{row-compressed} version of $\Sigma_{x,x}$, making its condition number potentially worse: $\kappa(\Sigma_{\phi(x),x}) \leq \kappa(\Sigma_{x,x}) \cdot d_{\max}/d_{\min}$.
 When state variances are heterogeneous across neurons, this ratio can be large, amplifying noise in the oracle inversion.
 The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditioned, acting as implicit regularization, analogous to how ridge regression (biased) can outperform OLS (unbiased but high-variance), or how James--Stein shrinkage reduces total risk by trading bias for variance.
@@ -598,18 +611,19 @@ Preliminary tests with mixed-sign weights yield qualitatively similar recovery a
 \label{sec:conclusion}
 % ============================================================================
 
-We have studied a partial-window system identification problem in which a recurrent network is observed only through varying subsets of its state variables across sessions, and asked whether the connectivity matrix $W$ is nevertheless recoverable.
-The answer is yes when (i) every pair of neurons is co-observed at least once, (ii) the underlying weights do not drift between sessions, and (iii) covariances are pooled \emph{before} a single global pseudoinverse rather than fit per session.
-Three findings refine that answer into something more useful for designers of such estimators.
+The mathematical content of this paper is intentionally simple: pool pairwise covariances across sessions, invert once, refine with a Granger-inspired projection.
+What that simplicity buys is a route to weighted connectivity that has been almost entirely absent from connectomics practice---one that uses standard functional imaging, asks no more of the experimenter than randomising the imaging mask between sessions, and recovers the full $N{\times}N$ synaptic matrix despite never observing the whole circuit at once.
+The empirical claims are correspondingly simple: at the scales we test, this works.
 
-First, dropping the network's nonlinearity from the estimator can \emph{improve} recovery: the natural plug-in oracle that uses the true nonlinearity inverts a row-compressed covariance whose worse conditioning outweighs its lower bias---an instance of James--Stein-style implicit regularization (E6). Practically, this removes the need to characterize the neuronal transfer function before estimating $W$.
-Second, partial observability creates a control--estimation tradeoff: stimulation excites otherwise-unobservable network modes (good for identifiability) but disrupts intrinsic dynamics (bad for studying them), with the optimum interior to the design space (E3, E7).
-Third, an error decomposition (Eq.~\ref{eq:error}) cleanly separates two failure modes---approximating a nonlinear circuit as linear ($e_1$) and unmodeled state-dependent drive ($e_2$)---and shows the second to be ${\sim}3\times$ larger in our setting. The estimator's remaining error is therefore not principally a math-approximation problem but a problem of unmodeled autonomous dynamics, which points to the next concrete direction: jointly estimating $W$ alongside a model of the intrinsic drive.
+Three findings refine this picture.
+First, modelling the network's nonlinearity does not help: a linear estimator outperforms a natural plug-in oracle that knows the true $\phi$, because the oracle's compressed covariance is worse-conditioned (E6).
+The practical implication is that experimentalists need not measure the neuronal transfer function to apply the method.
+Second, stimulation design matters but in a non-monotone way (E3, E7): too little leaves $\Sigma_{x,x}$ ill-conditioned and recovery fails; too much overrides the intrinsic dynamics that make the circuit biologically interesting; moderate stimulation of a modest neuron subset is the sweet spot.
+Third, the dominant remaining error source is not the linear approximation but the network's own state-dependent intrinsic drive, modelled here as a CPG (E2). Closing this gap is the most promising direction for further accuracy.
 
-Several directions merit future investigation.
-Extending the framework to real neural recordings, particularly \textit{C.~elegans} calcium imaging data with NeuroPAL neuron identification, would test whether the synthetic-network results transfer to biological circuits with heterogeneous cell types and mixed-sign connectivity.
-Structured stimulation protocols (e.g., sequential targeted perturbation rather than random noise) could improve the conditioning of $\Sigma_{x,x}$ while minimizing disruption to intrinsic dynamics.
-Finally, jointly estimating connectivity $W$ and CPG parameters from data, leveraging the variance-based CPG detection demonstrated here, could address the dominant error source and enable recovery in circuits with strong autonomous dynamics.
+The natural extensions are biological.
+Applying the method to real recordings---\textit{C.~elegans} calcium imaging with NeuroPAL identification, larval zebrafish whole-brain imaging, lobster STG voltage imaging---would test whether synthetic-network performance transfers to circuits with heterogeneous cell types and mixed-sign connectivity.
+Structured stimulation protocols, jointly estimated CPG models, and integration with anatomical priors from electron-microscopy connectomes are all natural follow-ons that the framework readily accommodates.
 
 % ============================================================================
 % References
@@ -642,7 +656,7 @@ Applying this with $f = \tanh$ (so $f' = \text{sech}^2$):
 \end{equation}
 Therefore $\Sigma_{\phi(x),x} = D \Sigma_{x,x}$ where $D = \text{diag}(\mathbb{E}[\text{sech}^2(X_i)])$ with $X_i \sim \mathcal{N}(0, \sigma_i^2)$.
 The model mismatch in $e_1$ reduces to $W(D - I)$, with $\|e_1\|_F \leq \|W\|_F \max_i(1 - D_{ii})$.
-For small state variance, $1 - \mathbb{E}[\text{sech}^2(X_i)] \approx \sigma_i^2 - 2\sigma_i^4 + O(\sigma_i^6)$, giving the $O(\sigma^2)$ bound used in Section~\ref{sec:methods}.
+For small state variance, $1 - \mathbb{E}[\text{sech}^2(X_i)] \approx \sigma_i^2 - 2\sigma_i^4 + O(\sigma_i^6)$, giving the $O(\sigma^2)$ bound in Eq.~\eqref{eq:price}.
 For large variance, $\mathbb{E}[\text{sech}^2(X_i)] \to 0$ as $\sigma_i \to \infty$, so the mismatch approaches $W \cdot (-I) = -W$.
 Note that $\mathbb{E}[x_i^3 x_j] = 3\sigma_i^2 \Sigma_{ij} \neq 0$ for Gaussians (degree-4 moment), correcting a common misconception that this vanishes by symmetry.
 
