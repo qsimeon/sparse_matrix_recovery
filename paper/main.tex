@@ -67,15 +67,6 @@ Consider a network of $N$ neurons with connectivity matrix $W \in \mathbb{R}^{N 
 In each recording session, we observe a subset of neurons and stimulate a (possibly different) subset.
 Our key insight is that pairwise covariance statistics can be accumulated across sessions: whenever neurons $i$ and $j$ are simultaneously observed, their covariance contributes to estimating the $(i,j)$ block of $W$.
 
-\paragraph{Why this matters.}
-Connectomics has historically split along two paths.
-Anatomical connectomes (electron microscopy, expansion microscopy) give a wiring diagram but no synaptic weights and no dynamics.
-Functional connectomes (calcium imaging, voltage imaging) give activity but assume the imaging FOV captures the whole circuit, an assumption that fails in practice for the small invertebrate circuits where causal reconstruction would matter most.
-A third path---reconstructing weighted connectivity directly from \emph{sub-sampled} functional recordings---has been explored only sporadically: most prominently \citet{soudry2015shotgun} introduced the ``shotgun'' multi-session sampling design and inferred connectivity via expectation--maximisation on a generalised linear model.
-We argue this idea is more powerful than its limited adoption suggests, and that the central design lever has been overlooked: \emph{accumulate the second-order statistics first, then invert once globally.}
-The mathematical content of this paper is unusually simple---one pseudoinverse, one projected gradient---but the resulting estimator turns the partial-observation problem from intractable into nearly trivial whenever a coverage condition (every neuron pair co-observed in at least one session) is met.
-Two surprising findings emerge from this simplicity, neither of them about the algorithm itself: a linear approximation outperforms an oracle that knows the true nonlinearity, and the dominant remaining error is not model mismatch but unmodelled intrinsic-circuit dynamics.
-
 \paragraph{Contributions.}
 Our central design choice is to pool pairwise covariances across sessions \emph{before} matrix inversion---a single global solve rather than per-session inversions averaged together. This choice yields four results:
 \begin{itemize}
@@ -111,13 +102,7 @@ Empirically, weakly connected topologies produced dead zones where activity coll
 This prior is consistent with the recurrent interneuron cores of biological circuits: a large fraction of neurons in the \textit{Drosophila} whole-brain connectome lie in a giant strongly connected component \citep{lin2024network}, and central pattern generators rely on reciprocal connectivity to sustain rhythmic output \citep{marder2007understanding}.
 Sensory input and motor output neurons typically sit outside this recurrent core \citep{varshney2011structural}, so the strong-connectivity prior is best understood as a model of the \emph{processing} stage of a circuit rather than a full sensory-to-motor pipeline.
 
-\emph{(iii) Non-negative weights}: $W_{ij} \geq 0$.
-Like the no-autapse prior, this is a modeling belief applied uniformly to \emph{all} estimates (both the raw covariance estimator and the Granger-refined output), not a constraint specific to any refinement step.
-It is motivated by the measurement modality: EM connectomics, the primary source of ground-truth wiring data, measures synapse \emph{size} (contact area, vesicle count) but not synapse \emph{sign} (excitatory vs.\ inhibitory), yielding an inherently unsigned weight matrix.
-In our formulation, inhibitory effects arise from the \emph{sign of the activity}: a positive weight applied to negative (hyperpolarized) presynaptic activity drives the postsynaptic neuron downward.
-This is a dual of the standard neuroscience convention (non-negative firing rates with signed weights), and is functionally equivalent for the covariance estimator, which assumes no sign structure on $W$.
-By the Perron--Frobenius theorem, non-negative irreducible matrices have a unique maximal real eigenvalue with a positive eigenvector, which simplifies spectral radius control and ensures stable dynamics.
-The method generalizes to mixed-sign weights (see Section~\ref{sec:discussion}).
+\emph{(iii) Non-negative weights}: $W_{ij} \geq 0$, applied uniformly to all estimates. This is motivated by EM connectomics measuring synapse \emph{size} but not \emph{sign}, yielding an inherently unsigned weight matrix; in our formulation inhibitory effects arise from the sign of the activity rather than the weight. By Perron--Frobenius, this also simplifies spectral radius control. The method generalizes to mixed-sign weights (Section~\ref{sec:discussion}).
 
 \paragraph{Nonlinearity.}
 We require the element-wise nonlinearity $\phi$ to be \emph{1-Lipschitz}: $|\phi'(x)| \leq 1$ for all $x$.
@@ -129,20 +114,10 @@ To assess robustness, we test three additional nonlinearities in E5 (Section~\re
 \emph{sigmoid} ($\phi(x) = 1/(1+e^{-x})$, 1-Lipschitz and bounded but not odd, with $\phi(0) = 0.5 \neq 0$).
 This deliberately includes nonlinearities that violate our default's symmetry and boundedness, testing how gracefully the estimator degrades.
 
-\paragraph{Stability.}
-For stability, we require $\rho(W) \leq 1$, where $\rho(\cdot)$ denotes the spectral radius.
-Combined with the 1-Lipschitz property of $\phi$, this ensures bounded autonomous dynamics ($b_t = 0$): since $\|\phi(x)\| \leq \|x\|$ and $\rho(W) \leq 1$, the map $x \mapsto W\phi(x)$ is non-expansive.
-The spectral radius is scaled to $\rho(W) \approx 1.0$ (edge of stability), producing marginally stable dynamics that are neither trivially decaying nor divergent.
-With $\rho(W) \leq 1$ and 1-Lipschitz $\phi$ satisfying $|\phi(x)| < |x|$ for $x \neq 0$ (as with $\tanh$), the autonomous system ($b_t = 0$) \emph{contracts to the origin}: the network falls silent without input.
-This motivates the central pattern generator (CPG) component of the input $b_t$: a subset of neurons possess autonomous oscillatory drive (analogous to cardiac pacemaker cells) that sustains network activity in the absence of external stimulation \citep{marder2001central}.
-The input thus decomposes as $b_t = b_t^{\text{stim}} + b_t^{\text{CPG}}$, where $b_t^{\text{stim}}$ is extrinsic i.i.d.\ Gaussian noise (independent of $x_t$) and $b_t^{\text{CPG}} = \text{cpg}(x_t)$ is state-dependent intrinsic drive with $\text{Cov}(b_t^{\text{CPG}}, x_t) \neq 0$.
-This decomposition is critical: the extrinsic component satisfies our independence assumption, while the CPG component violates it and dominates the estimation error (Section~\ref{sec:discussion}).
-
-\emph{CPG identity is hidden from the estimation pipeline.}
-Which neurons possess intrinsic drive is a property of the ground-truth simulation, not available to the observer.
-In each session, any measured or stimulated node may also be a CPG node; the experimenter does not know.
-The variance-based CPG detection described in Section~\ref{sec:discussion} is a \emph{post-hoc} analysis, not an oracle input to the estimator.
-This mirrors the biological reality: a real experimenter typically cannot identify pacemaker neurons \emph{a priori}.
+\paragraph{Stability and input decomposition.}
+We scale $\rho(W) \approx 1.0$ (edge of stability), so combined with 1-Lipschitz $\phi$ the autonomous map $x \mapsto W\phi(x)$ is non-expansive and contracts to the origin ($b_t = 0 \Rightarrow x_t \to 0$): the network falls silent without input.
+This motivates a central pattern generator (CPG) component of $b_t$: a subset of neurons possess autonomous oscillatory drive \citep{marder2001central} that sustains activity. The input thus decomposes as $b_t = b_t^{\text{stim}} + b_t^{\text{CPG}}$, with $b_t^{\text{stim}}$ extrinsic i.i.d.\ Gaussian (independent of $x_t$) and $b_t^{\text{CPG}} = \text{cpg}(x_t)$ state-dependent. The extrinsic component satisfies our independence assumption; the CPG component violates it and dominates the estimation error (Section~\ref{sec:discussion}).
+CPG identity is \emph{hidden from the estimation pipeline}: the experimenter does not know which neurons are CPGs, and the variance-based detection in Section~\ref{sec:discussion} is post-hoc, not an oracle input.
 
 \subsection{Observation Model}
 
@@ -497,10 +472,9 @@ Our approach combines ideas from several distinct literatures: neural connectivi
 Inferring functional connectivity from neural recordings is a longstanding challenge.
 Modern calcium imaging enables simultaneous recording of hundreds of neurons in neural circuits \citep{kato2015global, yemini2021neuropal}, but full coverage in a single session remains difficult.
 Generalized linear models (GLMs) \citep{pillow2008spatio} provide a principled regression-based framework for inferring directed connectivity, though they assume all relevant neurons are observed.
-\citet{linderman2014discovering} extend this line by jointly inferring a latent weighted graph and Hawkes-process dynamics under a fully Bayesian random-graph prior; in contrast, our method is non-parametric in the dynamics, recovers $W$ from second moments alone, and assumes only that the noise driving the recurrent network is approximately uncorrelated with the state.
 Transfer entropy \citep{schreiber2000measuring} offers a model-free alternative that captures nonlinear interactions, but is sensitive to unobserved confounders.
-More broadly, \citet{janzing2010causal} show that even under partial observability, causal structure is identifiable when the joint distribution admits an algorithmically simple factorization aligned with the true graph; our pooling-then-inverting strategy can be read as a second-order, finite-sample analog of this principle, exploiting that distinct session masks expose complementary marginals of a single underlying causal mechanism.
-\citet{soudry2015shotgun} introduced the ``shotgun'' multi-session sampling design, in which a small, randomly varying subset of neurons is observed at each epoch, and showed that an EM-based generalized linear model can disentangle direct from latent-mediated effects under this scheme; our estimator targets the same observation model but pools second-order covariance statistics across sessions and inverts globally in closed form, trading the GLM likelihood for a simpler convex moment-matching step.
+More broadly, partial-observability identifiability has been studied formally by \citet{janzing2010causal}; our pooling-then-inverting recipe is a second-order finite-sample analog.
+\citet{soudry2015shotgun} introduced the multi-session shotgun sampling design and used EM on a GLM; we target the same observation model but pool covariances and invert globally in closed form.
 Our covariance-based approach is complementary: it explicitly handles partial observations by accumulating statistics across sessions.
 
 \paragraph{Granger causality in neuroscience.}
@@ -530,11 +504,6 @@ Our method is distinct from all of the above in that it operates with partial ob
 \label{sec:discussion}
 % ============================================================================
 
-\paragraph{The covariance estimator works but has limitations.}
-Our results demonstrate that the covariance-based estimator $\hat{W} = \Sigma_{x_{t+1},x_t}\Sigma_{x_t,x_t}^{-1}$ can recover connectivity from partial measurements, consistently outperforming chance baselines for small networks.
-For larger networks, the estimator's performance degrades due to ill-conditioning: when only $\sim33\%$ of neurons are observed per session, the empirical covariance matrix may be rank-deficient, leading to high-variance estimates.
-This suggests that increasing the measurement fraction or the number of recording sessions is critical for scaling to larger circuits.
-
 \paragraph{Error decomposition: CPG correlation dominates.}
 Before dissecting individual pipeline components, it helps to understand \emph{why} the estimator works and where its residual error comes from.
 The independence assumption $\text{Cov}(b_t, x_t) \approx 0$ is only partially justified: the extrinsic stimulation is truly independent ($\text{Cov}(\text{stim}_t, x_t) = 0$ by construction), but the CPG drive depends on the current state through $\text{cpg}(x_t)$, so $\text{Cov}(\text{cpg}_t, x_t) \neq 0$.
@@ -560,12 +529,9 @@ The Granger-inspired refinement adds the lagged-covariance sparsity pattern (App
 For practical circuit mapping, a precision of $0.40$ means roughly $60\%$ of predicted edges are spurious---sufficient as a screening tool that narrows the candidate edge set for targeted validation, but not for definitive wiring inference without additional evidence.
 
 \paragraph{The linear approximation provides implicit regularization.}
-A surprising finding is that the approximate estimator (using $\Sigma_{x,x}$) outperforms the natural plug-in oracle estimator that inverts $\Sigma_{\phi(x),x}$ with known $\phi$ and $b$ (Appendix~\ref{sec:app_oracle} discusses how a hypothetical ``split'' oracle with separately estimated $D$ would close part of this gap).
-The Stein--Price identity (Eq.~\eqref{eq:price}) explains why: $\Sigma_{\phi(x),x} = D \Sigma_{x,x}$ where $D = \mathrm{diag}(\mathbb{E}[\mathrm{sech}^2(x_i)])$ with $0 < d_i < 1$.
-Because $\tanh$ compresses large values, the oracle covariance is a \emph{row-compressed} version of $\Sigma_{x,x}$, making its condition number potentially worse: $\kappa(\Sigma_{\phi(x),x}) \leq \kappa(\Sigma_{x,x}) \cdot d_{\max}/d_{\min}$.
-When state variances are heterogeneous across neurons, this ratio can be large, amplifying noise in the oracle inversion.
-The ``incorrect'' linear approximation using $\Sigma_{x,x}$ is better-conditioned, acting as implicit regularization, analogous to how ridge regression (biased) can outperform OLS (unbiased but high-variance), or how James--Stein shrinkage reduces total risk by trading bias for variance.
-The E6 experiment (Section~\ref{sec:experiments}, Figure~\ref{fig:oracle}) confirms this prediction empirically: the approximation matches or outperforms the oracle at all seven stimulation intensities tested, with the largest non-pathological gap ($\sim2.2\times$ in the Granger-refined approximation) at $\sigma = 0.1$.
+A surprising finding is that the approximate estimator (using $\Sigma_{x,x}$) outperforms the natural plug-in oracle that inverts $\Sigma_{\phi(x),x}$ with known $\phi$ and $b$.
+Intuitively, the row-compression $\Sigma_{\phi(x),x} = D \Sigma_{x,x}$ implied by Stein--Price makes the oracle's covariance worse-conditioned than $\Sigma_{x,x}$, and the resulting variance penalty outweighs the oracle's bias advantage; full bias--variance breakdown in Appendix~\ref{sec:app_oracle}.
+E6 confirms this empirically: the approximation matches or outperforms the oracle at all seven stimulation intensities tested, with the largest non-pathological gap ($\sim 2.2\times$) at $\sigma = 0.1$.
 
 \paragraph{Stimulation coverage: a practical experimental knob.}
 Our experiments reveal two complementary axes of stimulation design: \emph{intensity} (E3) and \emph{coverage} (E7).
@@ -574,6 +540,7 @@ The E7 results show that zero stimulation yields substantially degraded recovery
 At $33\%$ stimulation ($10$ of $N=30$ neurons), error drops substantially, and performance plateaus beyond $\sim 33\%$ stimulation coverage.
 This has a direct practical implication: in optogenetic experiments, an experimenter need not achieve pan-neuronal actuator expression. Targeting roughly one-third of neurons suffices, provided stimulation intensity is moderate ($\sigma \approx 0.5$--$1.0$).
 Combined with the E3 finding that excessive stimulation degrades recovery, this defines a practical operating regime: moderate gain applied to a modest subset of neurons.
+Observation noise enters as ridge regularization (Eq.~\eqref{eq:estimator}); E8 confirms graceful degradation up to $\sigma_\epsilon = 0.5$ ($\sim 32\%$ error increase).
 
 \paragraph{Connection to neuroscience experiments.}
 In practice, the ``sessions'' in our framework correspond to separate recording sessions of the same animal or circuit, where different neurons are visible due to imaging field of view, indicator expression, or optical access.
@@ -581,30 +548,15 @@ The key requirement is that sessions share the same underlying connectivity $W$,
 Tools for consistent neuron identification across sessions, such as NeuroPAL \citep{yemini2021neuropal}, make this framework directly applicable to real experimental data.
 
 \paragraph{Identifiability conditions.}
-$W$ is uniquely recoverable if and only if every neuron pair $(i,j)$ is co-observed in at least one session ($n_{ij} \geq 1$ for all $i,j$) and $\Sigma_{x,x}$ is invertible.
-Necessity follows because unobserved pairs leave covariance entries unconstrained; sufficiency follows from $W = \Sigma_1 \Sigma_0^{-1}$.
-For random measurement patterns where each neuron is observed independently with probability $p$, a union bound over $N^2$ pairs gives:
-\begin{equation}
-    K \geq \frac{\log(N^2/\delta)}{p^2} \quad \Rightarrow \quad \Pr(\text{all pairs covered}) \geq 1 - \delta
-\end{equation}
-This is tight up to constants, matching a coupon-collector argument where each session yields $\sim (pN)^2$ pair-coupons.
-Beyond this \emph{structural} identifiability, \emph{practical} identifiability demands that $\Sigma_{x,x}$ is well-conditioned for stable inversion.
-Our experiments (Section~\ref{sec:experiments}) show that measurement density directly controls $\kappa(\Sigma_{x,x})$, creating a gap between the two.
-
-\paragraph{Robustness to measurement noise.}
-When observation noise is present, Eq.~\eqref{eq:estimator} shows that the estimator becomes ridge-regularized: $\hat{W} = W\Sigma_{x,x}(\Sigma_{x,x} + \sigma_\epsilon^2 I)^{-1}$, which shrinks estimates toward zero.
-In systematic tests (E8, 10 topologies, baseline configuration), at $\sigma_\epsilon = 0.1$ (relative to state std $\sim 0.8$) the Granger-refined error increases by $\sim 2\%$, and at $\sigma_\epsilon = 0.5$ by $\sim 32\%$.
-The graceful degradation follows from the ridge structure: noise regularizes the inversion rather than corrupting it catastrophically.
+We discuss structural identifiability (the coupon-collector bound on session count $K$) and the gap to practical identifiability (the conditioning of $\Sigma_{x,x}$) in Appendix~\ref{sec:app_ident}.
 
 \paragraph{Limitations.}
 (1)~The Stein--Price bound assumes Gaussian states, but our states are driven by a chaotic reservoir through $\tanh$; the bound is directionally correct but not formally tight for non-Gaussian distributions.
 (2)~Our experiments use excitatory networks ($W_{ij} \geq 0$), where the Perron--Frobenius theorem \citep{horn1985matrix} guarantees a unique real dominant eigenvalue and simplifies spectral radius control.
 Real circuits include inhibitory connections (mixed-sign $W$); extending the method requires relaxing the non-negativity modeling prior.
 Preliminary tests with mixed-sign weights yield qualitatively similar recovery accuracy for the covariance estimator itself, since the estimator $\hat{W} = \Sigma_{y_{t+1},y_t}\Sigma_{y_t,y_t}^{-1}$ does not assume sign constraints.
-(3)~We compare against per-session VAR (OLS) and Ridge-GLM ($\ell_2$, $\alpha{=}1$) baselines (E2). Both underperform our accumulate-then-invert estimator ($58\%$ and $36\%$ worse, respectively), confirming that global covariance pooling is the critical design choice. Comparison against full-data GLMs with Poisson link \citep{pillow2008spatio} (appropriate for spike data rather than our continuous activity) is a direction for future work.
-(4)~Our experiments span $N \in \{15, 159, 300\}$, motivated by biologically relevant circuit scales: from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) to \textit{C.~elegans} (302 neurons; \citep{white1986structure}). The method itself places no upper bound on $N$; the computational bottleneck is the $O(N^3)$ covariance inversion, for which efficient iterative and sparse solvers exist, and recent advances in AI-discovered linear-algebra algorithms \citep{fawzi2022discovering} suggest this ceiling is not fundamental.
-(5)~Our primary results assume noiseless observations; noise robustness tests (E8) show graceful degradation ($2\%$ at $\sigma_\epsilon = 0.1$, $32\%$ at $\sigma_\epsilon = 0.5$).
-(6)~We assume a fixed weight matrix $W$ shared across recording sessions, which holds on the short timescales typical of optogenetic experiments; biological synapses are plastic on longer timescales, so the recovered $\hat{W}$ should be interpreted as a snapshot of effective connectivity rather than a permanent wiring diagram.
+(3)~Our experiments span $N \in \{15, 159, 300\}$, motivated by biologically relevant circuit scales: from the lobster stomatogastric ganglion (${\sim}30$ neurons; \citep{marder2007understanding}) to \textit{C.~elegans} (302 neurons; \citep{white1986structure}). The method itself places no upper bound on $N$; the computational bottleneck is the $O(N^3)$ covariance inversion, for which efficient iterative and sparse solvers exist, and recent advances in AI-discovered linear-algebra algorithms \citep{fawzi2022discovering} suggest this ceiling is not fundamental.
+(4)~We assume a fixed weight matrix $W$ shared across recording sessions, which holds on the short timescales typical of optogenetic experiments; biological synapses are plastic on longer timescales, so the recovered $\hat{W}$ should be interpreted as a snapshot of effective connectivity rather than a permanent wiring diagram.
 
 % ============================================================================
 \section{Conclusion}
@@ -687,7 +639,7 @@ Defining $\Delta = D - I$ (the linearization error; each diagonal entry satisfie
 The left side bounds the approximation's total error via submultiplicativity: model mismatch $\|W\Delta\|_F$ plus input correlation $\|\Sigma_{b,x}\Sigma_{x,x}^{-1}\|_F$ (which the oracle removes by subtracting $\hat{\Sigma}_{b,x}$).
 The right side captures how the same finite-sample noise $E_{\text{samp}}$ is amplified \emph{more} through the oracle's worse-conditioned $\Sigma_{\phi(x),x}^{-1}$ than through the approximation's $\Sigma_{x,x}^{-1}$.
 When state variances are heterogeneous across neurons (common in biological networks), $d_{\max}/d_{\min}$ can be large, making the oracle unstable.
-This conditioning penalty is a property of the natural plug-in oracle that estimates $\hat\Sigma_{\phi(x),x}$ as a single sample cross-covariance: a hypothetical ``split'' oracle that estimated $\hat D$ separately and inverted $\hat\Sigma_{x,x}$ would coincide with our oracle in the population limit (both equal $W$ for $b{=}0$ by associativity) but would inherit the better conditioning of $\Sigma_{x,x}^{-1}$, reducing the gap to the linear approximation. The E6 effect therefore reflects two compounding factors---oracle design and implicit James--Stein-style shrinkage---and Figure~\ref{fig:oracle} should be read as a comparison against the natural plug-in oracle, not the optimal one.
+A hypothetical ``split'' oracle that estimated $\hat D$ separately and inverted $\hat\Sigma_{x,x}$ would coincide with the natural plug-in oracle in the population limit but inherit the better finite-sample conditioning of $\Sigma_{x,x}^{-1}$; Figure~\ref{fig:oracle} should be read as a comparison against the natural plug-in oracle, not the optimal one.
 This is a concrete instance of the bias-variance tradeoff: like ridge regression or James--Stein shrinkage, a biased estimator with lower variance can achieve better total risk.
 
 \subsection{Granger-Inspired Non-Causality Rule: Derivation and Scope}
@@ -721,7 +673,7 @@ We therefore call the refinement \emph{Granger-inspired} rather than Granger cau
 The derivation establishes three strict limits on when the rule is safe:
 \begin{enumerate}
     \item \textbf{Non-negativity prior.} The argument ``$W_{ij} > 0 \Rightarrow$ positive direct contribution to $\Sigma_{x_{t+1},x_t}(i,j)$'' requires $W_{ij} \geq 0$. With mixed-sign weights, a negative edge could reduce the lag-1 covariance relative to the lag-0 and satisfy the inequality falsely, producing a spurious zero. The rule is only safe under the excitatory-network prior (Section~\ref{sec:formulation}).
-    \item \textbf{Off-path sign-cancellation.} Eq.~\eqref{eq:lag1_expansion} sums contributions from all length-1 paths plus $\mathrm{Cov}(b_{i,t},x_{j,t})$. The contraposition $\Sigma_{ij}>\Sigma_{x_{t+1},x_t}(i,j)\Rightarrow W_{ij}{=}0$ requires both the direct term $W_{ij}D_j\Sigma_{jj}$ and the off-path sum $\sum_{k\neq j}W_{ik}D_k\Sigma_{kj}+\mathrm{Cov}(b_{i,t},x_{j,t})$ to be non-negative. Caveat~(1) ensures the former; the latter additionally requires non-negative pairwise stationary covariances $\Sigma_{kj}\geq 0$ and non-negative CPG cross-covariances. When this fails (e.g.\ anti-correlated CPG components, or transient regimes where $\Sigma$ has negative entries despite $W\geq 0$), the rule can fail in either direction: a true positive edge can satisfy $\Sigma_{ij}>\Sigma_{x_{t+1},x_t}(i,j)$ (false zero), and a true zero can violate it (false retention). The rule is a conservative screening heuristic, not an identification theorem.
+    \item \textbf{Off-path sign-cancellation.} The contraposition implicitly assumes off-path covariance contributions are non-negative; under anti-correlated CPG components or transient $\Sigma_{kj}<0$, the rule can fail in either direction (false zeros and false retentions). It is a conservative screening heuristic, not an identification theorem.
     \item \textbf{Used as a projection, not a test.} The zero-mask is enforced as one of four constraints inside the least-squares refinement (Eq.~\eqref{eq:optimization}), allowing the $\ell_2$ objective to push back on positions where the rule is noisy.
 \end{enumerate}
 Empirically (Section~\ref{sec:experiments}, E2) the rule improves precision from $0.30$ to $0.40$ while keeping recall at $0.96$---consistent with its interpretation as a conservative, precision-biased screen rather than a complete causal test.
